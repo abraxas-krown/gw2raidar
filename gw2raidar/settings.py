@@ -189,6 +189,67 @@ GA_PROPERTY_ID = None
 RESTAT_PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'log', 'restat.pid')
 
 
+# Environment overrides (used by the Docker deployment; each applies only when set)
+def _env_bool(name, default):
+    value = os.environ.get(name)
+    return default if value in (None, '') else value.strip().lower() in ('1', 'true', 'yes', 'on')
+
+if os.environ.get('SECRET_KEY'):
+    SECRET_KEY = os.environ['SECRET_KEY']
+
+DEBUG = _env_bool('DJANGO_DEBUG', DEBUG)
+
+if os.environ.get('ALLOWED_HOSTS'):
+    ALLOWED_HOSTS = [h.strip() for h in os.environ['ALLOWED_HOSTS'].split(',') if h.strip()]
+    CSRF_TRUSTED_ORIGINS = list(ALLOWED_HOSTS)
+
+if os.environ.get('POSTGRES_PASSWORD'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB') or 'gw2raidar',
+            'USER': os.environ.get('POSTGRES_USER') or 'gw2raidar',
+            'PASSWORD': os.environ['POSTGRES_PASSWORD'],
+            'HOST': os.environ.get('POSTGRES_HOST') or 'db',
+            'PORT': os.environ.get('POSTGRES_PORT') or '5432',
+        }
+    }
+
+if os.environ.get('STATIC_ROOT'):
+    STATIC_ROOT = os.environ['STATIC_ROOT']
+if os.environ.get('UPLOAD_DIR'):
+    UPLOAD_DIR = os.environ['UPLOAD_DIR']
+if os.environ.get('GA_PROPERTY_ID'):
+    GA_PROPERTY_ID = os.environ['GA_PROPERTY_ID']
+
+if os.environ.get('DEFAULT_FROM_EMAIL'):
+    DEFAULT_FROM_EMAIL = SERVER_EMAIL = os.environ['DEFAULT_FROM_EMAIL']
+if os.environ.get('EMAIL_HOST'):
+    EMAIL_HOST = os.environ['EMAIL_HOST']
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or 25)
+elif _env_bool('DJANGO_CONSOLE_EMAIL', False):
+    # no SMTP server configured: print emails (password resets, ...) to the log
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Behind an HTTPS-terminating proxy (Traefik in Dokploy)
+if _env_bool('DJANGO_HTTPS', False):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+if not DEBUG:
+    # Django only e-mails errors when DEBUG is off; also write them to the console/container log
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {'console': {'class': 'logging.StreamHandler'}},
+        'loggers': {
+            'django.request': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
+            'django.security': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        },
+    }
+
+
 # Local settings, not checked into the repository
 # Model on the example at `settings_local.py.example`
 # They can override the options in this file
@@ -196,6 +257,10 @@ try:
     from .settings_local import *
 except ImportError:
     pass
+
+if not DEBUG and importlib.util.find_spec("whitenoise"):
+    # Serve the collected static files (STATIC_ROOT) from the app itself, right after SecurityMiddleware
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 if DEBUG:
     if importlib.util.find_spec("debug_toolbar"):
