@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gw2raidar
+      POSTGRES_USER: gw2raidar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gw2raidar -d gw2raidar"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 2s
+
+  web:
+    build: .
+    restart: unless-stopped
+    command: ["web"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: &appenv
+      # read by gw2raidar/settings.py
+      DJANGO_DEBUG: "false"
+      DJANGO_HTTPS: "true"
+      DJANGO_CONSOLE_EMAIL: "true"   # print emails to the log unless EMAIL_HOST is set
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?set ALLOWED_HOSTS}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      UPLOAD_DIR: /data/uploads
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
+      GA_PROPERTY_ID: ${GA_PROPERTY_ID:-}
+    expose:
+      - "8000"
+    volumes:
+      - uploads:/data/uploads
+    # Healthy once migrations have run and the app answers (Host header must be an allowed host)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request as u; h = os.environ['ALLOWED_HOSTS'].split(',')[0].strip(); u.urlopen(u.Request('http://127.0.0.1:8000/initial.json', headers={'Host': h, 'User-Agent': 'healthcheck'}), timeout=5)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+      start_interval: 5s
+
+  worker:
+    build: .
+    restart: unless-stopped
+    command: ["worker"]
+    depends_on:
+      web:
+        condition: service_healthy
+    environment: *appenv
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  pgdata:
+  uploads:
