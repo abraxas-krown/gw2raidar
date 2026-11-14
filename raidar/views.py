@@ -355,18 +355,25 @@ def _get_leaderboard(area_id: int, start: datetime, end: datetime):
     return max_dps, (leaderboard if tops else False)
 
 
+def _privacy_by_account(account_names):
+    """Returns {account name: privacy setting} for the accounts that belong to a user with a profile."""
+    return {name: privacy for name, privacy in UserProfile.objects.filter(user__accounts__name__in=account_names)
+            .values_list("user__accounts__name", "privacy")}
+
+
 def _has_hidden_players(request, prv_encounter):
     """True if the privacy settings of a player of this encounter hide them from the person asking."""
     own_account_names = [
         account.name for account in Account.objects.filter(participations__encounter_id=prv_encounter.id,
                                                            user=request.user)
     ] if request.user.is_authenticated else []
-    for player in prv_encounter.encounter_data.encounterplayer_set.filter(account_id__isnull=False):
-        account_name = player.account.name
+    account_names = list(prv_encounter.encounter_data.encounterplayer_set.filter(account_id__isnull=False)
+                         .values_list("account__name", flat=True))
+    privacy = _privacy_by_account(account_names)
+    for account_name in account_names:
         if account_name in own_account_names:
             continue
-        user_profile = UserProfile.objects.filter(user__accounts__name=account_name).first()
-        prv_privacy = user_profile.privacy if user_profile else UserProfile.SQUAD
+        prv_privacy = privacy.get(account_name, UserProfile.SQUAD)
         if prv_privacy == UserProfile.PRIVATE or (prv_privacy == UserProfile.SQUAD and not own_account_names):
             return True
     return False
@@ -434,18 +441,16 @@ def encounter(request, url_id=None, json=None):
     players = {
         player.account.name: player.data()
         for player in prv_encounter.encounter_data.encounterplayer_set.filter(account_id__isnull=False)
+        .select_related("account")
     }
+    privacy = _privacy_by_account(list(players))
 
     encounter_anonymous = False
     for account_name, player_data in players.items():
         if account_name in own_account_names:
             player_data["self"] = True
 
-        user_profile = UserProfile.objects.filter(user__accounts__name=player_data["account"]).first()
-        if user_profile:
-            prv_privacy = user_profile.privacy
-        else:
-            prv_privacy = UserProfile.SQUAD
+        prv_privacy = privacy.get(account_name, UserProfile.SQUAD)
         if "self" not in player_data and (prv_privacy == UserProfile.PRIVATE
                                           or (prv_privacy == UserProfile.SQUAD and not own_account_names)):
             player_data["name"] = ""

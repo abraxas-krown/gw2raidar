@@ -66,6 +66,10 @@ def _safe_get(func, default=None):
         return default
 
 
+def _is_nan(value):
+    return isinstance(value, float) and math.isnan(value)
+
+
 def _safe_abs(value):
     try:
         return abs(value)
@@ -239,6 +243,25 @@ class Era(ValueModel):
         for stat in source:
             stat.add_to_dump(stats, perc)
         return stats
+
+    def dump_all_stats(self, area, builds):
+        """The same as dump_stats for every phase at once: returns ({phase: squad stats},
+        {(phase, archetype, profession, elite): build stats}), from one query each.
+
+        Phases and builds without stats are missing; use dump_stats' empty result (_stats_dump()) for them.
+        """
+        squad, build = {}, {}
+        for stat in SquadStat.objects.filter(era=self, area=area):
+            if not _is_nan(stat.min_val):
+                stat.add_to_dump(squad.setdefault(stat.phase, _stats_dump()))
+        if builds:
+            archetypes, profs, elites = zip(*builds)
+            for stat in BuildStat.objects.filter(era=self, area=area, archetype__in=set(archetypes),
+                                                 prof__in=set(profs), elite__in=set(elites)):
+                key = (stat.archetype, stat.prof, stat.elite)
+                if key in builds and not _is_nan(stat.min_val):
+                    stat.add_to_dump(build.setdefault((stat.phase,) + key, _stats_dump()))
+        return squad, build
 
     @staticmethod
     def by_time(started_at):
@@ -567,24 +590,27 @@ class Encounter(models.Model):
 
     def json_dump(self, participated=False):
         data = self.encounter_data
-        phases = data.encounterphase_set.order_by("start_tick", "id")
-        players = data.encounterplayer_set.filter(account_id__isnull=False)
-        parties = {party_name: [player.data() for player in players.filter(party=party_name)]
-                   for party_name in players.values_list("party", flat=True).distinct()}
+        # Every table is read once; the figures per phase, party and player are worked out in memory
+        rows = _EncounterRows(self)
+        phases = rows.phases
+        parties = {}
+        for player in data.encounterplayer_set.filter(account_id__isnull=False).select_related("account")\
+                .order_by("id"):
+            parties.setdefault(player.party, []).append(player.data())
 
         # Generate phase data
         phase_data = {phase.name: {
-            "parties": {party_name: EncounterPhase.breakdown(self, party_data, phase, group=True) for
+            "parties": {party_name: rows.breakdown(party_data, phase, group=True) for
                         party_name, party_data in parties.items()}} for phase in phases}
 
         # Add phase meta data
         for phase in phases:
-            phase_data[phase.name]["duration"] = self.calc_phase_duration(phase)
+            phase_data[phase.name]["duration"] = rows.phase_duration(phase)
 
             # Add player data
             for party_name, party in phase_data[phase.name]["parties"].items():
                 for member in party["members"]:
-                    member.update(EncounterPhase.breakdown(self, member, phase))
+                    member.update(rows.breakdown(member, phase))
 
         # Generate "All" phase from existing data
         if "All" not in phase_data:
@@ -642,13 +668,15 @@ class Encounter(models.Model):
                 squad_size += party_size
 
         # Add performance data
+        builds = {(member["archetype"], member["profession"], member["elite"])
+                  for party_data in parties.values() for member in party_data}
+        squad_stats, build_stats = self.era.dump_all_stats(self.area, builds)
         for phase_name, prv_phase_data in phase_data.items():
-            prv_phase_data["performance"] = self.era.dump_stats(self.area, phase_name)
+            prv_phase_data["performance"] = squad_stats.get(phase_name) or _stats_dump()
             for party_data in prv_phase_data["parties"].values():
                 for member in party_data["members"]:
-                    member["performance"] = self.era.dump_stats(self.area, phase_name, (member["archetype"],
-                                                                                        member["profession"],
-                                                                                        member["elite"]))
+                    build = (phase_name, member["archetype"], member["profession"], member["elite"])
+                    member["performance"] = build_stats.get(build) or _stats_dump()
 
         max_player_dps = max([member["actual"]["dps"] for phase in phase_data.values()
                               for party in phase["parties"].values()
@@ -895,6 +923,143 @@ class RestatPerfStats(models.Model):
     number_new_encounters = models.IntegerField()
     number_pruned_evtcs = models.IntegerField()
     was_force = models.BooleanField()
+
+
+class _EncounterRows:
+    """Everything stored for one encounter, read with one query per table.
+
+    The encounter page needs the same figures for every phase, party and player. Asking the database for each
+    of them takes thousands of queries, so the rows are loaded once and the figures are worked out here. The
+    methods mirror EncounterPhase.breakdown, EncounterDamage.breakdown/summarize, EncounterBuff.breakdown and
+    EncounterEvent.summarize, which other code (restat) still uses on querysets.
+    """
+    DAMAGE_STATS = ["crit", "fifty", "flanking", "scholar", "seaweed"]
+    EVENT_STATS = ["disconnect_count", "disconnect_time", "down_count", "down_time", "dead_count", "dead_time"]
+
+    def __init__(self, encounter):
+        data = encounter.encounter_data
+        self.encounter = encounter
+        self.encounter_duration = data.duration()
+        self.phases = list(data.encounterphase_set.order_by("start_tick", "id"))
+        self.damage_from, self.damage_to = self._index(
+            data.encounterdamage_set.order_by("id").values("phase_id", "source", "target", "skill", "damage",
+                                                           *self.DAMAGE_STATS))
+        self.buffs_from, self.buffs_to = self._index(
+            data.encounterbuff_set.order_by("id").values("phase_id", "source", "target", "name", "uptime"))
+        self.events_from, _ = self._index(
+            data.encounterevent_set.order_by("id").values("phase_id", "source", *self.EVENT_STATS))
+        self.mechanics_from, _ = self._index(
+            data.encountermechanic_set.order_by("id").values("phase_id", "source", "name", "count"))
+
+    @staticmethod
+    def _index(rows):
+        """Returns ({(phase, source): rows}, {(phase, target): rows})."""
+        by_source, by_target = {}, {}
+        for row in rows:
+            by_source.setdefault((row["phase_id"], row["source"]), []).append(row)
+            if "target" in row:
+                by_target.setdefault((row["phase_id"], row["target"]), []).append(row)
+        return by_source, by_target
+
+    @staticmethod
+    def _rows(index, phase, names):
+        return [row for name in names for row in index.get((phase.id, name), ())]
+
+    def phase_duration(self, phase):
+        if phase.end_tick is not None:
+            return (phase.end_tick - phase.start_tick) / 1000.0
+        # Encounters analysed before the EI switch: phases are consecutive and only their start is stored
+        later = [other.start_tick for other in self.phases if other.start_tick > phase.start_tick]
+        end_tick = min(later) if later else self.encounter.encounter_data.end_tick
+        return (end_tick - phase.start_tick) / 1000.0
+
+    @classmethod
+    def _damage_summary(cls, rows, kind="all", absolute=False):
+        if kind != "all":
+            if any(row["skill"] in ("power", "condi") for row in rows):
+                rows = [row for row in rows if row["skill"] == kind]
+            else:
+                # No power/condi totals stored for these rows: tell them apart by skill name
+                conditions = EncounterDamage.conditions()
+                rows = [row for row in rows if (row["skill"] in conditions) == (kind == "condi")]
+        data = {"total": sum(row["damage"] for row in rows)}
+        for stat in cls.DAMAGE_STATS:
+            data[stat] = sum(row[stat] for row in rows) / max(len(rows), 1)
+        if absolute:
+            data = {key: _safe_abs(val) for key, val in data.items()}
+        return data
+
+    @classmethod
+    def _damage(cls, rows, phase_duration, group, absolute=False):
+        # Breakbar damage is stored next to the damage rows but is not damage: keep it out of the totals
+        breakbar = sum(row["damage"] for row in rows if row["skill"] == BREAKBAR)
+        rows = [row for row in rows if row["skill"] != BREAKBAR]
+
+        data = cls._damage_summary(rows, "power", absolute)
+        data["power"] = data["total"]
+        data["condi"] = cls._damage_summary(rows, "condi", absolute)["total"]
+        data["total"] = data["power"] + data["condi"]
+        if data["total"] == 0:
+            data["total"] = cls._damage_summary(rows, absolute=absolute)["total"]
+        data["dps"] = data["total"] / phase_duration
+        data["condi_dps"] = data["condi"] / phase_duration
+        data["power_dps"] = data["power"] / phase_duration
+        data["breakbar"] = _safe_abs(breakbar) if absolute else breakbar
+        if not group:
+            data["Skill"] = {row["skill"]: dict({"skill": row["skill"], "total": row["damage"]},
+                                                **{stat: row[stat] * 100.0 for stat in cls.DAMAGE_STATS})
+                             for row in rows if row["skill"] not in ("power", "condi")}
+        return data
+
+    @staticmethod
+    def _buffs(rows, use_sum=False):
+        uptimes = {}
+        for row in rows:
+            uptimes.setdefault(row["name"], []).append(row["uptime"])
+        data = {name: sum(values) if use_sum else sum(values) / len(values) for name, values in uptimes.items()}
+        for name, uptime in data.items():
+            if name not in ["might", "stability"]:
+                data[name] = uptime * 100.0
+        return data
+
+    def breakdown(self, players, phase, group=False):
+        """The figures of one player, or of a group of players (a party), in one phase."""
+        names = [player["name"] for player in players] if group else [players["name"]]
+        phase_duration = self.phase_duration(phase)
+        dealt = [row for row in self._rows(self.damage_from, phase, names) if row["damage"] > 0]
+        taken = self._rows(self.damage_to, phase, names)
+
+        events = dict.fromkeys(self.EVENT_STATS, 0)
+        event_rows = self._rows(self.events_from, phase, names)
+        for row in event_rows:
+            for stat in self.EVENT_STATS:
+                events[stat] += row[stat]
+        events["combat_count"] = len(event_rows)
+        events["combat_time"] = sum(self.encounter_duration for _ in event_rows)
+
+        mechanics = {}
+        for row in self._rows(self.mechanics_from, phase, names):
+            mechanics[row["name"]] = mechanics.get(row["name"], 0) + row["count"]
+
+        result = {
+            "actual": self._damage([row for row in dealt if row["target"] == "*All"], phase_duration, group),
+            "actual_boss": self._damage([row for row in dealt if row["target"] == "*Boss"], phase_duration, group),
+            "received": self._damage([row for row in taken if row["damage"] > 0], phase_duration, group),
+            "shielded": self._damage([row for row in taken if row["damage"] < 0], phase_duration, group,
+                                     absolute=True),
+            "buffs": self._buffs(self._rows(self.buffs_to, phase, names)),
+            "buffs_out": self._buffs(self._rows(self.buffs_from, phase, names), use_sum=True),
+            "events": events,
+            "mechanics": mechanics,
+        }
+        if group:
+            result["members"] = copy.deepcopy(players)
+        return result
+
+
+def _stats_dump():
+    return {"actual": {}, "actual_boss": {}, "buffs": {}, "buffs_out": {}, "received": {}, "shielded": {},
+            "events": {}, "mechanics": {}}
 
 
 class EncounterAttribute(models.Model):
