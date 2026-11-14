@@ -10,7 +10,9 @@ is always the full fight. EI times are milliseconds relative to log start.
 from datetime import datetime
 
 from analyser.analyser import Archetype, SPECIALISATION_BY_NAME
-from analyser.buffs import BUFF_TYPES
+from analyser.buffs import BUFF_CATEGORIES, BUFF_CODES_BY_ID, BUFF_TYPES, buff_code
+
+BOON_CODES = frozenset(buff.code for buff in BUFF_TYPES)
 
 ALL_PHASE = "All"
 ALL = "*All"
@@ -181,14 +183,45 @@ def _events(player, index):
     }
 
 
-def _buff_tables(players, index):
+def _buff_info(log, players):
+    """Returns ({EI buff ID: buff code}, [buff descriptions]) for the buffs the site shows.
+
+    These are the buffs at least one player had during the fight that EI classifies as a boon or as an
+    offensive, support or defensive buff. A description is {"code", "name", "category", "stacking", "icon"},
+    where the category is the ID of the tab the buff is listed on.
+    """
+    tab_by_classification = {classification: tab for classification, tab, _ in BUFF_CATEGORIES}
+    buff_map = log.get("buffMap") or {}
+    code_by_id = {}
+    info = {}
+    for player in players:
+        for buff in player.get("buffUptimes") or []:
+            desc = buff_map.get("b%d" % buff["id"]) or {}
+            tab = tab_by_classification.get(desc.get("classification"))
+            if tab is None or not desc.get("name") or buff["id"] in code_by_id:
+                continue
+            code = buff_code(buff["id"], desc["name"])
+            # a buff that only shares its name with a boon must not be merged into the boon
+            if not code or (code in BOON_CODES and buff["id"] not in BUFF_CODES_BY_ID):
+                continue
+            code_by_id[buff["id"]] = code
+            info.setdefault(code, {
+                "code": code,
+                "name": desc["name"],
+                "category": tab,
+                "stacking": bool(desc.get("stacking")),
+                "icon": desc.get("icon") or "",
+            })
+    return code_by_id, sorted(info.values(), key=lambda buff: buff["name"])
+
+
+def _buff_tables(players, index, code_by_id):
     """Returns ({player: {buff code: uptime}}, {player: {buff code: generation}}).
 
     Uptime is a percentage, or the average stack count for buffs stacking in intensity. Generation is what the
     player provided averaged over every squad member (themselves included), which is how the site has always
     measured outgoing buffs.
     """
-    code_by_id = {skill_id: buff.code for buff in BUFF_TYPES for skill_id in buff.skillid}
     incoming = {player["name"]: {} for player in players}
     outgoing = {player["name"]: {} for player in players}
     for player in players:
@@ -252,12 +285,13 @@ def convert(log):
     phases = _select_phases(log)
     names = _SkillNames(log)
     mechanics_info, mechanic_counts = _mechanics(log, set(player_names), phases)
+    buff_codes, buff_info = _buff_info(log, players)
 
     full_fight = phases[0][2]
     combat = {}
     for index, phase_name, phase in phases:
         duration_ms = phase["end"] - phase["start"]
-        buffs_in, buffs_out = _buff_tables(players, index)
+        buffs_in, buffs_out = _buff_tables(players, index, buff_codes)
         phase_players = {}
         for player in players:
             name = player["name"]
@@ -307,6 +341,7 @@ def convert(log):
                 "duration": (phase["end"] - phase["start"]) / 1000.0,
             } for _, name, phase in phases},
             "mechanics": mechanics_info,
+            "buffs": buff_info,
         },
         "boss": {"Boss": {log.get("fightName") or log.get("name") or "Unknown": {}}},
         "status": {"Player": status},

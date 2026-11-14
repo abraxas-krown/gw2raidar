@@ -18,6 +18,7 @@ from pandas import DataFrame
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
+from analyser.buffs import BUFF_TYPES
 from raidar.models import Variable, Encounter, RestatPerfStats, Era, settings, datetime, Area, EncounterDamage, \
     EncounterBuff, EncounterPlayer, EncounterEvent, BuildStat, EncounterPhase, SquadStat, UserStat
 
@@ -27,6 +28,8 @@ from raidar.models import Variable, Encounter, RestatPerfStats, Era, settings, d
 # l.setLevel(logging.DEBUG)
 # l.addHandler(logging.StreamHandler())
 
+# Boon names as stored in EncounterBuff.name
+BOON_CODES = [buff.code for buff in BUFF_TYPES]
 REMAP = {"actual": "cleave", "actual_boss": "target", "buffs_out": "buffs", "received": "target"}
 
 
@@ -179,10 +182,11 @@ def _generate_player_data(player: EncounterPlayer, phase: EncounterPhase, phase_
                                                               phase_duration, group=True, absolute=True),
                                     prefix="shielded__"))
 
-    player_data.update(_modify_dict(EncounterBuff.breakdown(phase.encounterbuff_set.filter(target=player.character)),
+    # Statistics are only kept for the boons; the other buffs an encounter stores are for display only
+    boons = phase.encounterbuff_set.filter(name__in=BOON_CODES)
+    player_data.update(_modify_dict(EncounterBuff.breakdown(boons.filter(target=player.character)),
                                     prefix="buffs__"))
-    player_data.update(_modify_dict(EncounterBuff.breakdown(phase.encounterbuff_set.filter(source=player.character),
-                                                            use_sum=True),
+    player_data.update(_modify_dict(EncounterBuff.breakdown(boons.filter(source=player.character), use_sum=True),
                                     prefix="buffs_out__"))
 
     player_data.update(_modify_dict(EncounterEvent.summarize(phase.encounterevent_set.filter(source=player.character)),

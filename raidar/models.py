@@ -13,6 +13,7 @@ from json import loads as json_loads, dumps as json_dumps
 import numpy
 import pytz
 from django.db import models
+from django.templatetags.static import static
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db.models import UniqueConstraint as Unique, Sum, Avg
@@ -22,6 +23,7 @@ from taggit.managers import TaggableManager
 from gw2raidar import settings
 from analyser.analyser import Profession, Archetype, Elite, BOSSES
 from analyser.bosses import MetricType, DesiredValue
+from analyser.buffs import BUFF_TYPES, BUFF_CATEGORIES, BOONS_TAB, HIDDEN_BUFF_TABS, BOON_ORDER, LEGACY_BOON_ORDER, StackType
 
 # unique to 30-60s precision
 START_RESOLUTION = 60
@@ -312,6 +314,9 @@ class EncounterData(models.Model):
     parser_version = models.TextField(blank=True, default="")
     # JSON list of the mechanics tracked for this encounter: [{"name", "short_name", "long_name"}]
     metrics = models.TextField(default="[]", editable=False)
+    # JSON list of the buffs found in this encounter, as described by the parser:
+    # [{"code", "name", "category", "stacking", "icon"}]; empty for encounters analysed before the EI switch
+    buffs = models.TextField(default="[]", editable=False)
 
     def duration_ticks(self):
         return self.end_tick - self.start_tick
@@ -358,7 +363,8 @@ class EncounterData(models.Model):
                              success=encounter_dump["success"],
                              evtc_version=encounter_dump["evtc_version"],
                              parser_version=encounter_dump.get("parser_version", ""),
-                             metrics=json_dumps(encounter_dump.get("mechanics", [])))
+                             metrics=json_dumps(encounter_dump.get("mechanics", [])),
+                             buffs=json_dumps(encounter_dump.get("buffs", [])))
         data.save()
 
         # Players
@@ -522,6 +528,38 @@ class Encounter(models.Model):
         boss = BOSSES.get(self.area_id)
         return [metric.__dict__ for metric in boss.metrics] if boss else []
 
+    def buff_info(self):
+        """Returns ({buff code: {"name", "icon"[, "stacks"]}}, [{"id", "name", "order"}]): the buffs to show
+        for this encounter and the tabs they are listed on.
+
+        The boons are always listed. The other tabs hold the buffs the parser found in this encounter.
+        """
+        boons = {buff.code: buff for buff in BUFF_TYPES}
+        found = json_loads(self.encounter_data.buffs)
+        boon_order = BOON_ORDER if found else LEGACY_BOON_ORDER
+        buffs = {}
+        for code in boon_order:
+            buffs[code] = {"name": boons[code].name, "icon": static("raidar/img/buff/%s.png" % code)}
+            if boons[code].stacking == StackType.INTENSITY:
+                buffs[code]["stacks"] = boons[code].capacity
+        tabs = []
+        for _, tab_id, tab_name in BUFF_CATEGORIES:
+            if tab_id in HIDDEN_BUFF_TABS:
+                continue
+            if tab_id == BOONS_TAB:
+                order = boon_order
+            else:
+                order = []
+                for buff in found:
+                    if buff["category"] == tab_id and buff["code"] not in boons:
+                        order.append(buff["code"])
+                        buffs[buff["code"]] = {"name": buff["name"], "icon": buff["icon"]}
+                        if buff["stacking"]:
+                            buffs[buff["code"]]["stacks"] = 25
+            if order:
+                tabs.append({"id": tab_id, "name": tab_name, "order": order})
+        return buffs, tabs
+
     def json_dump(self, participated=False):
         data = self.encounter_data
         phases = data.encounterphase_set.order_by("start_tick", "id")
@@ -614,6 +652,7 @@ class Encounter(models.Model):
                                for party in phase["parties"].values()
                                for member in party["members"]])
 
+        buffs, buff_tabs = self.buff_info()
         data = {
             "encounter": {
                 "evtc_version": data.evtc_version,
@@ -631,6 +670,8 @@ class Encounter(models.Model):
                 "phase_order": [phase.name for phase in phases if phase.name != "All"],
                 "participated": participated,
                 "boss_metrics": self.boss_metrics(),
+                "buffs": buffs,
+                "buff_tabs": buff_tabs,
                 "max_player_dps": max_player_dps,
                 "max_player_recv": max_player_recv,
                 "phases": phase_data,
@@ -1076,7 +1117,11 @@ class EncounterBuff(TargetedEncounterAttribute):
 
     @staticmethod
     def to_stored(name, value):
-        """Uptimes are stored as fractions, except for the buffs breakdown() reports as stack counts."""
+        """Uptimes are stored as fractions, except for might, which is stored as its stack count.
+
+        Other buffs that stack in intensity are stored as stacks / 100, which breakdown() turns back into
+        the stack count.
+        """
         return value if name in ["might", "stability"] else value / 100.0
 
     @staticmethod
