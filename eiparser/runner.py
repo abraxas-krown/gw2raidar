@@ -89,8 +89,14 @@ def parse(evtc_path, cli, timeout=DEFAULT_TIMEOUT, single_threaded=True):
         with open(config_path, "w") as config:
             config.write(CONFIG.format(out_dir=out_dir, single_threaded="true" if single_threaded else "false"))
 
-        # EI keeps per-user settings under the home directory; give every run a clean, writable one
-        env = dict(os.environ, HOME=work_dir)
+        # EI keeps per-user settings under the home directory; give every run a clean, writable one.
+        # On Linux, .NET only reports the per-user settings folders if they already exist, and EI
+        # crashes on startup (ArgumentNullException in Settings.Upgrade) when they are missing.
+        config_home = os.path.join(work_dir, ".config")
+        data_home = os.path.join(work_dir, ".local", "share")
+        os.makedirs(config_home)
+        os.makedirs(data_home)
+        env = dict(os.environ, HOME=work_dir, XDG_CONFIG_HOME=config_home, XDG_DATA_HOME=data_home)
         try:
             process = subprocess.run(_command(cli) + ["-c", config_path, os.path.abspath(evtc_path)],
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=work_dir, env=env,
