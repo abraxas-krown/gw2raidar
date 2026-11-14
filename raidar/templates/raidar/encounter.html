@@ -93,7 +93,8 @@
 </nav>
 [[#each phaseRows(encounter, page.phase).slice(1) as row]]
   <div class="r-phase-parts uk-visible@m">
-    <ul uk-tab class="uk-flex-right uk-margin-small-top">
+    {# only the look of tabs (class), not the UIkit tab component (attribute): the component always activates the first tab when none is active #}
+    <ul class="uk-tab uk-flex-right uk-margin-small-top">
       [[#each row as phase]]
         <li uk-tooltip title="[[formatTime(phase.duration)]]" class="[[phase.active || phase.open ? 'uk-active' : '']]"><a on-click="@this.set('page.phase', phase.name)">[[phase.name]][[#if phase.parts]] <i class="material-icons">keyboard_arrow_down</i>[[/if]]</a></li>
       [[/each]]
