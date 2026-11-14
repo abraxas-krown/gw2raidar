@@ -130,6 +130,8 @@ def _modify_dict(dictionary: dict, prefix: str):
 
 
 def _generate_statistics(frame: DataFrame):
+    # The frames also hold names (character, account, phase), which have no statistics
+    frame = frame.select_dtypes(include="number")
     min_stats = frame.min()
     avg_stats = frame.mean()
     max_stats = frame.max()
@@ -145,7 +147,7 @@ def _generate_sum_statistics(frame: DataFrame, squad=False):
     rel_frame = rel_frame[[col for col in rel_frame.columns if "dps" in col or "buff" in col]]
     rel_frame = rel_frame.mul(factors, axis="index")
     frame.update(rel_frame)
-    sum_frame = frame.groupby(["encounter_id"] if squad else ["character_name", "encounter_id"]).sum()
+    sum_frame = frame.groupby(["encounter_id"] if squad else ["character_name", "encounter_id"]).sum(numeric_only=True)
     return _generate_statistics(sum_frame)
 
 
@@ -156,7 +158,7 @@ def _generate_squad_statistics(frame: DataFrame, sum=False):
                            or any(rel in col for rel in ["crit", "fifty", "flanking", "scholar", "seaweed"])]]
     rel_frame /= rel_frame.count()
     frame.update(rel_frame)
-    avg_frame = frame.groupby(["encounter_id", "phase_name"] if sum else ["encounter_id"]).sum()
+    avg_frame = frame.groupby(["encounter_id", "phase_name"] if sum else ["encounter_id"]).sum(numeric_only=True)
     return _generate_sum_statistics(avg_frame, squad=True) if sum else _generate_statistics(avg_frame)
 
 

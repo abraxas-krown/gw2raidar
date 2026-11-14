@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os.path
 import importlib.util
-from dateutil import parser
 
 VERSION = {
         'id': '2.4.0',
@@ -48,7 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_swagger',
+    'drf_spectacular',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -135,18 +134,15 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
     'PAGE_SIZE': 100,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        "api_key": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-    },
-    'LOGIN_URL': 'rest_framework:login',
-    'LOGOUT_URL': 'rest_framework:logout',
+# API documentation (schema and Swagger UI under /api/v2/swagger)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'GW2Raidar API',
+    'VERSION': '2',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': r'/api/v2',
 }
 
 
@@ -159,9 +155,10 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
-
 USE_TZ = True
+
+# Keep the integer primary keys the existing tables were created with
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
 # Static files (CSS, JavaScript, Images)
@@ -169,7 +166,11 @@ USE_TZ = True
 
 STATIC_ROOT = '/static/'
 STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'static_compress.CompressedManifestStaticFilesStorage'
+# collectstatic writes hashed file names plus .gz/.br copies, which WhiteNoise (or the web server) serves
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'gw2raidar.storage.StaticFilesStorage'},
+}
 
 # Other
 
@@ -207,7 +208,9 @@ DEBUG = _env_bool('DJANGO_DEBUG', DEBUG)
 
 if os.environ.get('ALLOWED_HOSTS'):
     ALLOWED_HOSTS = [h.strip() for h in os.environ['ALLOWED_HOSTS'].split(',') if h.strip()]
-    CSRF_TRUSTED_ORIGINS = list(ALLOWED_HOSTS)
+    # Origins need a scheme; a leading dot in ALLOWED_HOSTS (subdomain wildcard) is "*." here
+    CSRF_TRUSTED_ORIGINS = ['https://' + ('*' + h if h.startswith('.') else h)
+                            for h in ALLOWED_HOSTS if h != '*']
 
 if os.environ.get('POSTGRES_PASSWORD'):
     DATABASES = {
