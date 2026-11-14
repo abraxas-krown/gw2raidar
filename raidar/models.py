@@ -394,7 +394,8 @@ class EncounterData(models.Model):
             phases[phase_name] = EncounterPhase(encounter_data=data,
                                                 name=phase_name,
                                                 start_tick=phase_data["start_tick"],
-                                                end_tick=phase_data["end_tick"])
+                                                end_tick=phase_data["end_tick"],
+                                                parent=phase_data.get("parent"))
             phases[phase_name].save()
 
         damage_rows = []
@@ -675,6 +676,7 @@ class Encounter(models.Model):
                 "tags": self.tagstring,
                 "category": self.category_id,
                 "phase_order": [phase.name for phase in phases if phase.name != "All"],
+                "phase_parents": {phase.name: phase.parent for phase in phases if phase.name != "All"},
                 "participated": participated,
                 "boss_metrics": self.boss_metrics(),
                 "buffs": buffs,
@@ -904,6 +906,8 @@ class EncounterPhase(EncounterAttribute):
     start_tick = models.BigIntegerField()
     # Not set for encounters analysed before the EI switch: their phases end where the next one starts
     end_tick = models.BigIntegerField(null=True, blank=True)
+    # Name of the phase this one is a part of; empty for the top level phases (and for older encounters)
+    parent = models.TextField(null=True, blank=True)
 
     def calc_duration(self):
         return self.encounter_data.encounter.calc_phase_duration(self)

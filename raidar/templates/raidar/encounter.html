@@ -85,12 +85,21 @@
   </div>
   <div class="uk-navbar-right uk-visible@m">
     <ul uk-tab="swiping: true;">
-      [[#each encounter.phase_order]]
-        <li uk-tooltip title="[[formatTime(encounter.phases[.].duration)]]" class="uk-flex-last [[page.phase == . ? 'uk-active' : '']]"><a on-click="@this.set('page.phase', .)">[[.]]</a></li>
+      [[#each phaseRows(encounter, page.phase)[0] as phase]]
+        <li uk-tooltip title="[[formatTime(phase.duration)]]" class="uk-flex-last [[phase.active || phase.open ? 'uk-active' : '']]"><a on-click="@this.set('page.phase', phase.name)">[[phase.name]][[#if phase.parts]] <i class="material-icons">keyboard_arrow_down</i>[[/if]]</a></li>
       [[/each]]
     </ul>
   </div>
 </nav>
+[[#each phaseRows(encounter, page.phase).slice(1) as row]]
+  <div class="r-phase-parts uk-visible@m">
+    <ul uk-tab class="uk-flex-right uk-margin-small-top">
+      [[#each row as phase]]
+        <li uk-tooltip title="[[formatTime(phase.duration)]]" class="[[phase.active || phase.open ? 'uk-active' : '']]"><a on-click="@this.set('page.phase', phase.name)">[[phase.name]][[#if phase.parts]] <i class="material-icons">keyboard_arrow_down</i>[[/if]]</a></li>
+      [[/each]]
+    </ul>
+  </div>
+[[/each]]
 
 [[#if persistent_page.tab == 'combat_stats']]
   {% include 'raidar/encounter_combat_data.html' %}

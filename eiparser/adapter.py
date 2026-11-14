@@ -85,6 +85,25 @@ def _select_phases(log):
     return selected
 
 
+def _phase_parents(log, phases):
+    """Returns {phase name: name of the phase it is a part of, or None for the top level phases}.
+
+    EI lists the direct sub phases of every phase (JsonPhase.subPhases); the full fight is the root and is not
+    a parent: its sub phases are the top level phases.
+    """
+    ei_phases = log.get("phases") or []
+    name_by_index = {index: name for index, name, _ in phases}
+    parents = {}
+    for index, name, phase in phases[1:]:
+        candidates = [other for other, other_name, other_phase in phases[1:]
+                      if index in (other_phase.get("subPhases") or []) and other != index]
+        # should several phases claim this one, the shortest is the closest
+        parent = min(candidates, key=lambda other: ei_phases[other]["end"] - ei_phases[other]["start"],
+                     default=None)
+        parents[name] = name_by_index[parent] if parent is not None else None
+    return parents
+
+
 class _SkillNames:
     def __init__(self, log):
         self.skills = log.get("skillMap") or {}
@@ -285,6 +304,7 @@ def convert(log):
     if len(set(player_names)) != len(player_names):
         raise EIAdapterException("Duplicate character names in this log")
     phases = _select_phases(log)
+    phase_parents = _phase_parents(log, phases)
     names = _SkillNames(log)
     mechanics_info, mechanic_counts = _mechanics(log, set(player_names), phases)
     buff_codes, buff_info = _buff_info(log, players)
@@ -341,6 +361,7 @@ def convert(log):
                 "start_tick": phase["start"],
                 "end_tick": phase["end"],
                 "duration": (phase["end"] - phase["start"]) / 1000.0,
+                "parent": phase_parents.get(name),
             } for _, name, phase in phases},
             "mechanics": mechanics_info,
             "buffs": buff_info,

@@ -312,6 +312,33 @@
       return '';
     }
   };
+  // The phase tabs of an encounter. Phases can be nested (a boss phase made of several smaller phases), so the
+  // tabs are rows: the first holds "All" and the top level phases, and below it come the parts of the selected phase
+  // and of the phases it is a part of.
+  helpers.phaseRows = (encounter, selected) => {
+    const parents = encounter.phase_parents || {};
+    const phases = encounter.phase_order || [];
+    const children = parent => phases.filter(name => name !== 'All' && (parents[name] || null) === parent);
+    const path = [];
+    for (let name = selected; name && name !== 'All' && path.length < 10; name = parents[name]) {
+      path.unshift(name);
+    }
+    const rows = [['All'].concat(children(null))];
+
+    path.forEach(name => {
+      const parts = children(name);
+      if (parts.length) {
+        rows.push(parts);
+      }
+    });
+    return rows.map(row => row.map(name => ({
+      name: name,
+      duration: encounter.phases[name].duration,
+      active: name === selected,
+      open: name !== selected && (name === 'All' ? selected === 'All' : path.indexOf(name) >= 0),
+      parts: name !== 'All' && children(name).length > 0,
+    })));
+  };
   helpers.formatTime = duration => {
     if (duration !== undefined) {
       let seconds = Math.trunc(duration);
