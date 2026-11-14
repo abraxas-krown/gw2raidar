@@ -7,9 +7,9 @@
       <div>
         <div>Damage</div>
         <div class="r-toggle">
-          <a href="#" class-uk-active="page.dps_boss" on-click="@.set({'page.dps_boss': true}) && false">Boss</a>
+          <a href="#" class-uk-active="page.dps_boss" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false">Boss</a>
           |
-          <a href="#" class-uk-active="!page.dps_boss" on-click="@.set({'page.dps_boss': false}) && false">Total</a>
+          <a href="#" class-uk-active="!page.dps_boss" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false">Total</a>
         </div>
       </div>
       <div class="uk-visible@l">Damage Received</div>
@@ -73,13 +73,13 @@
 
 		    [[#if page.dps_boss]]
 		      {#  total DPS backdrop #}
-		      <rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover r-bg-[[pctl_dps]]" on-click="@.set({'page.dps_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_max_dps)]]%' opacity='0.3' />
+		      <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_max_dps)]]%' opacity='0.3' />
 		    [[/if]]
 		    {# primary DPS graph #}
-		    <rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover r-bg-[[pctl_dps]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.<br/><strong>Performance:</strong> [[th(pctl_dps)]] Percentile[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]]</strong>.[[/if]]" x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps / max_max_dps)]]%' opacity='1' />
+		    <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.<br/><strong>Performance:</strong> [[th(pctl_dps)]] Percentile[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]]</strong>.[[/if]]" x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps / max_max_dps)]]%' opacity='1' />
 		    [[#unless page.dps_boss]]
 		      {# boss DPS overlay #}
-		      <rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover" on-click="@.set({'page.dps_boss': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_max_dps)]]%' opacity='0.15' />
+		      <rect class-chart="!page.dps_toggled" class="chart-hover" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_max_dps)]]%' opacity='0.15' />
 		    [[/unless]]
 
 		    {# text #}
@@ -216,13 +216,13 @@
 
 		      [[#if page.dps_boss]]
 			{# total DPS backdrop #}
-			<rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover r-bg-101" on-click="@.set({'page.dps_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_max_dps)]]%' opacity='0.3' />
+			<rect class-chart="!page.dps_toggled" class="chart-hover r-bg-101" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_max_dps)]]%' opacity='0.3' />
 		      [[/if]]
 		      {# primary DPS Graph #}
-		      <rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover r-bg-101" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]]</strong>.[[/if]]" x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
+		      <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-101" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]]</strong>.[[/if]]" x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
 		      [[#unless page.dps_boss]]
 			{# boss DPS overlay #}
-			<rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover" on-click="@.set({'page.dps_boss': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_max_dps)]]%' opacity='0.15' />
+			<rect class-chart="!page.dps_toggled" class="chart-hover" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_max_dps)]]%' opacity='0.15' />
 		      [[/unless]]
 		      {# line text #}
 		      <text x='[[clamp(100 * section.squad_dps / max_max_dps)]]%' y='42px' alignment-baseline="hanging" text-anchor="[[(clamp(100 * section.squad_dps / max_max_dps)) < 25 ? 'begin' : 'end']]" font-family='Source Sans Pro' fill='#958cbb'  font-size='11'>Squad</text>
@@ -366,13 +366,13 @@
                         [[#if page.dps_boss]]
                           {# total DPS backdrop #}
 
-                          <rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover r-bg-[[pctl_dps]]" on-click="@.set({'page.dps_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_player_dps)]]%' opacity='0.3' />
+                          <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_player_dps)]]%' opacity='0.3' />
                         [[/if]]
                         {# primary DPS graph #}
-                        <rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover r-bg-[[pctl_dps]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.<br/><strong>Performance:</strong> [[th(pctl_dps)]] Percentile[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]][[/if]]</strong>." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps / max_player_dps)]]%' opacity='1' />
+                        <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.<br/><strong>Performance:</strong> [[th(pctl_dps)]] Percentile[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]][[/if]]</strong>." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps / max_player_dps)]]%' opacity='1' />
                         [[#unless page.dps_boss]]
                           {# boss DPS overlay #}
-                          <rect class-chart="typeof page.dps_boss != 'boolean'" class="chart-hover" on-click="@.set({'page.dps_boss': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_player_dps)]]%' opacity='0.15' />
+                          <rect class-chart="!page.dps_toggled" class="chart-hover" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_player_dps)]]%' opacity='0.15' />
                         [[/unless]]
 
                         {# text #}

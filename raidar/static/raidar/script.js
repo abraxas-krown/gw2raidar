@@ -689,6 +689,9 @@ ${body}
       r.set({
         loading: true,
         "page.phase": 'All',
+        // damage and breakbar damage show the figures against the boss first
+        "page.dps_boss": true,
+        "page.breakbar_boss": true,
       });
       $.get({
         url: 'encounter/' + page.no + '.json',
