@@ -1,6 +1,6 @@
 from django.db.models import Q
 from analyser.analyser import EvtcAnalysisException
-from analyser.bosses import Kind, find_boss, UnsupportedEncounter
+from analyser.bosses import Kind, Mode, find_boss, UnsupportedEncounter
 from eiparser import adapter, runner
 from eiparser.adapter import EIAdapterException
 from eiparser.runner import EIParseException
@@ -154,9 +154,6 @@ class Command(BaseCommand):
 
             boss = find_boss(encounter_dump['ei_encounter_id'], encounter_dump['cm'], encounter_dump['legendary_cm'])
             area_id = boss.area_id
-            boss_name = boss.name
-            if not boss.non_cm_allowed:
-                boss_name += " (CM)"
 
             minDuration = 60
             if boss.kind == Kind.FRACTAL:
@@ -168,7 +165,8 @@ class Command(BaseCommand):
             era = Era.by_time(started_at)
 
             area, _ = Area.objects.get_or_create(id=area_id,
-                    defaults={ "name": boss_name })
+                    defaults={"name": boss.base_name, "is_cm": boss.mode == Mode.CM,
+                              "is_lcm": boss.mode == Mode.LEGENDARY_CM})
 
             status_for = {name: player for name, player in dump['Category']['status']['Player'].items() if 'account' in player}
             account_names = [player['account'] for player in status_for.values()]

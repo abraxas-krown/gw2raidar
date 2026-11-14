@@ -98,7 +98,9 @@ def _html_response(request, page, data=None):
         pass
     response['archetypes'] = {k: v for k, v in ARCHETYPE_CHOICES}
     response['areas'] = {id: {
-            "name": boss.name,
+            "name": boss.base_name,
+            "mode": int(boss.mode),
+            "tag": boss.tag,
             "kind": boss.kind,
             "enrage": boss.enrage,
         } for id, boss in BOSSES.items()}
@@ -217,8 +219,10 @@ def global_stats(request, era_id=None, stats_page=None, json=None):
         } for era in Era.objects.all()}
 
     areas = [{
-            "name": area.name,
+            "name": str(area),
             "id": area.id,
+            "is_cm": area.is_cm,
+            "is_lcm": area.is_lcm,
         } for area in Area.objects.all()]
 
     try:

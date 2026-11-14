@@ -8,7 +8,7 @@ Area IDs:
   * encounters that predate the EI switch keep their original area ID (the
     ArcDPS boss ID), with challenge mode at ``+ 0xFF0000``;
   * encounters added since use the EI encounter ID, with challenge mode at
-    ``+ 0x1000000`` and legendary challenge mode at ``+ 0x2000000``.
+    ``+ 0x1000000`` and LCM at ``+ 0x2000000``.
 """
 from enum import IntEnum
 
@@ -38,6 +38,12 @@ class Mode(IntEnum):
     LEGENDARY_CM = 2
 
 
+# Short tag shown next to the name of an encounter
+MODE_TAGS = {Mode.NORMAL: "", Mode.CM: "CM", Mode.LEGENDARY_CM: "LCM"}
+MODE_SUFFIXES = {Mode.CM: " (CM)", Mode.LEGENDARY_CM: " (LCM)"}
+# Suffix area names stored before the mode flags existed may still carry
+OLD_LCM_SUFFIX = " (Legendary CM)"
+
 MINUTES = 60
 
 
@@ -57,7 +63,7 @@ class Metric:
 
 
 def mode_area_id(area_id, mode):
-    """Area ID of the CM / legendary CM variant of an encounter."""
+    """Area ID of the CM / LCM variant of an encounter."""
     if mode == Mode.NORMAL:
         return area_id
     if area_id < 0x10000:
@@ -69,13 +75,17 @@ def mode_area_id(area_id, mode):
 class Boss:
     """An encounter in one difficulty mode.
 
+    ``name`` is unique and includes the mode ("Cairn (CM)"); ``base_name`` is the name of the boss alone
+    ("Cairn"), which is what the site shows next to a tag for the mode.
+
     ``metrics`` are the mechanics the pre-EI analyser recorded; they are only
     used to label mechanics of encounters parsed before the EI switch.
     Mechanics of EI-parsed encounters are stored with the encounter itself.
     """
     def __init__(self, name, kind, area_id, ei_ids, metrics=None, enrage=None,
-                 has_cm=False, has_legendary_cm=False, non_cm_allowed=True, mode=Mode.NORMAL):
+                 has_cm=False, has_legendary_cm=False, non_cm_allowed=True, mode=Mode.NORMAL, base_name=None):
         self.name = name
+        self.base_name = base_name or name
         self.kind = kind
         self.area_id = area_id
         self.ei_ids = ei_ids if isinstance(ei_ids, (list, tuple)) else [ei_ids]
@@ -84,17 +94,21 @@ class Boss:
         self.has_cm = has_cm
         self.has_legendary_cm = has_legendary_cm
         self.non_cm_allowed = non_cm_allowed
-        self.mode = mode
+        # encounters that only exist in challenge mode (fractals) have a single area, which is a CM one
+        self.mode = mode if non_cm_allowed else Mode.CM
 
     # kept for code that still expects the old attribute
     @property
     def boss_ids(self):
         return [self.area_id]
 
+    @property
+    def tag(self):
+        return MODE_TAGS[self.mode]
+
     def variant(self, mode):
-        suffix = {Mode.CM: " (CM)", Mode.LEGENDARY_CM: " (Legendary CM)"}[mode]
-        return Boss(self.name + suffix, self.kind, mode_area_id(self.area_id, mode), self.ei_ids,
-                    metrics=self.metrics, enrage=self.enrage, mode=mode)
+        return Boss(self.name + MODE_SUFFIXES[mode], self.kind, mode_area_id(self.area_id, mode), self.ei_ids,
+                    metrics=self.metrics, enrage=self.enrage, mode=mode, base_name=self.name)
 
     def __repr__(self):
         return "%s (#%d)" % (self.name, self.area_id)
@@ -310,6 +324,20 @@ assert len(BOSSES) == len(BOSS_ARRAY), "duplicate area ID in boss table"
 assert len(IDS) == len(BOSS_ARRAY), "duplicate name in boss table"
 
 
+def area_name_and_mode(area_id, stored_name):
+    """Returns (name of the boss alone, Mode) for an area, given its ID and a name that may include the mode.
+
+    Areas that are no longer in the boss table are recognised by the mode suffix of their name.
+    """
+    boss = BOSSES.get(area_id)
+    if boss is not None:
+        return boss.base_name, boss.mode
+    for mode, suffix in list(MODE_SUFFIXES.items()) + [(Mode.LEGENDARY_CM, OLD_LCM_SUFFIX)]:
+        if stored_name.endswith(suffix):
+            return stored_name[:-len(suffix)], mode
+    return stored_name, Mode.NORMAL
+
+
 class UnsupportedEncounter(Exception):
     pass
 
@@ -464,7 +492,7 @@ BOSS_LOCATIONS = [
                     IDS['Greer, the Blightbringer (CM)'],
                     IDS['Decima, the Stormsinger (CM)'],
                     IDS['Ura, the Steamshrieker (CM)'],
-                    IDS['Ura, the Steamshrieker (Legendary CM)'],
+                    IDS['Ura, the Steamshrieker (LCM)'],
                 ],
             },
         ],
@@ -592,7 +620,7 @@ BOSS_LOCATIONS = [
                 "bosses": [
                     IDS['Cosmic Observatory (CM)'],
                     IDS['Temple of Febe (CM)'],
-                    IDS['Temple of Febe (Legendary CM)'],
+                    IDS['Temple of Febe (LCM)'],
                 ],
             },
             {
@@ -600,7 +628,7 @@ BOSS_LOCATIONS = [
                 "bosses": [
                     IDS['Guardian\'s Glade (CM)'],
                     IDS['Nexus of Eternity (CM)'],
-                    IDS['Nexus of Eternity (Legendary CM)'],
+                    IDS['Nexus of Eternity (LCM)'],
                 ],
             },
         ],

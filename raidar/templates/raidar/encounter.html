@@ -20,7 +20,7 @@
           </div>
         </div>
         <div class="r-body">
-          <h2 style='line-height:1;' class="uk-margin-small-bottom">[[name]]</h2>
+          <h2 style='line-height:1;' class="uk-margin-small-bottom">[[name]][[#if mode_tag]] <span class="uk-label">[[mode_tag]]</span>[[/if]]</h2>
           <span class="uk-badge uk-text-bold [[encounter.success ? 'uk-label-success' : 'uk-label-danger']]">[[encounter.success ? 'Success' : 'Wipe']]  ([[formatTime(duration)]])</span>
           <span class="uk-badge uk-text-bold r-bg-0">
             [[formatDate(started_at)]]

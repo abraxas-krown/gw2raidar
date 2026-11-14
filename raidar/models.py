@@ -150,14 +150,29 @@ class UserProfile(models.Model):
 
 
 class Area(models.Model):
+    """A boss in one difficulty mode. Statistics and leaderboards are kept per area, so normal, challenge
+    mode (CM) and LCM of the same boss are separate areas with the same name."""
     id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=64)
+    # At most one of the two is set: an LCM area is not also a CM one
+    is_cm = models.BooleanField(default=False)
+    is_lcm = models.BooleanField(default=False)
+
+    @property
+    def mode(self):
+        """0 normal, 1 CM, 2 LCM (analyser.bosses.Mode)."""
+        return 2 if self.is_lcm else 1 if self.is_cm else 0
+
+    @property
+    def mode_tag(self):
+        return "LCM" if self.is_lcm else "CM" if self.is_cm else ""
 
     def __str__(self):
-        return self.name
+        return ("%s %s" % (self.name, self.mode_tag)).strip()
 
     class Meta:
-        ordering = ("name",)
+        ordering = ("name", "is_lcm", "is_cm")
+        unique_together = ("name", "is_cm", "is_lcm")
 
 
 class Account(models.Model):
@@ -695,6 +710,8 @@ class Encounter(models.Model):
                 "id": self.id,
                 "url_id": self.url_id,
                 "name": self.area.name,
+                "mode": self.area.mode,
+                "mode_tag": self.area.mode_tag,
                 "filename": self.filename,
                 "uploaded_at": self.uploaded_on.timestamp(),
                 "uploaded_by": self.uploaded_by.username,
@@ -789,6 +806,8 @@ class Participation(models.Model):
             "id": self.encounter.id,
             "url_id": self.encounter.url_id,
             "area": self.encounter.area.name,
+            "mode": self.encounter.area.mode,
+            "mode_tag": self.encounter.area.mode_tag,
             "started_at": self.encounter.started_at,
             "duration": self.encounter.duration,
             "character": self.character,

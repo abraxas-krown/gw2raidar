@@ -339,6 +339,11 @@
       parts: name !== 'All' && children(name).length > 0,
     })));
   };
+  // Name of an area for menus: the boss, followed by CM or LCM for the challenge modes
+  helpers.areaLabel = id => {
+    const area = (r.get('data.areas') || {})[id];
+    return area ? area.name + (area.tag ? ' ' + area.tag : '') : id;
+  };
   helpers.formatTime = duration => {
     if (duration !== undefined) {
       let seconds = Math.trunc(duration);
@@ -776,6 +781,11 @@ ${body}
           any = true;
           encounters = encounters.filter(e => e.area === filters.area);
         }
+        // 0 normal, 1 CM, 2 LCM; not set: all
+        if (filters.mode != null) {
+          any = true;
+          encounters = encounters.filter(e => e.mode === filters.mode);
+        }
         if (filters.started_from) {
           let m = filters.started_from.match(dateRE);
           if (m) {
@@ -997,12 +1007,14 @@ ${body}
     };
   };
 
+  // encounters of the same boss are ordered by mode (normal, CM, LCM)
+  const sortValue = (row, prop) => prop === 'area' ? row.area + '\u0000' + (row.mode || 0) : row[prop];
   const ascSort = (prop) => (a, b) =>
-    a[prop] > b[prop] ? 1 :
-    a[prop] < b[prop] ? -1 : 0;
+    sortValue(a, prop) > sortValue(b, prop) ? 1 :
+    sortValue(a, prop) < sortValue(b, prop) ? -1 : 0;
   const descSort = (prop) => (a, b) =>
-    a[prop] < b[prop] ? 1 :
-    a[prop] > b[prop] ? -1 : 0;
+    sortValue(a, prop) < sortValue(b, prop) ? 1 :
+    sortValue(a, prop) > sortValue(b, prop) ? -1 : 0;
 
 
   r.on({
@@ -1204,6 +1216,10 @@ ${body}
     encounter_filter_clear: function encounterFilterClear(evt) {
       r.set('settings.encounterSort.filter.*', null);
     },
+    encounter_filter_mode: function encounterFilterMode(evt) {
+      r.set('settings.encounterSort.filter.mode', JSON.parse(evt.node.value));
+      return false;
+    },
     encounter_filter_success: function encounterFilterSuccess(evt) {
       r.set('settings.encounterSort.filter.success', JSON.parse(evt.node.value));
       return false;
@@ -1246,7 +1262,7 @@ ${body}
       let areaId = r.get('page.area');
       let archetypeName = archetype == 'All' ? '' : r.get('data.archetypes')[archetype] + ' ';
       let charDescription = profession == 'All' ? `All ${archetypeName}specialisations'` : archetypeName + r.get('data.specialisations')[profession][elite];
-      let areaName = r.get('data.areas')[areaId].name || areaId;
+      let areaName = helpers.areaLabel(areaId);
 
       $.post({
         url: 'profile_graph.json',
