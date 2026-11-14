@@ -227,6 +227,18 @@ def _update_stats(era: Era, area: Area, phase_name: str, frame: DataFrame,
             stat.save()
 
 
+def _split_full_fight(frame: DataFrame):
+    """Splits player/phase rows into (rows of the individual fight phases, rows making up the full fights).
+
+    EI-parsed encounters store the full fight as a phase named "All" next to their (possibly overlapping) fight
+    phases. Encounters analysed before the EI switch only have consecutive phases, which add up to the full
+    fight.
+    """
+    is_all = frame.phase_name == "All"
+    with_full_fight = frame.encounter_id.isin(frame.encounter_id[is_all].unique())
+    return frame[~is_all], frame[is_all | ~with_full_fight]
+
+
 def _update_area(era: Era, area: Area):
     raw_data = []
     # Load raw data from database
@@ -239,14 +251,16 @@ def _update_area(era: Era, area: Area):
 
     # Update build stats
     for build, build_frame in frame.groupby(["archetype", "profession", "elite"]):
-        for phase_name, phase_frame in build_frame.groupby("phase_name"):
+        phases_frame, full_fight_frame = _split_full_fight(build_frame)
+        for phase_name, phase_frame in phases_frame.groupby("phase_name"):
             _update_stats(era, area, phase_name, phase_frame, build)
-        _update_stats(era, area, "All", build_frame, build)
+        _update_stats(era, area, "All", full_fight_frame, build)
 
     # Update squad stats
-    for phase_name, phase_frame in frame.groupby("phase_name"):
+    phases_frame, full_fight_frame = _split_full_fight(frame)
+    for phase_name, phase_frame in phases_frame.groupby("phase_name"):
         _update_stats(era, area, phase_name, phase_frame)
-    _update_stats(era, area, "All", frame)
+    _update_stats(era, area, "All", full_fight_frame)
 
 
 def _update_user(era: Era, user: User):
@@ -259,7 +273,7 @@ def _update_user(era: Era, user: User):
                 raw_data.append(_generate_player_data(player, phase, phase_duration))
 
     # Create pandas DataFrame
-    frame = DataFrame(raw_data)
+    frame = _split_full_fight(DataFrame(raw_data))[1]
     for area_id, area_frame in frame.groupby("area_id"):
         area = Area.objects.get(id=area_id)
         for build, build_frame in area_frame.groupby(["archetype", "profession", "elite"]):

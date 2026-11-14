@@ -21,6 +21,7 @@ from fuzzycount import FuzzyCountManager
 from taggit.managers import TaggableManager
 from gw2raidar import settings
 from analyser.analyser import Profession, Archetype, Elite, BOSSES
+from analyser.bosses import MetricType, DesiredValue
 
 # unique to 30-60s precision
 START_RESOLUTION = 60
@@ -51,6 +52,8 @@ ELITE_CHOICES = (
     (Elite.CORE, "Core"),
     (Elite.HEART_OF_THORNS, "Heart of Thorns"),
     (Elite.PATH_OF_FIRE, "Path of Fire"),
+    (Elite.END_OF_DRAGONS, "End of Dragons"),
+    (Elite.VISIONS_OF_ETERNITY, "Visions of Eternity"),
 )
 
 
@@ -305,6 +308,10 @@ class EncounterData(models.Model):
     end_tick = models.BigIntegerField()
     success = models.BooleanField()
     evtc_version = models.TextField()
+    # Parser that produced this data, e.g. "EI 3.32.0.0"; empty for encounters analysed before the EI switch
+    parser_version = models.TextField(blank=True, default="")
+    # JSON list of the mechanics tracked for this encounter: [{"name", "short_name", "long_name"}]
+    metrics = models.TextField(default="[]", editable=False)
 
     def duration_ticks(self):
         return self.end_tick - self.start_tick
@@ -313,32 +320,45 @@ class EncounterData(models.Model):
         return self.duration_ticks() / 100
 
     @staticmethod
-    def _generate_skill_data(encounter_data, phase, damage_source, damage_target, damage_data):
-        for skill_name, skill_data in damage_data["Skill"].items():
-            skill = EncounterDamage(encounter_data=encounter_data,
-                                    phase=phase,
-                                    source=damage_source,
-                                    target=damage_target,
-                                    skill=skill_name,
-                                    damage=skill_data["total"],
-                                    crit=_safe_get_percent("crit", skill_data),
-                                    fifty=_safe_get_percent("fifty", skill_data),
-                                    flanking=_safe_get_percent("flanking", skill_data),
-                                    scholar=_safe_get_percent("scholar", skill_data),
-                                    seaweed=_safe_get_percent("seaweed", skill_data))
-            skill.save()
+    def _damage_row(encounter_data, phase, source, target, skill, damage, stats):
+        return EncounterDamage(encounter_data=encounter_data,
+                               phase=phase,
+                               source=source,
+                               target=target,
+                               skill=skill,
+                               damage=damage,
+                               crit=_safe_get_percent("crit", stats),
+                               fifty=_safe_get_percent("fifty", stats),
+                               flanking=_safe_get_percent("flanking", stats),
+                               scholar=_safe_get_percent("scholar", stats),
+                               seaweed=_safe_get_percent("seaweed", stats))
+
+    @staticmethod
+    def _damage_rows(encounter_data, phase, source, target, damage_data):
+        """Rows for one source/target pair: one per skill, plus "power" and "condi" totals."""
+        rows = [EncounterData._damage_row(encounter_data, phase, source, target, skill_name, skill_data["total"],
+                                          skill_data)
+                for skill_name, skill_data in damage_data.get("Skill", {}).items()]
+        for kind in ["power", "condi"]:
+            if damage_data.get(kind, 0) > 0:
+                rows.append(EncounterData._damage_row(encounter_data, phase, source, target, kind,
+                                                      damage_data[kind], damage_data))
+        return rows
 
     @staticmethod
     def from_dump(dump):
+        """Stores the output of eiparser.adapter.convert."""
+        encounter_dump = dump["Category"]["encounter"]
         boss = "".join([boss_name for boss_name in dump["Category"]["boss"]["Boss"]])
         data = EncounterData(boss=boss,
-                             cm=dump["Category"]["encounter"]["cm"],
-                             start_timestamp=datetime.fromtimestamp(dump["Category"]["encounter"]["start"],
-                                                                    timezone.utc),
-                             start_tick=dump["Category"]["encounter"]["start_tick"],
-                             end_tick=dump["Category"]["encounter"]["end_tick"],
-                             success=dump["Category"]["encounter"]["success"],
-                             evtc_version=dump["Category"]["encounter"]["evtc_version"])
+                             cm=encounter_dump["cm"],
+                             start_timestamp=datetime.fromtimestamp(encounter_dump["start"], timezone.utc),
+                             start_tick=encounter_dump["start_tick"],
+                             end_tick=encounter_dump["end_tick"],
+                             success=encounter_dump["success"],
+                             evtc_version=encounter_dump["evtc_version"],
+                             parser_version=encounter_dump.get("parser_version", ""),
+                             metrics=json_dumps(encounter_dump.get("mechanics", [])))
         data.save()
 
         # Players
@@ -357,150 +377,74 @@ class EncounterData(models.Model):
                                      tough=player_data["toughness"])
             player.save()
 
-        # Phases
-        if "Phase" in dump["Category"]["encounter"]:
-            for phase_name, phase_data in dump["Category"]["encounter"]["Phase"].items():
-                if phase_name != "All":
-                    phase = EncounterPhase(encounter_data=data,
-                                           name=phase_name,
-                                           start_tick=phase_data["start_tick"])
-                    phase.save()
-        else:
-            phase = EncounterPhase(encounter_data=data,
-                                   name="All",
-                                   start_tick=dump["Category"]["encounter"]["start_tick"])
-            phase.save()
+        # Phases. The full fight is stored as the phase "All"; the other phases may overlap or leave gaps.
+        phases = {}
+        for phase_name in encounter_dump["phase_order"]:
+            phase_data = encounter_dump["Phase"][phase_name]
+            phases[phase_name] = EncounterPhase(encounter_data=data,
+                                                name=phase_name,
+                                                start_tick=phase_data["start_tick"],
+                                                end_tick=phase_data["end_tick"])
+            phases[phase_name].save()
 
+        damage_rows = []
+        buff_rows = []
+        event_rows = []
+        mechanic_rows = []
         for phase_name, phase_data in dump["Category"]["combat"]["Phase"].items():
-            phase = data.encounterphase_set.filter(name=phase_name).first()
+            phase = phases.get(phase_name)
             if phase is None:
                 continue
 
             for player_name, player_data in phase_data["Player"].items():
                 player_data = player_data["Metrics"]
 
-                # Buffs
-                # Incoming
-                if "From" in player_data["buffs"]:
-                    for buff_source in player_data["buffs"]["From"]:
-                        buff_target = player_name
-                        for buff_name, buff_data in player_data["buffs"]["From"][buff_source].items():
-                            if buff_data > 0:
-                                buff = EncounterBuff(encounter_data=data,
-                                                     phase=phase,
-                                                     source=buff_source,
-                                                     target=buff_target,
-                                                     name=buff_name,
-                                                     uptime=buff_data if buff_name in ["might", "stability"]
-                                                     else buff_data / 100.0)
-                                buff.save()
-                # Outgoing
-                if "To" in player_data["buffs"]:
-                    for buff_target in player_data["buffs"]["To"]:
-                        buff_source = player_name
-                        for buff_name, buff_data in player_data["buffs"]["To"][buff_target].items():
-                            if buff_data > 0:
-                                buff = EncounterBuff(encounter_data=data,
-                                                     phase=phase,
-                                                     source=buff_source,
-                                                     target=buff_target,
-                                                     name=buff_name,
-                                                     uptime=buff_data if buff_name in ["might", "stability"]
-                                                     else buff_data / 100.0)
-                                buff.save()
+                # Buffs: incoming are stored with the player as target, outgoing with the player as source
+                for buff_source, buffs in player_data["buffs"].get("From", {}).items():
+                    buff_rows += [EncounterBuff(encounter_data=data, phase=phase, source=buff_source,
+                                                target=player_name, name=buff_name,
+                                                uptime=EncounterBuff.to_stored(buff_name, buff_data))
+                                  for buff_name, buff_data in buffs.items() if buff_data > 0]
+                for buff_target, buffs in player_data["buffs"].get("To", {}).items():
+                    buff_rows += [EncounterBuff(encounter_data=data, phase=phase, source=player_name,
+                                                target=buff_target, name=buff_name,
+                                                uptime=EncounterBuff.to_stored(buff_name, buff_data))
+                                  for buff_name, buff_data in buffs.items() if buff_data > 0]
 
                 # Damage
-                # Incoming
                 for damage_source, damage_data in player_data["damage"]["From"].items():
-                    # Skill breakdown
-                    if "Skill" in damage_data:
-                        EncounterData._generate_skill_data(data, phase, damage_source, player_name, damage_data)
-                # Outgoing
+                    damage_rows += EncounterData._damage_rows(data, phase, damage_source, player_name, damage_data)
                 for damage_target, damage_data in player_data["damage"]["To"].items():
-                    # Skill breakdown
-                    if damage_target == "*All" and "Skill" in damage_data:
-                        EncounterData._generate_skill_data(data, phase, player_name, damage_target, damage_data)
-                    # Summary
-                    else:
-                        # Condi
-                        if damage_data["condi"] > 0:
-                            condi = EncounterDamage(encounter_data=data,
-                                                    phase=phase,
-                                                    source=player_name,
-                                                    target=damage_target,
-                                                    skill="condi",
-                                                    damage=damage_data["condi"],
-                                                    crit=_safe_get_percent("crit", damage_data),
-                                                    fifty=_safe_get_percent("fifty", damage_data),
-                                                    flanking=_safe_get_percent("flanking", damage_data),
-                                                    scholar=_safe_get_percent("scholar", damage_data),
-                                                    seaweed=_safe_get_percent("seaweed", damage_data))
-                            condi.save()
-                        # Power
-                        if damage_data["power"] > 0:
-                            power = EncounterDamage(encounter_data=data,
-                                                    phase=phase,
-                                                    source=player_name,
-                                                    target=damage_target,
-                                                    skill="power",
-                                                    damage=damage_data["power"],
-                                                    crit=_safe_get_percent("crit", damage_data),
-                                                    fifty=_safe_get_percent("fifty", damage_data),
-                                                    flanking=_safe_get_percent("flanking", damage_data),
-                                                    scholar=_safe_get_percent("scholar", damage_data),
-                                                    seaweed=_safe_get_percent("seaweed", damage_data))
-                            power.save()
+                    damage_rows += EncounterData._damage_rows(data, phase, player_name, damage_target, damage_data)
+
+                # Shielded (damage absorbed by barrier), stored as negative incoming damage
+                shield_data = player_data["shielded"]["From"]["*All"]
+                if shield_data["total"] > 0:
+                    damage_rows.append(EncounterData._damage_row(data, phase, "*All", player_name, "shielded",
+                                                                 -shield_data["total"], shield_data))
 
                 # Events
                 event_data = player_data["events"]
-                event = EncounterEvent(encounter_data=data,
-                                       phase=phase,
-                                       source=player_name,
-                                       disconnect_count=event_data["disconnects"],
-                                       disconnect_time=int(event_data["disconnect_time"]),
-                                       down_count=event_data["downs"],
-                                       down_time=int(event_data["down_time"]),
-                                       dead_count=event_data["deaths"],
-                                       dead_time=int(event_data["dead_time"]))
-                event.save()
-
-                # Shielded
-                shield_data = player_data["shielded"]["From"]["*All"]
-                shield = EncounterDamage(encounter_data=data,
-                                         phase=phase,
-                                         source="*All",
-                                         target=player_name,
-                                         skill="shielded",
-                                         damage=-shield_data["total"],
-                                         crit=_safe_get_percent("crit", shield_data),
-                                         fifty=_safe_get_percent("fifty", shield_data),
-                                         flanking=_safe_get_percent("flanking", shield_data),
-                                         scholar=_safe_get_percent("scholar", shield_data),
-                                         seaweed=_safe_get_percent("seaweed", shield_data))
-                shield.save()
+                event_rows.append(EncounterEvent(encounter_data=data,
+                                                 phase=phase,
+                                                 source=player_name,
+                                                 disconnect_count=event_data["disconnects"],
+                                                 disconnect_time=int(event_data["disconnect_time"]),
+                                                 down_count=event_data["downs"],
+                                                 down_time=int(event_data["down_time"]),
+                                                 dead_count=event_data["deaths"],
+                                                 dead_time=int(event_data["dead_time"])))
 
                 # Mechanics
-                if "mechanics" in player_data:
-                    for mechanic_name, mechanic_data in player_data["mechanics"].items():
-                        mechanic = EncounterMechanic(encounter_data=data,
-                                                     phase=phase,
-                                                     source=player_name,
-                                                     name=mechanic_name,
-                                                     count=mechanic_data)
-                        mechanic.save()
+                mechanic_rows += [EncounterMechanic(encounter_data=data, phase=phase, source=player_name,
+                                                    name=mechanic_name, count=mechanic_data)
+                                  for mechanic_name, mechanic_data in player_data.get("mechanics", {}).items()
+                                  if mechanic_data > 0]
 
-        # TODO: Remove when fixed
-        # If no mechanics were found within phases, they're probably only annotated in the "All" phase
-        if not data.encountermechanic_set:
-            for player_name, player_data in dump["Category"]["combat"]["Phase"]["All"]["Player"].items():
-                if "mechanics" in player_data:
-                    for mechanic_name, mechanic_data in player_data["mechanics"].items():
-                        mechanic = EncounterMechanic(encounter_data=data,
-                                                     phase="All",
-                                                     source=player_name,
-                                                     name=mechanic_name,
-                                                     count=mechanic_data)
-                        mechanic.save()
+        EncounterDamage.objects.bulk_create(damage_rows, batch_size=500)
+        EncounterBuff.objects.bulk_create(buff_rows, batch_size=500)
+        EncounterEvent.objects.bulk_create(event_rows, batch_size=500)
+        EncounterMechanic.objects.bulk_create(mechanic_rows, batch_size=500)
         return data
 
 
@@ -552,14 +496,35 @@ class Encounter(models.Model):
         if not isinstance(phase, EncounterPhase):
             return self.duration
         start_tick = phase.start_tick
+        if phase.end_tick is not None:
+            return (phase.end_tick - start_tick) / 1000.0
+        # Encounters analysed before the EI switch: phases are consecutive and only their start is stored
         next_phase = self.encounter_data.encounterphase_set.filter(start_tick__gt=start_tick).order_by(
             "start_tick").first()
         end_tick = self.encounter_data.end_tick if next_phase is None else next_phase.start_tick
         return (end_tick - start_tick) / 1000.0
 
+    def full_fight(self, queryset):
+        """Restricts a queryset of encounter attributes (damage, buffs, ...) to the full fight.
+
+        EI-parsed encounters store the full fight as its own phase next to the (overlapping) fight phases, so
+        their rows must not be summed over all phases.
+        """
+        all_phase = self.encounter_data.encounterphase_set.filter(name="All").first()
+        return queryset.filter(phase=all_phase) if all_phase else queryset
+
+    def boss_metrics(self):
+        data = self.encounter_data
+        if data.parser_version:
+            return [dict(metric, data_type=MetricType.COUNT, desired=DesiredValue.NONE,
+                         split_by_player=True, split_by_phase=True) for metric in json_loads(data.metrics)]
+        # Encounters analysed before the EI switch used a fixed list of mechanics per boss
+        boss = BOSSES.get(self.area_id)
+        return [metric.__dict__ for metric in boss.metrics] if boss else []
+
     def json_dump(self, participated=False):
         data = self.encounter_data
-        phases = data.encounterphase_set.order_by("start_tick")
+        phases = data.encounterphase_set.order_by("start_tick", "id")
         players = data.encounterplayer_set.filter(account_id__isnull=False)
         parties = {party_name: [player.data() for player in players.filter(party=party_name)]
                    for party_name in players.values_list("party", flat=True).distinct()}
@@ -663,16 +628,15 @@ class Encounter(models.Model):
                 "success": self.success,
                 "tags": self.tagstring,
                 "category": self.category_id,
-                "phase_order": [phase.name for phase in phases],
+                "phase_order": [phase.name for phase in phases if phase.name != "All"],
                 "participated": participated,
-                "boss_metrics": [metric.__dict__ for metric in BOSSES[self.area_id].metrics],
+                "boss_metrics": self.boss_metrics(),
                 "max_player_dps": max_player_dps,
                 "max_player_recv": max_player_recv,
                 "phases": phase_data,
             }
         }
-        if "All" not in data["encounter"]["phase_order"]:
-            data["encounter"]["phase_order"].append("All")
+        data["encounter"]["phase_order"].append("All")
         return data
 
     def week(self):
@@ -889,6 +853,8 @@ class EncounterPhase(EncounterAttribute):
         constraints = [Unique(fields=["encounter_data", "name"], name="enc_phase_unique")]
     name = models.TextField()
     start_tick = models.BigIntegerField()
+    # Not set for encounters analysed before the EI switch: their phases end where the next one starts
+    end_tick = models.BigIntegerField(null=True, blank=True)
 
     def calc_duration(self):
         return self.encounter_data.encounter.calc_phase_duration(self)
@@ -1109,6 +1075,11 @@ class EncounterBuff(TargetedEncounterAttribute):
     uptime = models.FloatField()
 
     @staticmethod
+    def to_stored(name, value):
+        """Uptimes are stored as fractions, except for the buffs breakdown() reports as stack counts."""
+        return value if name in ["might", "stability"] else value / 100.0
+
+    @staticmethod
     def breakdown(buff_data, use_sum=False):
         prv_buff_data = {buff["name"]: buff["sum"] if use_sum else buff["avg"] for buff in
                          buff_data.values("name").annotate(avg=Avg("uptime"), sum=Sum("uptime"))}
@@ -1161,7 +1132,7 @@ class EncounterDamage(TargetedEncounterAttribute):
 
         if not group:
             prv_dmg_data["Skill"] = {
-                damage.skill: damage.data() for damage in dmg_data.exclude(skill__in=["power, condi"])
+                damage.skill: damage.data() for damage in dmg_data.exclude(skill__in=["power", "condi"])
             }
 
         return prv_dmg_data
@@ -1169,8 +1140,10 @@ class EncounterDamage(TargetedEncounterAttribute):
     @staticmethod
     def summarize(query, target="all", absolute=False):
         if target != "all":
-            query = query.filter(skill=target)
-            if len(query) == 0:
+            if query.filter(skill__in=["power", "condi"]).exists():
+                query = query.filter(skill=target)
+            else:
+                # No power/condi totals stored for these rows: tell them apart by skill name
                 query = query.filter(skill__in=EncounterDamage.conditions()) if target == "condi"\
                     else query.exclude(skill__in=EncounterDamage.conditions())
 

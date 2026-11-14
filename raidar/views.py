@@ -339,11 +339,13 @@ def _get_leaderboard(area_id: int, start: datetime, end: datetime):
             "id": enc.id,
             "url_id": enc.url_id,
             "duration": enc.calc_phase_duration("All"),
-            "dps": EncounterDamage.breakdown(enc.encounter_data.encounterdamage_set.filter(target="*All"),
+            "dps": EncounterDamage.breakdown(enc.full_fight(enc.encounter_data.encounterdamage_set)
+                                             .filter(target="*All"),
                                              phase_duration=enc.calc_phase_duration("All"), group=True)["dps"],
-            "dps_boss": EncounterDamage.breakdown(enc.encounter_data.encounterdamage_set.filter(target="*Boss"),
+            "dps_boss": EncounterDamage.breakdown(enc.full_fight(enc.encounter_data.encounterdamage_set)
+                                                  .filter(target="*Boss"),
                                                   phase_duration=enc.calc_phase_duration("All"), group=True)["dps"],
-            "buffs": EncounterBuff.breakdown(enc.encounter_data.encounterbuff_set
+            "buffs": EncounterBuff.breakdown(enc.full_fight(enc.encounter_data.encounterbuff_set)
                                              .filter(target__in=enc.participations.values_list("character", flat=True))),
             "comp": sorted([[part.archetype, part.profession, part.elite] for part in enc.participations.all()],
                            key=lambda x: -100 * x[0] + 10 * x[1] + x[2]),
