@@ -124,19 +124,21 @@ def _skill_breakdown(dists, names):
     }
 
 
-_DPS_FIELDS = ("damage", "powerDamage", "condiDamage")
+_DPS_FIELDS = ("damage", "powerDamage", "condiDamage", "breakbarDamage")
 _STAT_FIELDS = ("criticalRate", "critableDirectDamageCount", "flankingRate", "connectedDirectDamageCount",
                 "againstMovingRate", "connectedDamageCount", "connectedPowerAbove90HPCount", "connectedPowerCount")
 
 
 def _outgoing_summary(dps_entries, stat_entries, duration_ms):
     """Builds the outgoing damage summary from EI JsonDPS / JsonGameplayStats entries (summed over targets)."""
-    dps = {field: sum(entry[field] for entry in dps_entries) for field in _DPS_FIELDS}
+    dps = {field: sum(entry.get(field) or 0 for entry in dps_entries) for field in _DPS_FIELDS}
     stats = {field: sum(entry[field] for entry in stat_entries) for field in _STAT_FIELDS}
     return {
         "total": dps["damage"],
         "power": dps["powerDamage"],
         "condi": dps["condiDamage"],
+        # damage dealt to defiance bars
+        "breakbar": dps["breakbarDamage"],
         "dps": _per_second(dps["damage"], duration_ms),
         "power_dps": _per_second(dps["powerDamage"], duration_ms),
         "condi_dps": _per_second(dps["condiDamage"], duration_ms),

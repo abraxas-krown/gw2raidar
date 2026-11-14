@@ -340,7 +340,7 @@ class EncounterData(models.Model):
 
     @staticmethod
     def _damage_rows(encounter_data, phase, source, target, damage_data):
-        """Rows for one source/target pair: one per skill, plus "power" and "condi" totals."""
+        """Rows for one source/target pair: one per skill, plus "power", "condi" and "breakbar" totals."""
         rows = [EncounterData._damage_row(encounter_data, phase, source, target, skill_name, skill_data["total"],
                                           skill_data)
                 for skill_name, skill_data in damage_data.get("Skill", {}).items()]
@@ -348,6 +348,10 @@ class EncounterData(models.Model):
             if damage_data.get(kind, 0) > 0:
                 rows.append(EncounterData._damage_row(encounter_data, phase, source, target, kind,
                                                       damage_data[kind], damage_data))
+        # Damage dealt to defiance bars; not part of the damage totals
+        breakbar = int(round(damage_data.get("breakbar", 0)))
+        if breakbar > 0:
+            rows.append(EncounterData._damage_row(encounter_data, phase, source, target, BREAKBAR, breakbar, {}))
         return rows
 
     @staticmethod
@@ -613,7 +617,7 @@ class Encounter(models.Model):
                         if key != "Skill":
                             if key not in squad_phase[target]:
                                 squad_phase[target][key] = 0
-                            if key in ["total", "power", "condi", "dps", "power_dps", "condi_dps"]:
+                            if key in ["total", "power", "condi", "dps", "power_dps", "condi_dps", "breakbar"]:
                                 squad_phase[target][key] += val
                             else:
                                 squad_phase[target][key] =\
@@ -651,6 +655,9 @@ class Encounter(models.Model):
         max_player_recv = max([member["received"]["total"] for phase in phase_data.values()
                                for party in phase["parties"].values()
                                for member in party["members"]])
+        max_player_breakbar = max([member["actual"].get("breakbar", 0) for phase in phase_data.values()
+                                   for party in phase["parties"].values()
+                                   for member in party["members"]])
 
         buffs, buff_tabs = self.buff_info()
         data = {
@@ -674,6 +681,7 @@ class Encounter(models.Model):
                 "buff_tabs": buff_tabs,
                 "max_player_dps": max_player_dps,
                 "max_player_recv": max_player_recv,
+                "max_player_breakbar": max_player_breakbar,
                 "phases": phase_data,
             }
         }
@@ -960,7 +968,7 @@ class EncounterPhase(EncounterAttribute):
                     if key != "Skill":
                         if key not in all_phase[target]:
                             all_phase[target][key] = 0
-                        if key in ["total", "power", "condi", "dps", "power_dps", "condi_dps"]:
+                        if key in ["total", "power", "condi", "dps", "power_dps", "condi_dps", "breakbar"]:
                             all_phase[target][key] += val
                         else:
                             all_phase[target][key] += val * (phase_duration / prv_encounter.duration)
@@ -973,7 +981,7 @@ class EncounterPhase(EncounterAttribute):
                         if key != "Skill":
                             if key not in member[target]:
                                 member[target][key] = 0
-                            if key in ["total", "power", "condi", "dps", "power_dps", "condi_dps"]:
+                            if key in ["total", "power", "condi", "dps", "power_dps", "condi_dps", "breakbar"]:
                                 member[target][key] += val
                             else:
                                 member[target][key] += val * (phase_duration / prv_encounter.duration)
@@ -1134,6 +1142,10 @@ class EncounterBuff(TargetedEncounterAttribute):
         return prv_buff_data
 
 
+# EncounterDamage.skill of the row that holds the damage dealt to defiance bars
+BREAKBAR = "breakbar"
+
+
 class EncounterDamage(TargetedEncounterAttribute):
     class Meta:
         db_table = "raidar_encounter_damage"
@@ -1160,6 +1172,10 @@ class EncounterDamage(TargetedEncounterAttribute):
     # TODO: Fix numbers
     @staticmethod
     def breakdown(dmg_data, phase_duration, group=False, absolute=False):
+        # Breakbar damage is stored next to the damage rows but is not damage: keep it out of the totals
+        breakbar = dmg_data.filter(skill=BREAKBAR).aggregate(Sum("damage"))["damage__sum"] or 0
+        dmg_data = dmg_data.exclude(skill=BREAKBAR)
+
         prv_dmg_data = EncounterDamage.summarize(dmg_data, "power", absolute=absolute)
         prv_dmg_data["power"] = prv_dmg_data["total"]
         prv_dmg_data["condi"] = EncounterDamage.summarize(dmg_data, "condi", absolute=absolute)["total"]
@@ -1174,6 +1190,7 @@ class EncounterDamage(TargetedEncounterAttribute):
         prv_dmg_data["dps"] = prv_dmg_data["total"] / phase_duration
         prv_dmg_data["condi_dps"] = prv_dmg_data["condi"] / phase_duration
         prv_dmg_data["power_dps"] = prv_dmg_data["power"] / phase_duration
+        prv_dmg_data["breakbar"] = _safe_abs(breakbar) if absolute else breakbar
 
         if not group:
             prv_dmg_data["Skill"] = {
