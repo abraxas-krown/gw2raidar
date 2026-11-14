@@ -13,11 +13,15 @@ import tempfile
 RESULT_PREFIX = "Processed - "
 DEFAULT_TIMEOUT = 300
 
-# Only the JSON output is wanted; everything else EI can do is switched off.
+# The JSON output feeds the site. The HTML report (with the combat replay) is only made when the caller
+# wants to keep it; everything else EI can do is switched off.
 CONFIG = """\
 SaveAtOut=false
 OutLocation={out_dir}
-SaveOutHTML=false
+SaveOutHTML={html}
+HtmlExternalScripts=false
+HtmlCompressJson=false
+LightTheme=false
 SaveOutCSV=false
 SaveOutJSON=true
 IndentJSON=false
@@ -25,7 +29,7 @@ CompressRaw=false
 RawTimelineArrays=false
 SaveOutTrace=false
 ParsePhases=true
-ParseCombatReplay=false
+ParseCombatReplay={html}
 ComputeDamage=true
 ComputeBuff=true
 ComputeCast=true
@@ -73,10 +77,16 @@ def _load(path):
         return json.load(file)
 
 
-def parse(evtc_path, cli, timeout=DEFAULT_TIMEOUT, single_threaded=True):
+def _generated(result, extensions):
+    return [path for path in result.get("generatedFiles") or [] if path.endswith(extensions)]
+
+
+def parse(evtc_path, cli, timeout=DEFAULT_TIMEOUT, single_threaded=True, report_path=None):
     """Parses ``evtc_path`` (.evtc, .evtc.zip or .zevtc) and returns EI's JSON log as a dict.
 
     ``cli`` is the path of the GuildWars2EliteInsights-CLI executable, or of its .dll (run through ``dotnet``).
+    With ``report_path``, EI also makes its HTML report, including the combat replay; it is written there
+    gzip-compressed.
     """
     if not cli:
         raise EIRunException("Elite Insights CLI is not configured (GW2EI_CLI)")
@@ -87,7 +97,8 @@ def parse(evtc_path, cli, timeout=DEFAULT_TIMEOUT, single_threaded=True):
         out_dir = os.path.join(work_dir, "out")
         os.mkdir(out_dir)
         with open(config_path, "w") as config:
-            config.write(CONFIG.format(out_dir=out_dir, single_threaded="true" if single_threaded else "false"))
+            config.write(CONFIG.format(out_dir=out_dir, single_threaded="true" if single_threaded else "false",
+                                       html="true" if report_path else "false"))
 
         # EI keeps per-user settings under the home directory; give every run a clean, writable one.
         # On Linux, .NET only reports the per-user settings folders if they already exist, and EI
@@ -118,10 +129,17 @@ def parse(evtc_path, cli, timeout=DEFAULT_TIMEOUT, single_threaded=True):
             raise EIRunException("Elite Insights failed (%s): %s\n%s" % (
                 result.get("reason"), message, process.stdout[-2000:]))
 
-        json_files = [path for path in result.get("generatedFiles") or []
-                      if path.endswith(".json") or path.endswith(".json.gz")]
+        json_files = _generated(result, (".json", ".json.gz"))
         if not json_files:
             raise EIRunException("Elite Insights produced no JSON file: %s" % result.get("status"))
-        return _load(json_files[0])
+        log = _load(json_files[0])
+
+        if report_path:
+            html_files = _generated(result, (".html",))
+            if not html_files:
+                raise EIRunException("Elite Insights produced no HTML file: %s" % result.get("status"))
+            with open(html_files[0], "rb") as source, gzip.open(report_path, "wb", compresslevel=6) as target:
+                shutil.copyfileobj(source, target)
+        return log
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)

@@ -25,6 +25,9 @@
           <span class="uk-badge uk-text-bold r-bg-0">
             [[formatDate(started_at)]]
           </span>
+          [[#if has_report]]
+            <a href="{% url 'report' %}[[page.no]]" target="_blank" rel="noopener" class="uk-badge uk-text-bold" uk-tooltip title="Open the Elite Insights report of this log, with the combat replay, in a new tab">Elite Insights</a>
+          [[/if]]
 
           [[#if encounter.participated]]
           <a href="" class="uk-badge uk-text-bold uk-visible@m">[[encounter.tags ? 'Tags:' : 'Add Tags']] [[encounter.tags]] </a>

@@ -355,6 +355,64 @@ def _get_leaderboard(area_id: int, start: datetime, end: datetime):
     return max_dps, (leaderboard if tops else False)
 
 
+def _has_hidden_players(request, prv_encounter):
+    """True if the privacy settings of a player of this encounter hide them from the person asking."""
+    own_account_names = [
+        account.name for account in Account.objects.filter(participations__encounter_id=prv_encounter.id,
+                                                           user=request.user)
+    ] if request.user.is_authenticated else []
+    for player in prv_encounter.encounter_data.encounterplayer_set.filter(account_id__isnull=False):
+        account_name = player.account.name
+        if account_name in own_account_names:
+            continue
+        user_profile = UserProfile.objects.filter(user__accounts__name=account_name).first()
+        prv_privacy = user_profile.privacy if user_profile else UserProfile.SQUAD
+        if prv_privacy == UserProfile.PRIVATE or (prv_privacy == UserProfile.SQUAD and not own_account_names):
+            return True
+    return False
+
+
+# The Elite Insights report is a page made from an uploaded log, shown under this site's address. It needs
+# inline scripts and the libraries it loads from CDNs, but must not be able to talk to this site.
+REPORT_CSP = "; ".join([
+    "default-src 'none'",
+    "script-src 'unsafe-inline' 'unsafe-eval' https:",
+    "style-src 'unsafe-inline' https:",
+    "img-src https: data: blob:",
+    "font-src https: data:",
+    "media-src https: data: blob:",
+    "connect-src 'none'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "form-action 'none'",
+    "base-uri 'none'",
+])
+
+
+@require_GET
+def report(request, url_id=None):
+    """The Elite Insights HTML report of an encounter. It names every player, so it is only given to people
+    who may see all of them."""
+    try:
+        prv_encounter = Encounter.objects.select_related('uploaded_by').get(url_id=url_id)
+    except Encounter.DoesNotExist:
+        raise Http404("Encounter does not exist")
+
+    path = prv_encounter.report_diskname()
+    if not path or not isfile(path):
+        raise Http404("This encounter has no Elite Insights report")
+    if not request.user.is_staff and _has_hidden_players(request, prv_encounter):
+        raise Http404("Not allowed")
+
+    # the file is stored gzip-compressed and sent as it is
+    response = HttpResponse(open(path, 'rb'), content_type='text/html; charset=utf-8')
+    response['Content-Encoding'] = 'gzip'
+    response['Content-Security-Policy'] = REPORT_CSP
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
+
+
 @require_GET
 def encounter(request, url_id=None, json=None):
     try:
@@ -399,6 +457,11 @@ def encounter(request, url_id=None, json=None):
             for player_data in party_data["members"]:
                 anonymized = players[player_data["account"]]
                 player_data.update(anonymized)
+
+    # Elite Insights report: names every player, so only for those who can see all of them
+    report_path = prv_encounter.report_diskname()
+    data["encounter"]["has_report"] = bool(report_path and isfile(report_path)
+                                           and (request.user.is_staff or not encounter_anonymous))
 
     # Download settings
     if encounter_anonymous or request.user.is_staff:

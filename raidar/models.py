@@ -706,6 +706,11 @@ class Encounter(models.Model):
             upload_dir = "uploads"
         return os.path.join(upload_dir, "encounters", self.uploaded_by.username, self.filename)
 
+    def report_diskname(self):
+        """Where the Elite Insights HTML report of this encounter is kept (gzip-compressed), next to the log."""
+        diskname = self.diskname()
+        return diskname + ".html.gz" if diskname else None
+
     def update_has_evtc(self):
         self.has_evtc = os.path.isfile(self.diskname())
         self.save()

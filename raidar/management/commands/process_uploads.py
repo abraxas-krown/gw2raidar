@@ -129,6 +129,8 @@ class Command(BaseCommand):
 
     def analyse_upload(self, upload):
         diskname = upload.diskname()
+        # Elite Insights HTML report of the log; moved next to the stored log once the encounter is known
+        report_diskname = diskname + ".html.gz"
 
         try:
             # Elite Insights reads .evtc, .evtc.zip and .zevtc directly, but reports a damaged archive as a crash
@@ -137,7 +139,8 @@ class Command(BaseCommand):
 
             log = runner.parse(diskname,
                                getattr(settings, 'GW2EI_CLI', None),
-                               timeout=getattr(settings, 'GW2EI_TIMEOUT', runner.DEFAULT_TIMEOUT))
+                               timeout=getattr(settings, 'GW2EI_TIMEOUT', runner.DEFAULT_TIMEOUT),
+                               report_path=report_diskname)
             dump = adapter.convert(log)
             del log
 
@@ -190,12 +193,12 @@ class Command(BaseCommand):
                         area=area, account_hash=account_hash
                     )
                     if encounter.has_evtc:
-                        old_filename = encounter.diskname()
-                        if old_filename:
-                            try:
-                                os.remove(old_filename)
-                            except FileNotFoundError:
-                                pass
+                        for old_filename in (encounter.diskname(), encounter.report_diskname()):
+                            if old_filename:
+                                try:
+                                    os.remove(old_filename)
+                                except FileNotFoundError:
+                                    pass
                     encounter.era = era
                     encounter.filename = filename
                     encounter.uploaded_on = datetime.fromtimestamp(upload.uploaded_at, timezone.utc)
@@ -230,6 +233,7 @@ class Command(BaseCommand):
                 else:
                     with ZipFile(new_diskname, 'w', ZIP_DEFLATED) as zipfile_out:
                         zipfile_out.write(diskname, orig_filename)
+                os.replace(report_diskname, encounter.report_diskname())
 
                 for name, player in status_for.items():
                     account, _ = Account.objects.get_or_create(
@@ -297,6 +301,11 @@ class Command(BaseCommand):
             })
 
         finally:
+            # a report that was not moved to its encounter belongs to a failed upload
+            try:
+                os.remove(report_diskname)
+            except OSError:
+                pass
             upload.delete()
 
     def clean_up(self, *args, **options):
