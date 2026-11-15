@@ -14,8 +14,8 @@ import os.path
 import importlib.util
 
 VERSION = {
-        'id': '2.4.0',
-        'timestamp': 1563162107,  # date +%s
+        'id': '3.0.0',
+        'timestamp': 1794744101,  # date +%s
         }
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
