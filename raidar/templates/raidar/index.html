@@ -225,7 +225,6 @@
                 [[elseif page.name == "encounter"]]
 
                   {% include 'raidar/encounter.html' %}
-                  {% include 'raidar/donation_cta.html' %}
 
                 [[elseif page.name == "info-help"]]
 
@@ -250,15 +249,9 @@
                 [[elseif page.name == "global_stats"]]
 
                   {% include 'raidar/global_stats.html' %}
-                  {% include 'raidar/donation_cta.html' %}
-                [[elseif page.name == "thank-you"]]
-
-                  {% include 'raidar/thank-you.html' %}
-
               [[elseif page.name == "leaderboards"]]
 
                 {% include 'raidar/leaderboards.html' %}
-                {% include 'raidar/donation_cta.html' %}
               [[elseif page.name == "info-framework"]]
 
                   {% include 'raidar/info_framework.html' %}
@@ -269,7 +262,6 @@
 
                     [[#if encounters.length]]
                       {% include 'raidar/encounters.html' %}
-                      {% include 'raidar/donation_cta.html' %}
                     [[else]]
                       <p>
                         Drag and drop evtc files to this window to upload.
@@ -283,7 +275,6 @@
                   [[elseif page.name == "uploads"]]
 
                     {% include 'raidar/uploads.html' %}
-                    {% include 'raidar/donation_cta.html' %}
 
                   [[elseif page.name == "account"]]
 

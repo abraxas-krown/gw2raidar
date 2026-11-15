@@ -541,7 +541,7 @@ ${body}
 
   let loggedInPage = Object.assign({}, window.raidar_data.page);
   let initialPage = loggedInPage;
-  const PERMITTED_PAGES = ['encounter', 'index', 'login', 'register', 'reset_pw', 'info-about', 'info-help', 'info-releasenotes', 'info-contact', 'global_stats', 'thank-you'];
+  const PERMITTED_PAGES = ['encounter', 'index', 'login', 'register', 'reset_pw', 'info-about', 'info-help', 'info-releasenotes', 'info-contact', 'global_stats'];
   if (!window.raidar_data.username) {
     if (!initialPage.name) {
       loggedInPage = { name: 'info-releasenotes' };

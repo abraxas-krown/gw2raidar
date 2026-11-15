@@ -10,7 +10,7 @@ from . import views
 from .api_v2 import views as api_v2_views
 
 urlpatterns = [
-    re_path(r'^(?P<name>encounters|leaderboards|profile|uploads|account|register|login|index|reset_pw|thank-you|info-(?:help|releasenotes|contact|about|framework))(?:/(?P<no>\w+))?$', views.named, name = "named"),
+    re_path(r'^(?P<name>encounters|leaderboards|profile|uploads|account|register|login|index|reset_pw|info-(?:help|releasenotes|contact|about|framework))(?:/(?P<no>\w+))?$', views.named, name = "named"),
     re_path(r'^initial.json$', views.initial, name = "initial"),
     re_path(r'^login.json$', views.login, name = "login"),
     re_path(r'^logout.json$', views.logout, name = "logout"),
