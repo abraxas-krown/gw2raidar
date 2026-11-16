@@ -70,14 +70,14 @@
     [[#if replay.view.parties.length]]
       <div class="r-replay-section-head">
         <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">Players</h6>
-        {# the Boons and Condis toggles (replay_show) #}
+        {# the DPS, Boons and Condis toggles (replay_show) #}
         <div class="r-replay-toggles">
+          <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.dps ? 'uk-active' : '']]"
+                  title="[[~/replay_show.players.dps ? 'Hide' : 'Show']] boss and total DPS" on-click="@this.toggle('replay_show.players.dps')">DPS</button>
           <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.boons ? 'uk-active' : '']]"
                   title="[[~/replay_show.players.boons ? 'Hide' : 'Show']] boons and buffs" on-click="@this.toggle('replay_show.players.boons')">Boons</button>
           <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.conditions ? 'uk-active' : '']]"
                   title="[[~/replay_show.players.conditions ? 'Hide' : 'Show']] conditions" on-click="@this.toggle('replay_show.players.conditions')">Condis</button>
-          <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.dps ? 'uk-active' : '']]"
-                  title="[[~/replay_show.players.dps ? 'Hide' : 'Show']] boss and total DPS" on-click="@this.toggle('replay_show.players.dps')">DPS</button>
         </div>
       </div>
     [[/if]]
