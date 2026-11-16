@@ -175,7 +175,9 @@
         node.addEventListener('click', () => this.setSpeed(index));
         return node;
       });
-      button(controls, 'zoom_out_map', 'Reset the view', () => { this.fit(); this.render(); });
+      // a magnifier with a minus: it zooms all the way out (corner-arrow icons read as full screen,
+      // a crosshair as "go to the selected player")
+      button(controls, 'zoom_out', 'Zoom out to the whole map', () => { this.fit(); this.render(); });
 
       this.buildTimeline(root.querySelector('.r-replay-timeline'));
       this.updateControls();
