@@ -111,6 +111,7 @@ def _html_response(request, page, data=None):
             "name": boss.base_name,
             "mode": int(boss.mode),
             "tag": boss.tag,
+            "icon": boss.base_area_id,
             "kind": boss.kind,
             "enrage": boss.enrage,
         } for id, boss in BOSSES.items()}
