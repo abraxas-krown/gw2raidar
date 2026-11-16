@@ -3,6 +3,7 @@ from analyser.analyser import Profession, SPECIALISATIONS
 from analyser.bosses import BOSSES, BOSS_LOCATIONS
 from analyser.buffs import BUFF_TYPES, BUFF_TABS, StackType
 from django.conf import settings
+from eiparser import replay as replay_format
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
@@ -27,6 +28,8 @@ from os.path import isfile, dirname
 from datetime import datetime, timezone
 from re import sub
 from time import time
+import gzip
+import json
 import logging
 import numpy as np
 import base64
@@ -372,22 +375,28 @@ def _privacy_by_account(account_names):
             .values_list("user__accounts__name", "privacy")}
 
 
-def _has_hidden_players(request, prv_encounter):
-    """True if the privacy settings of a player of this encounter hide them from the person asking."""
+def _hidden_characters(request, prv_encounter):
+    """The characters of this encounter whose players' privacy settings hide them from the person asking."""
     own_account_names = [
         account.name for account in Account.objects.filter(participations__encounter_id=prv_encounter.id,
                                                            user=request.user)
     ] if request.user.is_authenticated else []
-    account_names = list(prv_encounter.encounter_data.encounterplayer_set.filter(account_id__isnull=False)
-                         .values_list("account__name", flat=True))
-    privacy = _privacy_by_account(account_names)
-    for account_name in account_names:
+    characters = dict(prv_encounter.encounter_data.encounterplayer_set.filter(account_id__isnull=False)
+                      .values_list("account__name", "character"))
+    privacy = _privacy_by_account(list(characters))
+    hidden = set()
+    for account_name, character in characters.items():
         if account_name in own_account_names:
             continue
         prv_privacy = privacy.get(account_name, UserProfile.SQUAD)
         if prv_privacy == UserProfile.PRIVATE or (prv_privacy == UserProfile.SQUAD and not own_account_names):
-            return True
-    return False
+            hidden.add(character)
+    return hidden
+
+
+def _has_hidden_players(request, prv_encounter):
+    """True if the privacy settings of a player of this encounter hide them from the person asking."""
+    return bool(_hidden_characters(request, prv_encounter))
 
 
 # The Elite Insights report is a page made from an uploaded log, shown under this site's address. It needs
@@ -429,6 +438,38 @@ def report(request, url_id=None):
     response['X-Content-Type-Options'] = 'nosniff'
     response['Referrer-Policy'] = 'no-referrer'
     return response
+
+
+@require_GET
+def replay(request, url_id=None):
+    """The replay of an encounter (see eiparser.replay), with the boss's map. Players whose privacy settings
+    hide them from the person asking have their names removed, as on the encounter page."""
+    try:
+        prv_encounter = Encounter.objects.select_related('encounter_data').get(url_id=url_id)
+    except Encounter.DoesNotExist:
+        raise Http404("Encounter does not exist")
+    path = prv_encounter.replay_diskname()
+    if not isfile(path):
+        raise Http404("This encounter has no replay")
+    with gzip.open(path, 'rt', encoding='utf-8') as file:
+        data = json.load(file)
+
+    hidden = _hidden_characters(request, prv_encounter)
+    for actor in data["actors"]:
+        if actor["kind"] == "player" and actor["name"] in hidden:
+            actor["name"] = ""
+            actor["private"] = True
+    data["mechanics"] = [dict(hit, actor="") if hit["actor"] in hidden else hit for hit in data["mechanics"]]
+
+    try:
+        entry = replay_format.boss_map(data["boss"])
+        data["map"] = {
+            "image": static("raidar/img/replay/" + entry["image"]) if entry["image"] else None,
+            "world": entry["world"],
+        }
+    except replay_format.ReplayException:
+        data["map"] = None
+    return JsonResponse(data)
 
 
 @require_GET
@@ -478,6 +519,8 @@ def encounter(request, url_id=None, json=None):
     report_path = prv_encounter.report_diskname()
     data["encounter"]["has_report"] = bool(report_path and isfile(report_path)
                                            and (request.user.is_staff or not encounter_anonymous))
+    # the replay hides names itself, so it is there for everyone
+    data["encounter"]["has_replay"] = isfile(prv_encounter.replay_diskname())
 
     # Download settings
     if encounter_anonymous or request.user.is_staff:

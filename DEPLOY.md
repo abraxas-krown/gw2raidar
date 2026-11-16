@@ -12,6 +12,22 @@ uv pip compile requirements.in --upgrade --python-version 3.13 --python-platform
 (`pip-compile --upgrade requirements.in` from pip-tools does the same.) Check the result for known
 vulnerabilities with `pip-audit -r requirements.txt`.
 
+## Upgrading Elite Insights
+
+The Elite Insights CLI is pinned in the `Dockerfile` (`GW2EI_VERSION` and the checksum of its zip). The
+site depends on its encounter IDs and its JSON output, so compare the new version's source with the old
+one before changing the pin:
+
+1. **New bosses.** Encounters EI added or renumbered (their `LogID`s, under `LogLogic/`) need an entry in
+   `analyser/bosses.py`, or their logs are rejected as unsupported.
+2. **New or changed maps.** Replays use the site's own map of each boss: the images in
+   `raidar/static/raidar/img/replay/`, listed in `eiparser/replay_maps.json`. Both are taken from EI: the image
+   (`ParserHelpers/Images/LogImages.cs`, the `CombatReplay...` constants) and the world rectangle and size of
+   the boss's `CombatReplayMap` (in its `GetCombatMapInternal`).
+   Add maps for new bosses, and update the image, `world` and `size` of any boss whose map changed. While a
+   map does not match EI's, that boss's encounters are stored without a replay (with a warning in the log).
+3. Run the tests (`python -m unittest discover -s eiparser/tests -t .`) and parse a few real logs.
+
 # Docker Compose deploy
 
 `docker-compose.yml` runs the database, the site (`web`) and the upload processor (`worker`).
@@ -21,8 +37,9 @@ Files are kept on two volumes:
 
 - `uploads` (`/data/uploads`, `UPLOAD_DIR`): uploads waiting to be processed, and the stored logs under
   `encounters/<uploader>/`.
-- `reports` (`/data/reports`, `REPORT_DIR`): the Elite Insights HTML report of each encounter, gzipped, at
-  `<encounter url id>/ei.html.gz`. Reports are never pruned, so back this volume up along with the database.
+- `reports` (`/data/reports`, `REPORT_DIR`): one folder per encounter, `<encounter url id>/`, holding the
+  Elite Insights HTML report (`ei.html.gz`, about 2–3 MB) and the encounter's replay (`replay.json.gz`, about
+  100–200 KB; see `eiparser/replay.py`). Neither is ever pruned, so back this volume up along with the database.
 
 `MIN_FREE_DISK_GB` (default 10) controls log pruning: `restat` deletes the oldest uploaded `.evtc` files
 while the upload volume has less than that many GB free. The parsed encounters and their Elite Insights

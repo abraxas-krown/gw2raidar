@@ -447,7 +447,8 @@ class EncounterData(models.Model):
                                      conc=player_data["concentration"],
                                      condi=player_data["condition"],
                                      heal=player_data["healing"],
-                                     tough=player_data["toughness"])
+                                     tough=player_data["toughness"],
+                                     commander=player_data.get("commander", False))
             player.save()
 
         # Phases. The full fight is stored as the phase "All"; the other phases may overlap or leave gaps.
@@ -783,6 +784,10 @@ class Encounter(models.Model):
     def report_diskname(self):
         """Where the Elite Insights HTML report of this encounter is kept (gzip-compressed)."""
         return os.path.join(self.report_folder(), "ei.html.gz")
+
+    def replay_diskname(self):
+        """Where the replay of this encounter is kept (gzip-compressed JSON, see eiparser.replay)."""
+        return os.path.join(self.report_folder(), "replay.json.gz")
 
     def update_has_evtc(self):
         self.has_evtc = os.path.isfile(self.diskname())
@@ -1472,6 +1477,8 @@ class EncounterPlayer(EncounterAttribute):
     condi = models.PositiveIntegerField()
     heal = models.PositiveIntegerField()
     tough = models.PositiveIntegerField()
+    # had a commander tag at some time in the fight; encounters stored before this was kept have none
+    commander = models.BooleanField(default=False)
 
     def data(self):
         return {
@@ -1484,6 +1491,7 @@ class EncounterPlayer(EncounterAttribute):
             "condition": self.condi,
             "healing": self.heal,
             "toughness": self.tough,
+            "commander": self.commander,
         }
 
 

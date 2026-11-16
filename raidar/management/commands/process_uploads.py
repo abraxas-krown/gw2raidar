@@ -1,7 +1,7 @@
 from django.db.models import Q
 from analyser.analyser import EvtcAnalysisException
 from analyser.bosses import Kind, Mode, find_boss, UnsupportedEncounter
-from eiparser import adapter, runner
+from eiparser import adapter, replay, runner
 from eiparser.adapter import EIAdapterException
 from eiparser.runner import EIParseException
 from multiprocessing import Queue, Process, log_to_stderr
@@ -15,6 +15,8 @@ from sys import exit, stderr
 from time import time
 from zipfile import ZipFile, ZIP_DEFLATED, is_zipfile
 from queue import Empty
+import gzip
+import json
 import os
 import os.path
 import logging
@@ -133,6 +135,9 @@ class Command(BaseCommand):
         # is known. It is staged on the report volume, as os.replace cannot move files across volumes.
         staging_dir = os.path.join(report_dir(), "incoming")
         report_diskname = os.path.join(staging_dir, "%d.html.gz" % upload.id)
+        # The replay made from EI's combat replay data, staged and moved the same way
+        replay_diskname = os.path.join(staging_dir, "%d.replay.json.gz" % upload.id)
+        has_replay = False
 
         try:
             os.makedirs(staging_dir, exist_ok=True)
@@ -145,7 +150,6 @@ class Command(BaseCommand):
                                timeout=getattr(settings, 'GW2EI_TIMEOUT', runner.DEFAULT_TIMEOUT),
                                report_path=report_diskname)
             dump = adapter.convert(log)
-            del log
 
             uploader = upload.uploaded_by
             encounter_dump = dump['Category']['encounter']
@@ -157,6 +161,17 @@ class Command(BaseCommand):
 
             boss = find_boss(encounter_dump['ei_encounter_id'], encounter_dump['cm'], encounter_dump['legendary_cm'])
             area_id = boss.area_id
+
+            # A replay is optional: an encounter without one is stored all the same
+            try:
+                replay_data = replay.convert(log, boss.base_name)
+                with gzip.open(replay_diskname, 'wt', encoding='utf-8', compresslevel=6) as replay_file:
+                    json.dump(replay_data, replay_file, separators=(',', ':'), ensure_ascii=False)
+                has_replay = True
+                del replay_data
+            except replay.ReplayException as e:
+                logger.warning("no replay: %s" % e)
+            del log
 
             minDuration = 60
             if boss.kind == Kind.FRACTAL:
@@ -235,6 +250,14 @@ class Command(BaseCommand):
                         zipfile_out.write(diskname, orig_filename)
                 os.makedirs(encounter.report_folder(), exist_ok=True)
                 os.replace(report_diskname, encounter.report_diskname())
+                if has_replay:
+                    os.replace(replay_diskname, encounter.replay_diskname())
+                else:
+                    # a re-upload that has no replay must not keep the replay of the earlier upload
+                    try:
+                        os.remove(encounter.replay_diskname())
+                    except FileNotFoundError:
+                        pass
 
                 for name, player in status_for.items():
                     account, _ = Account.objects.get_or_create(
@@ -302,11 +325,12 @@ class Command(BaseCommand):
             })
 
         finally:
-            # a report that was not moved to its encounter belongs to a failed upload
-            try:
-                os.remove(report_diskname)
-            except OSError:
-                pass
+            # a report or replay that was not moved to its encounter belongs to a failed upload
+            for staged in (report_diskname, replay_diskname):
+                try:
+                    os.remove(staged)
+                except OSError:
+                    pass
             upload.delete()
 
     def clean_up(self, *args, **options):
