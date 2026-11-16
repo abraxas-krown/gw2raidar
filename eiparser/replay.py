@@ -1,6 +1,7 @@
 """Converts the combat replay data of an Elite Insights JSON log into raidar's own replay format.
 
-The replay is stored with the encounter (``Encounter.replay_diskname()``) for a future replay viewer. It is a
+The replay is stored with the encounter (``Encounter.replay_diskname()``) and shown on the encounter page's
+Replay tab (``views.replay``, ``raidar/static/raidar/replay.js``). It is a
 snapshot in the site's own terms, so that a stored replay keeps its meaning whatever later versions of EI
 write: this module is the only place that reads EI's replay fields. Like ``adapter``, it has no Django imports.
 
@@ -21,11 +22,13 @@ Format, version 1 (all times are milliseconds from the start of the log, clamped
         "start": 0, "end": 568892,     # when the actor is present
         "sample_start": 0,             # time of the first sample of x, y and facing
         "x": [...], "y": [...],        # game world position in inches, one sample every sample_interval
-        "facing": [...],               # degrees, one per sample (empty when unknown)
+        "facing": [...],               # degrees counter-clockwise from +x (world, y up), one per sample, or empty
         "down": [[start, end], ...], "dead": [...], "dc": [...],
+        "health": [[time, percent], ...],           # health over time; each value holds until the next
+        "barrier": [[time, percent], ...],          # players: barrier, in percent of their health
+        "buffs": {"might": [[time, stacks], ...], ...},   # players: buff codes (analyser.buffs), see REPLAY_BUFF_TABS
         "damage": [...],               # players: running damage total at each second, to everything
         "boss_damage": [...],          # players: running damage total at each second, to the fight's targets
-        "health": [[time, percent], ...]            # targets: health over time
       }, ...],
       "mechanics": [{"time": 215810, "actor": "Character Name", "name": "Dead"}, ...]   # EncounterMechanic.name
     }
@@ -41,7 +44,8 @@ import os
 from functools import lru_cache
 
 from analyser.analyser import SPECIALISATION_BY_NAME
-from eiparser.adapter import _phase_parents, _select_phases, _select_players, named_mechanics
+from analyser.buffs import BOONS_TAB
+from eiparser.adapter import _buff_info, _phase_parents, _select_phases, _select_players, named_mechanics
 
 FORMAT = "raidar.replay"
 FORMAT_VERSION = 1
@@ -55,6 +59,9 @@ IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 EI_MAP_PIXELS = 750
 # EI rounds inchToPixel to 3 decimals
 SCALE_TOLERANCE = 0.0006
+
+# The buffs kept for each player, by the tab the site lists them on (analyser.buffs.BUFF_CATEGORIES)
+REPLAY_BUFF_TABS = frozenset([BOONS_TAB, "offensive_buffs", "support_buffs", "defensive_buffs"])
 
 
 class ReplayException(Exception):
@@ -140,11 +147,42 @@ def _movement(data, world, pixels, interval, duration):
         "sample_start": int(math.ceil(data.get("start", 0) / interval) * interval),
         "x": [round(min_x + px * scale_x, 1) for px, _ in positions],
         "y": [round(max_y - py * scale_y, 1) for _, py in positions],
-        "facing": [int(round(angle)) for angle in facing],
+        # EI's orientations are for its y-down map: the world angle is the opposite
+        "facing": [_world_angle(angle) for angle in facing],
         "down": _intervals(data.get("down"), duration),
         "dead": _intervals(data.get("dead"), duration),
         "dc": _intervals(data.get("dc"), duration),
     }
+
+
+def _world_angle(ei_angle):
+    angle = int(round(-ei_angle)) % 360
+    return angle - 360 if angle > 180 else angle
+
+
+def _steps(points, duration, digits=None):
+    """[time, value] changes, clamped to the log; of several values at one time the last holds."""
+    result = []
+    for time, value in points or []:
+        time = _clamp(time, duration)
+        value = round(float(value), digits) if digits is not None else int(value)
+        if result and result[-1][0] == time:
+            result.pop()
+        if not result or result[-1][1] != value:
+            result.append([time, value])
+    return result
+
+
+def _player_buffs(player, code_by_id, duration):
+    buffs = {}
+    for buff in player.get("buffUptimes") or []:
+        code = code_by_id.get(buff["id"])
+        if code is None:
+            continue
+        states = _steps(buff.get("states"), duration)
+        if any(stacks for _, stacks in states):
+            buffs[code] = states
+    return buffs
 
 
 def _running_total(series):
@@ -177,11 +215,17 @@ def _convert(log, boss, maps_path):
 
     actors = []
     players = _select_players(log)
+    code_by_id, buff_info = _buff_info(log, players)
+    kept = set(buff["code"] for buff in buff_info if buff["category"] in REPLAY_BUFF_TABS)
+    code_by_id = {buff_id: code for buff_id, code in code_by_id.items() if code in kept}
     for player in players:
         profession, elite = SPECIALISATION_BY_NAME[player["profession"]]
         actor = {"kind": "player", "name": player["name"], "profession": int(profession), "elite": int(elite),
                  "party": player.get("group") or 0}
         actor.update(_movement(player.get("combatReplayData") or {}, world, pixels, interval, duration))
+        actor["health"] = _steps(player.get("healthPercents"), duration, 1)
+        actor["barrier"] = _steps(player.get("barrierPercents"), duration, 1)
+        actor["buffs"] = _player_buffs(player, code_by_id, duration)
         actor["damage"] = _running_total(player["damage1S"][0])
         actor["boss_damage"] = _boss_damage(player, target_indices)
         actors.append(actor)
@@ -192,8 +236,7 @@ def _convert(log, boss, maps_path):
             continue
         actor = {"kind": "target", "name": target["name"], "species": target.get("id")}
         actor.update(_movement(data, world, pixels, interval, duration))
-        actor["health"] = [[_clamp(time, duration), round(float(percent), 2)]
-                           for time, percent in target.get("healthPercents") or []]
+        actor["health"] = _steps(target.get("healthPercents"), duration, 2)
         actors.append(actor)
 
     player_names = set(player["name"] for player in players)

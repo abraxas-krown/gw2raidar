@@ -35,6 +35,7 @@ urlpatterns = [
     re_path(r'^reset/done/$', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
     re_path(r'^download/(?P<url_id>\w+)?$', views.download, name="download"),
     re_path(r'^report/(?P<url_id>\w+)?$', views.report, name="report"),
+    re_path(r'^replay/(?P<url_id>\w+)\.json$', views.replay, name="replay"),
     re_path(r'^$', views.index, name = "index"),
     re_path(r'^robots.txt$', TemplateView.as_view(template_name='raidar/robots.txt'), name="robots"),
     # XXX HACK separate API

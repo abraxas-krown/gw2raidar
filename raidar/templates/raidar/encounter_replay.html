@@ -1,0 +1,77 @@
+{% load static %}
+{# The map, its controls and the timeline are drawn by RaidarReplay.Viewer (replay.js); the panel on the right shows its state (replay.view) #}
+<div class="r-replay uk-margin-top" as-replayViewer="page.no" data-static="{% static 'raidar/img/' %}">
+  <div class="r-replay-stage">
+    {# the viewer adds its canvas to .r-replay-map; Ractive's messages are kept out of it #}
+    <div class="r-replay-map"></div>
+    [[#if replay.loading]]
+      <div class="r-replay-message"><span uk-spinner></span> Loading the replay&hellip;</div>
+    [[elseif replay.error]]
+      <div class="r-replay-message">The replay could not be loaded.</div>
+    [[/if]]
+    <div class="r-replay-controls"></div>
+    <div class="r-replay-timeline"></div>
+  </div>
+
+  <div class="r-replay-side">
+    [[#each replay.view.parties]]
+      <div class="r-replay-group">
+        <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">
+          <span class="r-replay-swatch" style="background-color: [[colour]]"></span>Party [[party]]
+        </h6>
+        [[#each players]]
+          <div class="r-replay-unit r-replay-[[state]] [[selected ? 'r-replay-selected' : '']]" on-click="@this.replaySelect(index)">
+            [[#if spec]]
+              <img class="r-replay-spec" src="{% static 'raidar/img/48px/' %}[[spec]]_tango_icon_48px.png" alt="[[spec]]" title="[[spec]]">
+            [[/if]]
+            <div class="r-replay-unit-body">
+              <div class="r-replay-unit-line">
+                [[#if private]]
+                  <span class="private" data-text="PRIVATE">PRIVATE</span>
+                [[else]]
+                  <span class="r-replay-unit-name uk-text-truncate">[[name]]</span>
+                [[/if]]
+                <span class="r-replay-unit-value">
+                  [[#if state == 'dead']]Dead[[elseif state == 'down']]Downed[[elseif state == 'dc']]Disconnected[[else]][[round(health)]]%[[/if]]
+                </span>
+              </div>
+              <div class="r-replay-bar" title="Health [[round(health)]]%[[#if barrier]], barrier [[round(barrier)]]%[[/if]]">
+                <div class="r-replay-bar-fill" style="width: [[health]]%"></div>
+                [[#if barrier]]
+                  <div class="r-replay-bar-barrier" style="left: [[health]]%; width: [[Math.min(barrier, 100 - health)]]%"></div>
+                [[/if]]
+              </div>
+              <div class="r-replay-buffs">
+                [[#each buffs]]
+                  [[#if ~/encounter.buffs[code]]]
+                    <span class="r-replay-buff" title="[[~/encounter.buffs[code].name]][[#if stacks > 1]] ([[stacks]])[[/if]]">
+                      <img src="[[~/encounter.buffs[code].icon]]" alt="[[~/encounter.buffs[code].name]]">
+                      [[#if stacks > 1]]<span class="r-replay-buff-stacks">[[stacks]]</span>[[/if]]
+                    </span>
+                  [[/if]]
+                [[/each]]
+              </div>
+            </div>
+          </div>
+        [[/each]]
+      </div>
+    [[/each]]
+
+    [[#if replay.view.targets.length]]
+      <div class="r-replay-group">
+        <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">Targets</h6>
+        [[#each replay.view.targets]]
+          <div class="r-replay-unit r-replay-target r-replay-[[state]] [[selected ? 'r-replay-selected' : '']]" on-click="@this.replaySelect(index)">
+            <div class="r-replay-unit-body">
+              <div class="r-replay-unit-line">
+                <span class="r-replay-unit-name uk-text-truncate">[[name]]</span>
+                <span class="r-replay-unit-value">[[#if state == 'dead']]Dead[[else]][[num(health, 1)]]%[[/if]]</span>
+              </div>
+              <div class="r-replay-bar"><div class="r-replay-bar-fill" style="width: [[health]]%"></div></div>
+            </div>
+          </div>
+        [[/each]]
+      </div>
+    [[/if]]
+  </div>
+</div>

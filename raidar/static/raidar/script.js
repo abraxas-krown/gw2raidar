@@ -28,6 +28,42 @@
     };
   };
 
+  // The replay tab: loads the encounter's replay and runs RaidarReplay.Viewer (replay.js) on the node;
+  // the viewer's state of players and targets is kept in "replay.view" for the panel next to the map
+  let activeReplay = null;
+  Ractive.decorators.replayViewer = function(node, urlId) {
+    const ractive = this;
+    let viewer = null, removed = false;
+    ractive.set('replay', { loading: true });
+    $.get({ url: 'replay/' + urlId + '.json' }).then(data => {
+      if (removed) return;
+      const buffTabs = ['boons', 'offensive_buffs', 'support_buffs', 'defensive_buffs'];
+      const buffOrder = [].concat(...(ractive.get('encounter.buff_tabs') || [])
+        .filter(tab => buffTabs.indexOf(tab.id) != -1).map(tab => tab.order));
+      viewer = new RaidarReplay.Viewer(node, data, {
+        staticRoot: node.dataset.static,
+        specialisation: (profession, elite) => (ractive.get('data.specialisations')[profession] || {})[elite],
+        buffOrder: buffOrder,
+        onView: view => ractive.set('replay.view', view),
+      });
+      activeReplay = viewer;
+      ractive.set('replay.loading', false);
+      // the phase tabs above jump to their phase
+      let phase = ractive.get('page.phase');
+      if (phase && phase != 'All') ractive.replaySeekPhase(phase);
+    }, () => {
+      if (!removed) ractive.set('replay', { error: true });
+    });
+    return {
+      teardown: () => {
+        removed = true;
+        if (viewer) viewer.destroy();
+        if (activeReplay === viewer) activeReplay = null;
+        ractive.set('replay', null);
+      },
+    };
+  };
+
   // bring tagsInput into Ractive
   Ractive.decorators.tagsInput = function(node, tagsPath) {
     let ractive = this;
@@ -686,7 +722,12 @@ ${body}
       });
       $.get({
         url: 'encounter/' + page.no + '.json',
-      }).then(setData);
+      }).then(setData).then(() => {
+        // the tab is kept from encounter to encounter, but not every encounter has a replay
+        if (r.get('persistent_page.tab') == 'replay' && !r.get('encounter.has_replay')) {
+          r.set('persistent_page.tab', 'combat_stats');
+        }
+      });
     },
     profile: page => {
       r.set({
@@ -892,6 +933,20 @@ ${body}
 
 
   setPage(initPage);
+
+  // the replay panel selects players and targets on the map
+  r.replaySelect = index => {
+    if (activeReplay) activeReplay.select(index);
+    return false;
+  };
+  r.replaySeekPhase = name => {
+    if (!activeReplay) return;
+    let phase = activeReplay.data.phases.find(phase => phase.name == name);
+    if (phase) activeReplay.seek(phase.start);
+  };
+  r.observe('page.phase', phase => {
+    if (r.get('persistent_page.tab') == 'replay') r.replaySeekPhase(phase);
+  }, { init: false });
 
 
   r.observe('settings', (newValue, oldValue, keyPath) => {

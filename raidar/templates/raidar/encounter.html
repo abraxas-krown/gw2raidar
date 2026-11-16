@@ -74,7 +74,7 @@
   <div class="uk-navbar-left">
     <ul uk-tab="swiping: true;">
       <li class="[[persistent_page.tab == 'combat_stats' ? 'uk-active' : '']]"><a on-click="@this.set('persistent_page.tab', 'combat_stats')">Overview</a></li>
-      <li class="[[persistent_page.tab != 'combat_stats' && persistent_page.tab != 'boss_metrics' ? 'uk-active' : '']]"><a href="#">Buffs <i class="material-icons">keyboard_arrow_down</i></a></li>
+      <li class="[[persistent_page.tab != 'combat_stats' && persistent_page.tab != 'boss_metrics' && persistent_page.tab != 'replay' ? 'uk-active' : '']]"><a href="#">Buffs <i class="material-icons">keyboard_arrow_down</i></a></li>
       <div uk-dropdown="mode: click">
           <ul class="uk-nav uk-dropdown-nav">
             [[#each encounter.buff_tabs as buff_tab]]
@@ -84,6 +84,9 @@
       </div>
 
       <li class="[[persistent_page.tab == 'boss_metrics' ? 'uk-active' : '']]"><a on-click="@this.set('persistent_page.tab', 'boss_metrics')">Boss Metrics</a></li>
+      [[#if encounter.has_replay]]
+        <li class="[[persistent_page.tab == 'replay' ? 'uk-active' : '']]"><a on-click="@this.set('persistent_page.tab', 'replay')">Replay</a></li>
+      [[/if]]
     </ul>
   </div>
   <div class="uk-navbar-right uk-visible@m">
@@ -109,6 +112,10 @@
   {% include 'raidar/encounter_combat_data.html' %}
 [[elseif persistent_page.tab == 'boss_metrics']]
   {% include 'raidar/encounter_boss_metrics.html' %}
+[[elseif persistent_page.tab == 'replay']]
+  [[#if encounter.has_replay]]
+    {% include 'raidar/encounter_replay.html' %}
+  [[/if]]
 [[else]]
   {% include 'raidar/encounter_buffs.html' %}
 [[/if]]

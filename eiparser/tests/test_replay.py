@@ -25,6 +25,13 @@ def _player(name, account, group, profession, pixels):
         "damage1S": [[0, 100, 250], [0, 100]],
         "targetDamage1S": [[[0, 60, 150], [0, 60]], [[0, 30, 80], [0, 30]]],
         "dpsAll": [{}], "dpsTargets": [[{}], [{}]],
+        "healthPercents": [[0, 100], [200, 64.44], [200, 63.96], [500, 63.96], [800, 0]],
+        "barrierPercents": [[0, 0], [100, 12.5]],
+        "buffUptimes": [
+            {"id": 740, "buffData": [{"uptime": 10}], "states": [[0, 0], [0, 5], [400, 25], [INT64_MAX, 25]]},
+            {"id": 1187, "buffData": [{"uptime": 0}], "states": [[0, 0]]},  # never on: left out
+            {"id": 9001, "buffData": [{"uptime": 50}], "states": [[0, 1], [300, 0]]},  # a personal buff: left out
+        ],
     }
 
 
@@ -32,6 +39,9 @@ def make_log():
     return {
         "eliteInsightsVersion": "3.32.0.0",
         "durationMS": 900,
+        "buffMap": {"b740": {"name": "Might", "classification": "Boon", "stacking": True},
+                    "b1187": {"name": "Quickness", "classification": "Boon"},
+                    "b9001": {"name": "Personal Thing", "classification": "Other"}},
         "combatReplayMetaData": {"inchToPixel": 7.5, "pollingRate": 300, "sizes": [750, 375],
                                  "maps": [{"url": "https://example.invalid/map.png", "interval": [-5000, 5900]}]},
         "phases": [
@@ -105,7 +115,8 @@ class ReplayTest(unittest.TestCase):
         alpha = self.actor(self.convert(), "Alpha Character")
         # top left, bottom right and centre of the map
         self.assertEqual(list(zip(alpha["x"], alpha["y"])), [(1000, -450), (1100, -500), (1050, -475)])
-        self.assertEqual(alpha["facing"], [10, -90, 180])
+        # EI's angles are for its y-down map; the replay's are world angles, counter-clockwise from +x
+        self.assertEqual(alpha["facing"], [-10, 90, 180])
 
     def test_sample_start_is_on_the_polling_grid(self):
         add = self.actor(self.convert(), "Add")
@@ -124,6 +135,14 @@ class ReplayTest(unittest.TestCase):
         self.assertEqual(alpha["boss_damage"], [0, 90, 230])
         for series in (alpha["damage"], alpha["boss_damage"]):
             self.assertEqual(series, sorted(series))
+
+    def test_player_health_barrier_and_buffs(self):
+        alpha = self.actor(self.convert(), "Alpha Character")
+        # of two values at one time the last holds, and repeated values are dropped
+        self.assertEqual(alpha["health"], [[0, 100.0], [200, 64.0], [800, 0.0]])
+        self.assertEqual(alpha["barrier"], [[0, 0.0], [100, 12.5]])
+        # only buffs of the kept tabs that were ever on; EI's open end is clamped
+        self.assertEqual(alpha["buffs"], {"might": [[0, 5], [400, 25]]})
 
     def test_target_health(self):
         boss = self.actor(self.convert(), "Test Boss")
