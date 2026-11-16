@@ -19,6 +19,7 @@ Format, version 1 (all times are milliseconds from the start of the log, clamped
         "name": "Character Name",      # players: EncounterPlayer.character; no account names are kept
         "profession": 7, "elite": 2, "party": 1,    # players: raidar's codes
         "species": 19450,              # targets: game species ID
+        "boss": True,                  # targets: one of the fight's main targets (EI's full fight targets), not an add
         "start": 0, "end": 568892,     # when the actor is present
         "sample_start": 0,             # time of the first sample of x, y and facing
         "x": [...], "y": [...],        # game world position in inches, one sample every sample_interval
@@ -284,7 +285,8 @@ def _convert(log, boss, maps_path):
 
     breakbars = _breakbar_windows(log, duration)
     for index, target in targets:
-        actor = {"kind": "target", "name": target["name"], "species": target.get("id")}
+        actor = {"kind": "target", "name": target["name"], "species": target.get("id"),
+                 "boss": index in target_indices}
         actor.update(_movement(target["combatReplayData"], world, pixels, interval, duration))
         actor["health"] = _steps(target.get("healthPercents"), duration, 2)
         add_buffs(actor, target.get("buffs"))

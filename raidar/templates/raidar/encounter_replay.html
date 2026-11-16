@@ -87,7 +87,7 @@
           </div>
         </div>
         [[#each replay.view.targets]]
-          <div class="r-replay-unit r-replay-target r-replay-[[state]] [[selected ? 'r-replay-selected' : '']]" on-click="@this.replaySelect(index)">
+          <div class="r-replay-unit r-replay-target [[boss ? 'r-replay-boss' : '']] r-replay-[[state]] [[selected ? 'r-replay-selected' : '']]" on-click="@this.replaySelect(index)">
             <div class="r-replay-unit-body">
               <div class="r-replay-unit-line">
                 <span class="r-replay-unit-name uk-text-truncate">[[name]]</span>

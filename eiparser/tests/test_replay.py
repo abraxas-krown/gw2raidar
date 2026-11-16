@@ -185,6 +185,15 @@ class ReplayTest(unittest.TestCase):
         self.assertNotIn("breakbar", self.actor(result, "Add"))
         self.assertNotIn("breakbar_active", self.actor(result, "Add"))
 
+    def test_target_boss_flag(self):
+        # the full fight's targets are the bosses; any other target is an add
+        result = self.convert()
+        self.assertEqual((self.actor(result, "Test Boss")["boss"], self.actor(result, "Add")["boss"]), (True, True))
+        log = make_log()
+        log["phases"][0]["targets"] = [0]
+        result = self.convert(log)
+        self.assertEqual((self.actor(result, "Test Boss")["boss"], self.actor(result, "Add")["boss"]), (True, False))
+
     def test_target_health(self):
         boss = self.actor(self.convert(), "Test Boss")
         self.assertEqual(boss["health"], [[0, 100.0], [600, 42.12]])

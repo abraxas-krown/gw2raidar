@@ -134,8 +134,8 @@
       this.actors = data.actors.map((actor, index) => Object.assign({index: index}, actor));
       this.players = this.actors.filter(actor => actor.kind === 'player');
       this.targets = this.actors.filter(actor => actor.kind === 'target');
-      // the boss is drawn larger: the target with the most health data, usually the first
-      this.mainTarget = this.targets.reduce((best, target) =>
+      // replays made before targets had "boss": the target with the most health data stands for the boss
+      this.guessedBoss = this.targets.reduce((best, target) =>
         !best || (target.health || []).length > (best.health || []).length ? target : best, null);
       this.buffInfo = this.options.buffInfo || {};
       this.buffRank = this.ranks(this.options.buffOrder);
@@ -166,6 +166,11 @@
       });
       const order = buff => buff.code in rank ? rank[buff.code] : Infinity;
       return active.sort((a, b) => order(a) !== order(b) ? order(a) - order(b) : a.name.localeCompare(b.name));
+    }
+
+    // one of the fight's main targets, not an add: drawn larger and listed first
+    isBoss(target) {
+      return 'boss' in target ? !!target.boss : target === this.guessedBoss;
     }
 
     // the area the actors moved in, for a boss without a map
@@ -533,6 +538,7 @@
         return {
           index: target.index,
           name: target.name,
+          boss: this.isBoss(target),
           state: state,
           health: state === 'dead' ? 0 : valueAt(target.health, time, 100),
           breakbar: this.breakbarOf(target, time),
@@ -541,6 +547,8 @@
           selected: this.selected === target.index,
         };
       });
+      // the bosses first, each group in the log's order
+      targets.sort((a, b) => (b.boss - a.boss) || (a.index - b.index));
       return {
         time: time,
         parties: Object.keys(parties).sort((a, b) => a - b).map(party => parties[party]),
@@ -657,7 +665,7 @@
     drawTarget(target, place) {
       const context = this.context;
       const screen = this.toScreen(place.x, place.y);
-      const main = target === this.mainTarget;
+      const main = this.isBoss(target);
       const radius = main ? this.radius(70, 14, 36) : this.radius(30, 7, 16);
       this.drawFacing(screen, radius, place.facing, COLOURS.target);
       context.beginPath();
