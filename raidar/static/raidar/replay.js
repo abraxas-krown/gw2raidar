@@ -28,6 +28,9 @@
   const WINDOW_MARGIN_BOTTOM = 16;
   const VIEW_INTERVAL_MS = 125;  // how often the panel is updated while playing
   const TRAIL_MS = 6000;         // the selected player's trail
+  // EI starts a commander tag when the player is first seen or the tag is first reported, a moment into the
+  // log; a tag that starts this early was held from the start
+  const COMMANDER_FROM_START_MS = 5000;
   // one per party; chosen to read on the site's dark purple background
   const PARTY_COLOURS = ['#E7CCA9', '#6FB7E0', '#7FCB8A', '#C98BDB', '#E58A6E',
                          '#5DC6BE', '#D9C35C', '#9AA4F0', '#E07AA5', '#A0C76A'];
@@ -146,6 +149,12 @@
       this.world.height = this.world.maxY - this.world.minY;
 
       this.actors = data.actors.map((actor, index) => Object.assign({index: index}, actor));
+      this.actors.forEach(actor => {
+        const tag = actor.commander;
+        if (tag && tag.length && tag[0][0] > 0 && tag[0][0] <= COMMANDER_FROM_START_MS) {
+          actor.commander = [[0, tag[0][1]]].concat(tag.slice(1));
+        }
+      });
       this.players = this.actors.filter(actor => actor.kind === 'player');
       this.targets = this.actors.filter(actor => actor.kind === 'target');
       // replays made before targets had "boss": the target with the most health data stands for the boss

@@ -96,8 +96,7 @@
                 [[#if private]]
                   <span class="private" data-text="PRIVATE">PRIVATE</span>
                 [[else]]
-                  [[#if commander]]{% include 'raidar/commander_tag.html' %}[[/if]]
-                  <span class="r-replay-unit-name uk-text-truncate">[[name]]</span>
+                  <span class="r-replay-unit-name uk-text-truncate">[[#if commander]]{% include 'raidar/commander_tag.html' %}[[/if]][[name]]</span>
                 [[/if]]
                 <span class="r-replay-unit-value">
                   [[#if state == 'dead']]Dead[[elseif state == 'down']]Downed[[elseif state == 'dc']]Disconnected[[else]][[round(health)]]%[[/if]]
