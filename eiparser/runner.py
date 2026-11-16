@@ -13,8 +13,9 @@ import tempfile
 RESULT_PREFIX = "Processed - "
 DEFAULT_TIMEOUT = 300
 
-# The JSON output feeds the site. The HTML report (with the combat replay) is only made when the caller
-# wants to keep it; everything else EI can do is switched off.
+# The JSON output feeds the site: its statistics, and the combat replay data (positions and the other
+# timeline arrays, which EI only writes with RawTimelineArrays) that eiparser.replay keeps. The HTML report is
+# only made when the caller wants to keep it; everything else EI can do is switched off.
 CONFIG = """\
 SaveAtOut=false
 OutLocation={out_dir}
@@ -26,10 +27,10 @@ SaveOutCSV=false
 SaveOutJSON=true
 IndentJSON=false
 CompressRaw=false
-RawTimelineArrays=false
+RawTimelineArrays=true
 SaveOutTrace=false
 ParsePhases=true
-ParseCombatReplay={html}
+ParseCombatReplay=true
 ComputeDamage=true
 ComputeBuff=true
 ComputeCast=true

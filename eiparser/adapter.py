@@ -259,16 +259,24 @@ def _buff_tables(players, index, code_by_id):
     return incoming, outgoing
 
 
-def _mechanics(log, player_names, phases):
-    """Returns (mechanic descriptions, {phase name: {player: {mechanic name: count}}})."""
-    info = []
-    counts = {name: {player: {} for player in player_names} for _, name, _ in phases}
+def named_mechanics(log, player_names):
+    """Yields (unique name, EI mechanic, hits on players) for the mechanics the site keeps.
+
+    The names are the ones stored with the encounter (EncounterMechanic.name); the replay uses them too.
+    """
     taken = set()
     for mechanic in log.get("mechanics") or []:
         hits = [hit for hit in mechanic.get("mechanicsData") or [] if hit.get("actor") in player_names]
         if not hits or mechanic.get("name") in IGNORED_MECHANICS:
             continue
-        name = _unique(mechanic["name"], taken)
+        yield _unique(mechanic["name"], taken), mechanic, hits
+
+
+def _mechanics(log, player_names, phases):
+    """Returns (mechanic descriptions, {phase name: {player: {mechanic name: count}}})."""
+    info = []
+    counts = {name: {player: {} for player in player_names} for _, name, _ in phases}
+    for name, mechanic, hits in named_mechanics(log, player_names):
         full_name = mechanic.get("fullName") or name
         description = mechanic.get("description")
         info.append({

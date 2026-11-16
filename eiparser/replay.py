@@ -1,0 +1,229 @@
+"""Converts the combat replay data of an Elite Insights JSON log into raidar's own replay format.
+
+The replay is stored with the encounter (``Encounter.replay_diskname()``) for a future replay viewer. It is a
+snapshot in the site's own terms, so that a stored replay keeps its meaning whatever later versions of EI
+write: this module is the only place that reads EI's replay fields. Like ``adapter``, it has no Django imports.
+
+Format, version 1 (all times are milliseconds from the start of the log, clamped to [0, duration])::
+
+    {
+      "format": "raidar.replay", "version": 1,
+      "source": {"parser": "EI 3.32.0.0"},
+      "boss": "Dhuum",                 # raidar boss name (analyser.bosses base_name), the key into replay_maps.json
+      "duration": 568892,
+      "sample_interval": 300,          # ms between two position samples
+      "phases": [{"name": "All", "start": 0, "end": 568892, "parent": None}, ...],
+      "actors": [{
+        "kind": "player",              # or "target"
+        "name": "Character Name",      # players: EncounterPlayer.character; no account names are kept
+        "profession": 7, "elite": 2, "party": 1,    # players: raidar's codes
+        "species": 19450,              # targets: game species ID
+        "start": 0, "end": 568892,     # when the actor is present
+        "sample_start": 0,             # time of the first sample of x, y and facing
+        "x": [...], "y": [...],        # game world position in inches, one sample every sample_interval
+        "facing": [...],               # degrees, one per sample (empty when unknown)
+        "down": [[start, end], ...], "dead": [...], "dc": [...],
+        "damage": [...],               # players: running damage total at each second, to everything
+        "boss_damage": [...],          # players: running damage total at each second, to the fight's targets
+        "health": [[time, percent], ...]            # targets: health over time
+      }, ...],
+      "mechanics": [{"time": 215810, "actor": "Character Name", "name": "Dead"}, ...]   # EncounterMechanic.name
+    }
+
+Positions are game world coordinates, so they are independent of EI's map images and pixel sizes. The map of
+each boss is the site's own: ``replay_maps.json`` in this package lists, per boss, the image (a file in
+``raidar/static/raidar/img/replay``, or null for a boss without one), the world rectangle it shows
+(``world``: minX, minY, maxX, maxY) and the image's size; the replay only names its boss.
+"""
+import json
+import math
+import os
+from functools import lru_cache
+
+from analyser.analyser import SPECIALISATION_BY_NAME
+from eiparser.adapter import _phase_parents, _select_phases, _select_players, named_mechanics
+
+FORMAT = "raidar.replay"
+FORMAT_VERSION = 1
+
+MAPS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "replay_maps.json")
+# Where the images named in replay_maps.json are (served as static files under raidar/img/replay/)
+IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                          "raidar", "static", "raidar", "img", "replay")
+
+# EI draws every map with its longer side this many pixels long (CombatReplayMap.GetPixelMapSize)
+EI_MAP_PIXELS = 750
+# EI rounds inchToPixel to 3 decimals
+SCALE_TOLERANCE = 0.0006
+
+
+class ReplayException(Exception):
+    """No replay can be made from this log; the encounter is stored without one."""
+
+
+@lru_cache(maxsize=None)
+def _load_maps(path):
+    with open(path, encoding="utf-8") as file:
+        return json.load(file)
+
+
+def boss_map(boss, maps_path=MAPS_PATH):
+    """The site's map of ``boss``: {"image": file name or None, "world": [minX, minY, maxX, maxY], "size": [w, h]}."""
+    entry = _load_maps(maps_path).get(boss)
+    if entry is None:
+        raise ReplayException("No replay map for %s" % boss)
+    return entry
+
+
+def _clamp(time, duration):
+    return min(max(int(time), 0), duration)
+
+
+def _intervals(pairs, duration):
+    """EI's [start, end] lists, clamped to the log; EI marks open ends with the largest and smallest int64."""
+    result = []
+    for start, end in pairs or []:
+        start, end = _clamp(start, duration), _clamp(end, duration)
+        if end > start:
+            result.append([start, end])
+    return result
+
+
+def _ei_pixel_size(size):
+    """The size EI draws a map of ``size`` at: the longer side EI_MAP_PIXELS long, the ratio kept."""
+    width, height = size
+    ratio = width / height
+    if ratio > 1:
+        return EI_MAP_PIXELS, int(round(EI_MAP_PIXELS / ratio))
+    if ratio < 1:
+        return int(round(ratio * EI_MAP_PIXELS)), EI_MAP_PIXELS
+    return EI_MAP_PIXELS, EI_MAP_PIXELS
+
+
+def _check_map(meta, entry):
+    """EI's map frame must be the one the site's map was taken from, or the positions would be misplaced.
+
+    Returns EI's map size in pixels.
+    """
+    min_x, _, max_x, _ = entry["world"]
+    try:
+        scale = float(meta["inchToPixel"])
+        pixels = tuple(int(side) for side in meta["sizes"])
+    except (KeyError, TypeError, ValueError):
+        raise ReplayException("The log has no combat replay map data")
+    expected = _ei_pixel_size(entry["size"])
+    if pixels != expected or abs(scale - expected[0] / (max_x - min_x)) > SCALE_TOLERANCE:
+        raise ReplayException("EI's combat replay map (%sx%s px at %s px/inch) does not match the site's map %s" % (
+            pixels[0], pixels[1], scale, entry))
+    return pixels
+
+
+def _movement(data, world, pixels, interval, duration):
+    """Position samples converted from EI's map pixels (y pointing down) to world inches, and facing.
+
+    EI scales each axis on its own, to fit the map's pixel size (CombatReplayMap.GetMapCoordRounded); its
+    inchToPixel is rounded, so the scales are worked out from the map instead.
+    """
+    min_x, min_y, max_x, max_y = world
+    scale_x = (max_x - min_x) / pixels[0]
+    scale_y = (max_y - min_y) / pixels[1]
+    positions = data.get("positions")
+    if not positions:
+        raise ReplayException("The log has no combat replay positions")
+    start = _clamp(data.get("start", 0), duration)
+    facing = data.get("orientations") or []
+    if facing and len(facing) != len(positions):
+        raise ReplayException("Combat replay positions and orientations differ in length")
+    return {
+        "start": start,
+        "end": _clamp(data.get("end", duration), duration),
+        "sample_start": int(math.ceil(data.get("start", 0) / interval) * interval),
+        "x": [round(min_x + px * scale_x, 1) for px, _ in positions],
+        "y": [round(max_y - py * scale_y, 1) for _, py in positions],
+        "facing": [int(round(angle)) for angle in facing],
+        "down": _intervals(data.get("down"), duration),
+        "dead": _intervals(data.get("dead"), duration),
+        "dc": _intervals(data.get("dc"), duration),
+    }
+
+
+def _running_total(series):
+    return [int(value) for value in series or []]
+
+
+def _boss_damage(player, target_indices):
+    """Sum of the full fight running totals against the fight's targets."""
+    per_target = [player["targetDamage1S"][index][0] for index in target_indices]
+    length = max((len(series) for series in per_target), default=0)
+    return [int(sum(series[second] for series in per_target if second < len(series))) for second in range(length)]
+
+
+def _convert(log, boss, maps_path):
+    entry = boss_map(boss, maps_path)
+    world = entry["world"]
+    meta = log.get("combatReplayMetaData")
+    if not meta:
+        raise ReplayException("The log has no combat replay data")
+    pixels = _check_map(meta, entry)
+    interval = int(meta.get("pollingRate") or 0)
+    if interval <= 0:
+        raise ReplayException("The log has an invalid combat replay polling rate")
+
+    phases = _select_phases(log)
+    full_fight = phases[0][2]
+    duration = int(log.get("durationMS") or full_fight["end"])
+    parents = _phase_parents(log, phases)
+    target_indices = full_fight.get("targets") or []
+
+    actors = []
+    players = _select_players(log)
+    for player in players:
+        profession, elite = SPECIALISATION_BY_NAME[player["profession"]]
+        actor = {"kind": "player", "name": player["name"], "profession": int(profession), "elite": int(elite),
+                 "party": player.get("group") or 0}
+        actor.update(_movement(player.get("combatReplayData") or {}, world, pixels, interval, duration))
+        actor["damage"] = _running_total(player["damage1S"][0])
+        actor["boss_damage"] = _boss_damage(player, target_indices)
+        actors.append(actor)
+
+    for target in log.get("targets") or []:
+        data = target.get("combatReplayData") or {}
+        if target.get("isFake") or not data.get("positions"):
+            continue
+        actor = {"kind": "target", "name": target["name"], "species": target.get("id")}
+        actor.update(_movement(data, world, pixels, interval, duration))
+        actor["health"] = [[_clamp(time, duration), round(float(percent), 2)]
+                           for time, percent in target.get("healthPercents") or []]
+        actors.append(actor)
+
+    player_names = set(player["name"] for player in players)
+    mechanics = sorted(({"time": _clamp(hit["time"], duration), "actor": hit["actor"], "name": name}
+                        for name, _, hits in named_mechanics(log, player_names) for hit in hits),
+                       key=lambda hit: hit["time"])
+
+    return {
+        "format": FORMAT,
+        "version": FORMAT_VERSION,
+        "source": {"parser": "EI %s" % (log.get("eliteInsightsVersion") or "unknown")},
+        "boss": boss,
+        "duration": duration,
+        "sample_interval": interval,
+        "phases": [{"name": name, "start": _clamp(phase["start"], duration), "end": _clamp(phase["end"], duration),
+                    "parent": parents.get(name)} for _, name, phase in phases],
+        "actors": actors,
+        "mechanics": mechanics,
+    }
+
+
+def convert(log, boss, maps_path=MAPS_PATH):
+    """Returns the replay of a parsed EI JSON log of an encounter with ``boss`` (raidar's boss base name).
+
+    Raises ReplayException when no replay can be made: the boss has no map, the log lacks the data, or EI's
+    output is not what this module expects.
+    """
+    try:
+        return _convert(log, boss, maps_path)
+    except ReplayException:
+        raise
+    except Exception as error:  # anything unexpected in EI's output must not break the upload
+        raise ReplayException("Unexpected combat replay data: %s: %s" % (type(error).__name__, error))

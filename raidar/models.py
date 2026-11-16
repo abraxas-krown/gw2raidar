@@ -784,6 +784,10 @@ class Encounter(models.Model):
         """Where the Elite Insights HTML report of this encounter is kept (gzip-compressed)."""
         return os.path.join(self.report_folder(), "ei.html.gz")
 
+    def replay_diskname(self):
+        """Where the replay of this encounter is kept (gzip-compressed JSON, see eiparser.replay)."""
+        return os.path.join(self.report_folder(), "replay.json.gz")
+
     def update_has_evtc(self):
         self.has_evtc = os.path.isfile(self.diskname())
         self.save()
