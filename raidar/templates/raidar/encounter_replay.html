@@ -10,7 +10,8 @@
       </span>
     [[/each]]
   [[/partial]]
-  {# a boss or other target in the panel; the context is one of replay.view.bosses or replay.view.adds #}
+  {# a boss or other target in the panel; the context is one of replay.view.bosses or replay.view.adds, whose
+     buffs and conditions follow their group's toggles (replay_show.bosses or replay_show.targets) #}
   [[#partial replayTarget]]
     <div class="r-replay-unit r-replay-target [[boss ? 'r-replay-boss' : '']] r-replay-[[state]] [[selected ? 'r-replay-selected' : '']]" on-click="@this.replaySelect(index)">
       <div class="r-replay-unit-body">
@@ -25,22 +26,13 @@
             <div class="r-replay-bar-fill" style="width: [[breakbar]]%"></div>
           </div>
         [[/if]]
-        [[#if ~/replay_show.targets.boons && buffs.length]]
+        [[#if ~/replay_show[boss ? 'bosses' : 'targets'].boons && buffs.length]]
           <div class="r-replay-buffs">[[> replayBuffList buffs]]</div>
         [[/if]]
-        [[#if ~/replay_show.targets.conditions && conditions.length]]
+        [[#if ~/replay_show[boss ? 'bosses' : 'targets'].conditions && conditions.length]]
           <div class="r-replay-buffs r-replay-conditions">[[> replayBuffList conditions]]</div>
         [[/if]]
       </div>
-    </div>
-  [[/partial]]
-  {# the targets' Boons and Condis toggles (replay_show.targets), over the bosses and again over the other targets #}
-  [[#partial replayTargetToggles]]
-    <div class="r-replay-toggles">
-      <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.targets.boons ? 'uk-active' : '']]"
-              title="[[~/replay_show.targets.boons ? 'Hide' : 'Show']] boons and buffs" on-click="@this.toggle('replay_show.targets.boons')">Boons</button>
-      <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.targets.conditions ? 'uk-active' : '']]"
-              title="[[~/replay_show.targets.conditions ? 'Hide' : 'Show']] conditions" on-click="@this.toggle('replay_show.targets.conditions')">Condis</button>
     </div>
   [[/partial]]
   <div class="r-replay-stage">
@@ -60,7 +52,13 @@
       <div class="r-replay-group">
         <div class="r-replay-section-head">
           <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">[[replay.view.bosses.length > 1 ? 'Bosses' : 'Boss']]</h6>
-          [[> replayTargetToggles]]
+          {# their own Boons and Condis toggles (replay_show.bosses) #}
+          <div class="r-replay-toggles">
+            <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.bosses.boons ? 'uk-active' : '']]"
+                    title="[[~/replay_show.bosses.boons ? 'Hide' : 'Show']] boons and buffs" on-click="@this.toggle('replay_show.bosses.boons')">Boons</button>
+            <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.bosses.conditions ? 'uk-active' : '']]"
+                    title="[[~/replay_show.bosses.conditions ? 'Hide' : 'Show']] conditions" on-click="@this.toggle('replay_show.bosses.conditions')">Condis</button>
+          </div>
         </div>
         [[#each replay.view.bosses]]
           [[> replayTarget]]
@@ -132,7 +130,13 @@
       <div class="r-replay-group">
         <div class="r-replay-section-head">
           <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">Targets</h6>
-          [[> replayTargetToggles]]
+          {# their own Boons and Condis toggles (replay_show.targets) #}
+          <div class="r-replay-toggles">
+            <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.targets.boons ? 'uk-active' : '']]"
+                    title="[[~/replay_show.targets.boons ? 'Hide' : 'Show']] boons and buffs" on-click="@this.toggle('replay_show.targets.boons')">Boons</button>
+            <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.targets.conditions ? 'uk-active' : '']]"
+                    title="[[~/replay_show.targets.conditions ? 'Hide' : 'Show']] conditions" on-click="@this.toggle('replay_show.targets.conditions')">Condis</button>
+          </div>
         </div>
         [[#each replay.view.adds]]
           [[> replayTarget]]
