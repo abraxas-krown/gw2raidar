@@ -348,6 +348,8 @@
       this.canvas.width = Math.round(width * ratio);
       this.canvas.height = Math.round(height * ratio);
       this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      // the panel next to the map is no taller than the map with its controls and timeline, and scrolls
+      this.root.style.setProperty('--replay-stage-height', this.mapBox.parentNode.offsetHeight + 'px');
       if (previous && this.scale) {
         // keep the centre of the view where it was
         const centre = this.toWorld(previous.width / 2, previous.height / 2);
