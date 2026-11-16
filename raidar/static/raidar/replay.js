@@ -11,6 +11,7 @@
  *     conditionOrder: ['bleeding', ...],          // the order conditions are listed in
  *     buffInfo: {might: {name, icon}, ...},       // buffs and conditions without info are not listed
  *     onView: view => ...,                         // the state of players and targets, a few times a second
+ *                                                  // (players' DPS so far, from their running damage totals)
  *   });
  *   viewer.seek(ms); viewer.select(actorIndex); viewer.destroy();
  */
@@ -82,6 +83,19 @@
   function lerpAngle(a, b, f) {
     let delta = ((b - a + 540) % 360) - 180;
     return a + delta * f;
+  }
+
+  // thousands with at most one decimal: 1000 is "1 K", 28423 is "28.4 K"
+  function kilo(value) {
+    return String(Math.round(value / 100) / 10) + ' K';
+  }
+
+  // a running total of one value per second (damage, boss_damage) at time, in between the seconds
+  function totalAt(series, time) {
+    if (!series || !series.length) return 0;
+    const at = clamp(time / 1000, 0, series.length - 1);
+    const second = Math.floor(at), next = Math.min(second + 1, series.length - 1);
+    return series[second] + (series[next] - series[second]) * (at - second);
   }
 
   function formatTime(ms, tenths) {
@@ -516,11 +530,21 @@
     }
 
     // the state of players (by party) and targets, for the panel next to the map
+    // a player's boss and total DPS from the start of the fight until time; none in the first second
+    dpsOf(player, time) {
+      if (time < 1000) return {boss: 0, total: 0};
+      return {boss: totalAt(player.boss_damage, time) * 1000 / time, total: totalAt(player.damage, time) * 1000 / time};
+    }
+
     view() {
       const time = this.time;
       const parties = {};
+      // the DPS bars are scaled to the highest total DPS of the squad
+      const dps = new Map(this.players.map(player => [player, this.dpsOf(player, time)]));
+      const maxDps = Math.max(1, ...Array.from(dps.values(), value => value.total));
       this.players.forEach(player => {
         const state = this.stateOf(player, time);
+        const playerDps = dps.get(player);
         const party = player.party || 0;
         (parties[party] = parties[party] || {party: party, colour: partyColour(party), players: []}).players.push({
           index: player.index,
@@ -532,6 +556,13 @@
           barrier: state === 'dead' ? 0 : valueAt(player.barrier, time, 0),
           buffs: this.activeBuffs(player.buffs, time, this.buffRank),
           conditions: this.activeBuffs(player.conditions, time, this.conditionRank),
+          dps: {
+            boss: playerDps.boss,
+            total: playerDps.total,
+            bossWidth: 100 * playerDps.boss / maxDps,
+            totalWidth: 100 * playerDps.total / maxDps,
+            text: kilo(playerDps.boss) + ' / ' + kilo(playerDps.total),
+          },
           selected: this.selected === player.index,
         });
       });
@@ -819,5 +850,5 @@
     }
   }
 
-  window.RaidarReplay = {Viewer: Viewer, partyColour: partyColour, formatTime: formatTime};
+  window.RaidarReplay = {Viewer: Viewer, partyColour: partyColour, formatTime: formatTime, kilo: kilo};
 })();

@@ -76,6 +76,8 @@
                   title="[[~/replay_show.players.boons ? 'Hide' : 'Show']] boons and buffs" on-click="@this.toggle('replay_show.players.boons')">Boons</button>
           <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.conditions ? 'uk-active' : '']]"
                   title="[[~/replay_show.players.conditions ? 'Hide' : 'Show']] conditions" on-click="@this.toggle('replay_show.players.conditions')">Condis</button>
+          <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.dps ? 'uk-active' : '']]"
+                  title="[[~/replay_show.players.dps ? 'Hide' : 'Show']] boss and total DPS" on-click="@this.toggle('replay_show.players.dps')">DPS</button>
         </div>
       </div>
     [[/if]]
@@ -106,6 +108,14 @@
                   <div class="r-replay-bar-barrier" style="left: [[health]]%; width: [[Math.min(barrier, 100 - health)]]%"></div>
                 [[/if]]
               </div>
+              [[#if ~/replay_show.players.dps]]
+                {# boss DPS, and total DPS behind it, so far in the fight; the squad's highest total fills the bar #}
+                <div class="r-replay-dps" title="Boss DPS [[num(dps.boss, 0)]], total DPS [[num(dps.total, 0)]]">
+                  <div class="r-replay-dps-total" style="width: [[dps.totalWidth]]%"></div>
+                  <div class="r-replay-dps-boss" style="width: [[dps.bossWidth]]%"></div>
+                  <span class="r-replay-dps-text">[[dps.text]]</span>
+                </div>
+              [[/if]]
               [[#if ~/replay_show.players.boons]]
                 <div class="r-replay-buffs">[[> replayBuffList buffs]]</div>
               [[/if]]

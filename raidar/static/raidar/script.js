@@ -657,9 +657,9 @@ ${body}
     is_staff: window.raidar_data.is_staff,
     page: initialPage,
     persistent_page: { tab: 'combat_stats' },
-    // the replay panel's Boons and Condis toggles, above the players and above the targets
+    // the replay panel's Boons and Condis toggles, above the players and above the targets, and the players' DPS
     replay_show: {
-      players: { boons: true, conditions: false },
+      players: { boons: true, conditions: false, dps: false },
       targets: { boons: false, conditions: false },
     },
     encounters: [],

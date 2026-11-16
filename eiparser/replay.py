@@ -31,7 +31,7 @@ Format, version 1 (all times are milliseconds from the start of the log, clamped
         "conditions": {"bleeding": [[time, stacks], ...], ...},   # see REPLAY_CONDITION_TABS
         "breakbar": [[time, percent], ...],         # targets with a defiance bar: its value over time
         "breakbar_active": [[start, end], ...],     # targets with a defiance bar: when it is up (can be broken)
-        "damage": [...],               # players: running damage total at each second, to everything
+        "damage": [...],               # players: running damage total at each second, to everything (DPS bars)
         "boss_damage": [...],          # players: running damage total at each second, to the fight's targets
       }, ...],
       "mechanics": [{"time": 215810, "actor": "Character Name", "name": "Dead"}, ...],  # EncounterMechanic.name
