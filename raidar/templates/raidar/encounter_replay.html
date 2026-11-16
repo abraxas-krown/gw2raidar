@@ -69,11 +69,7 @@
               </div>
               <div class="r-replay-bar"><div class="r-replay-bar-fill" style="width: [[health]]%"></div></div>
               [[#if breakbar != null]]
-                {# the defiance bar, while it is up; 0 is a broken bar #}
-                <div class="r-replay-unit-line r-replay-breakbar-line">
-                  <span>Defiance</span>
-                  <span class="r-replay-unit-value">[[round(breakbar)]]%</span>
-                </div>
+                {# the defiance bar, while it is up, right under the HP bar; 0 is a broken bar #}
                 <div class="r-replay-bar r-replay-breakbar" title="Defiance bar [[round(breakbar)]]%">
                   <div class="r-replay-bar-fill" style="width: [[breakbar]]%"></div>
                 </div>
