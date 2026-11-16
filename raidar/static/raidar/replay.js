@@ -5,6 +5,7 @@
  *
  *   let viewer = new RaidarReplay.Viewer(rootElement, replayData, {
  *     staticRoot: '/static/raidar/img/',          // spec icons are under 48px/
+ *     topElement: tabs,                            // sized to fit, with the map and timeline, in the window
  *     specialisation: (profession, elite) => name,
  *     buffOrder: ['might', 'fury', ...],          // the order buffs are listed in
  *     onView: view => ...,                         // the state of players and targets, a few times a second
@@ -17,6 +18,10 @@
   const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16];
   const SKIP_MS = 5000;
   const MAX_ZOOM = 16;
+  const MIN_MAP_HEIGHT = 320;
+  // space left above options.topElement and below the timeline when the view fills the window
+  const WINDOW_MARGIN_TOP = 8;
+  const WINDOW_MARGIN_BOTTOM = 16;
   const VIEW_INTERVAL_MS = 125;  // how often the panel is updated while playing
   const TRAIL_MS = 6000;         // the selected player's trail
   // one per party; chosen to read on the site's dark purple background
@@ -280,12 +285,34 @@
       });
     }
 
-    // the canvas fills the width of its box; its height keeps the map's shape, within the window
+    // The canvas fills the width of its box. Its height is what is left of the window once options.topElement
+    // (the page's tabs) is at the top and the controls and timeline are at the bottom: see scrollIntoView.
+    // Without a topElement, it keeps the map's shape.
+    mapHeight(width) {
+      const top = this.options.topElement;
+      if (!top) {
+        return Math.round(clamp(width * this.world.height / this.world.width, MIN_MAP_HEIGHT,
+                                Math.max(window.innerHeight - 260, MIN_MAP_HEIGHT)));
+      }
+      const map = this.mapBox.getBoundingClientRect();
+      const above = map.top - top.getBoundingClientRect().top;
+      const below = this.mapBox.parentNode.getBoundingClientRect().bottom - map.bottom;
+      return Math.round(Math.max(MIN_MAP_HEIGHT,
+                                 window.innerHeight - WINDOW_MARGIN_TOP - above - below - WINDOW_MARGIN_BOTTOM));
+    }
+
+    // scrolls the page so options.topElement is at the top of the window, and with it the map and timeline
+    scrollIntoView() {
+      const top = this.options.topElement;
+      if (!top) return;
+      window.scrollTo({top: top.getBoundingClientRect().top + window.pageYOffset - WINDOW_MARGIN_TOP,
+                       behavior: 'smooth'});
+    }
+
     resize() {
       const ratio = window.devicePixelRatio || 1;
       const width = Math.max(this.mapBox.clientWidth, 200);
-      const maxHeight = Math.max(window.innerHeight - 260, 320);
-      const height = Math.round(clamp(width * this.world.height / this.world.width, 320, maxHeight));
+      const height = this.mapHeight(width);
       const previous = this.size;
       this.size = {width: width, height: height};
       this.canvas.style.width = width + 'px';

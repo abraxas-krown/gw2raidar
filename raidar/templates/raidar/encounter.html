@@ -70,7 +70,7 @@
 
 
 
-<nav class="uk-navbar-container uk-navbar-transparent" uk-navbar>
+<nav id="encounter-tabs" class="uk-navbar-container uk-navbar-transparent r-encounter-tabs" uk-navbar>
   <div class="uk-navbar-left">
     {# only the look of tabs (class), not the UIkit tab component (attribute): the component marks whatever is clicked as active, opening the Buffs menu included, and Ractive, which sets uk-active from persistent_page.tab, does not take that back #}
     <ul class="uk-tab">
@@ -90,24 +90,27 @@
       [[/if]]
     </ul>
   </div>
+  {# the phases as breadcrumbs, on one row: the path to a level, then that level's phases as tabs (helpers.phaseNav) #}
   <div class="uk-navbar-right uk-visible@m">
-    <ul uk-tab="swiping: true;">
-      [[#each phaseRows(encounter, page.phase)[0] as phase]]
-        <li uk-tooltip title="[[formatTime(phase.duration)]]" class="uk-flex-last [[phase.active || phase.open ? 'uk-active' : '']]"><a on-click="@this.set('page.phase', phase.name)">[[phase.name]][[#if phase.parts]] <i class="material-icons">keyboard_arrow_down</i>[[/if]]</a></li>
-      [[/each]]
-    </ul>
+    [[#with phaseNav(encounter, page.phase) as nav]]
+      <div class="r-phase-nav" as-phaseScroll="page.phase">
+        [[#if nav.path.length]]
+          <ul class="r-phase-path">
+            [[#each nav.path as phase]]
+              <li class="[[phase.active ? 'uk-active' : '']]" uk-tooltip title="[[formatTime(phase.duration)]]"><a on-click="@this.set('page.phase', phase.name)">[[phase.name]]</a></li>
+            [[/each]]
+          </ul>
+        [[/if]]
+        {# only the look of tabs (class), not the UIkit tab component (attribute): the component marks whatever is clicked as active, which Ractive does not take back #}
+        <ul class="uk-tab">
+          [[#each nav.tabs as phase]]
+            <li uk-tooltip title="[[formatTime(phase.duration)]]" class="[[phase.active ? 'uk-active' : '']]"><a on-click="@this.set('page.phase', phase.name)">[[phase.name]][[#if phase.parts]] <i class="material-icons">chevron_right</i>[[/if]]</a></li>
+          [[/each]]
+        </ul>
+      </div>
+    [[/with]]
   </div>
 </nav>
-[[#each phaseRows(encounter, page.phase).slice(1) as row]]
-  <div class="r-phase-parts uk-visible@m">
-    {# only the look of tabs (class), not the UIkit tab component (attribute): the component always activates the first tab when none is active #}
-    <ul class="uk-tab uk-flex-right uk-margin-small-top">
-      [[#each row as phase]]
-        <li uk-tooltip title="[[formatTime(phase.duration)]]" class="[[phase.active || phase.open ? 'uk-active' : '']]"><a on-click="@this.set('page.phase', phase.name)">[[phase.name]][[#if phase.parts]] <i class="material-icons">keyboard_arrow_down</i>[[/if]]</a></li>
-      [[/each]]
-    </ul>
-  </div>
-[[/each]]
 
 [[#if persistent_page.tab == 'combat_stats']]
   {% include 'raidar/encounter_combat_data.html' %}

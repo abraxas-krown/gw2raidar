@@ -42,12 +42,15 @@
         .filter(tab => buffTabs.indexOf(tab.id) != -1).map(tab => tab.order));
       viewer = new RaidarReplay.Viewer(node, data, {
         staticRoot: node.dataset.static,
+        // the tabs, the map and the timeline fit in the window together
+        topElement: document.getElementById('encounter-tabs'),
         specialisation: (profession, elite) => (ractive.get('data.specialisations')[profession] || {})[elite],
         buffOrder: buffOrder,
         onView: view => ractive.set('replay.view', view),
       });
       activeReplay = viewer;
       ractive.set('replay.loading', false);
+      viewer.scrollIntoView();
       // the phase tabs above jump to their phase
       let phase = ractive.get('page.phase');
       if (phase && phase != 'All') ractive.replaySeekPhase(phase);
@@ -60,6 +63,56 @@
         if (viewer) viewer.destroy();
         if (activeReplay === viewer) activeReplay = null;
         ractive.set('replay', null);
+      },
+    };
+  };
+
+  // The phase menu (encounter.html): when a level's tabs do not fit, they scroll sideways, next to the path; the
+  // mouse wheel scrolls them, and the chosen phase is kept in view whenever it changes
+  Ractive.decorators.phaseScroll = function(node) {
+    const tabs = () => node.querySelector('.uk-tab');
+    // marks the edges with tabs scrolled out of sight, which the styles fade
+    const markEdges = () => {
+      const row = tabs();
+      if (!row) return;
+      row.classList.toggle('r-more-left', row.scrollLeft > 1);
+      row.classList.toggle('r-more-right', row.scrollLeft + row.clientWidth < row.scrollWidth - 1);
+    };
+    const showChosen = () => setTimeout(() => {
+      const row = tabs(), chosen = row && row.querySelector('.uk-active');
+      if (!chosen) {
+        if (row) row.scrollLeft = 0;
+        markEdges();
+        return;
+      }
+      // where the chosen phase is in the tabs' scrolled content
+      const left = chosen.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft;
+      const right = left + chosen.offsetWidth;
+      if (left < row.scrollLeft) {
+        row.scrollLeft = left;
+      } else if (right > row.scrollLeft + row.clientWidth) {
+        row.scrollLeft = right - row.clientWidth;
+      }
+      markEdges();
+    });
+    const wheel = event => {
+      const row = tabs();
+      if (!row || !row.contains(event.target) || row.scrollWidth <= row.clientWidth ||
+          Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      row.scrollLeft += event.deltaY;
+      event.preventDefault();
+    };
+    node.addEventListener('wheel', wheel, { passive: false });
+    // scroll events do not bubble; capture them from the tabs, which Ractive may replace
+    node.addEventListener('scroll', markEdges, true);
+    window.addEventListener('resize', markEdges);
+    showChosen();
+    return {
+      update: showChosen,
+      teardown: () => {
+        node.removeEventListener('wheel', wheel);
+        node.removeEventListener('scroll', markEdges, true);
+        window.removeEventListener('resize', markEdges);
       },
     };
   };
@@ -342,29 +395,35 @@
   // The phase tabs of an encounter. Phases can be nested (a boss phase made of several smaller phases), so the
   // tabs are rows: the first holds "All" and the top level phases, and below it come the parts of the selected phase
   // and of the phases it is a part of.
-  helpers.phaseRows = (encounter, selected) => {
+  // The phase menu, as breadcrumbs: {path: [phase], tabs: [phase]}. The tabs are the phases of one level; the
+  // path leads to it, from "All". A phase with parts, once chosen, joins the path and its parts become the tabs.
+  // At the top level there is no path, and "All" is the first tab.
+  helpers.phaseNav = (encounter, selected) => {
     const parents = encounter.phase_parents || {};
     const phases = encounter.phase_order || [];
     const children = parent => phases.filter(name => name !== 'All' && (parents[name] || null) === parent);
-    const path = [];
-    for (let name = selected; name && name !== 'All' && path.length < 10; name = parents[name]) {
-      path.unshift(name);
+    // the selected phase and the phases it is a part of, from the top level down
+    const chain = [];
+    for (let name = selected; name && name !== 'All' && chain.length < 10; name = parents[name]) {
+      chain.unshift(name);
     }
-    const rows = [['All'].concat(children(null))];
-
-    path.forEach(name => {
-      const parts = children(name);
-      if (parts.length) {
-        rows.push(parts);
-      }
-    });
-    return rows.map(row => row.map(name => ({
+    const hasParts = name => name !== 'All' && children(name).length > 0;
+    let path, tabs;
+    if (hasParts(selected)) {
+      path = chain;
+      tabs = children(selected);
+    } else {
+      path = chain.slice(0, -1);
+      tabs = path.length ? children(path[path.length - 1]) : ['All'].concat(children(null));
+    }
+    if (path.length) path = ['All'].concat(path);
+    const phase = name => ({
       name: name,
       duration: encounter.phases[name].duration,
       active: name === selected,
-      open: name !== selected && (name === 'All' ? selected === 'All' : path.indexOf(name) >= 0),
-      parts: name !== 'All' && children(name).length > 0,
-    })));
+      parts: hasParts(name),
+    });
+    return {path: path.map(phase), tabs: tabs.map(phase)};
   };
   // Name of an area for menus: the boss, followed by CM or LCM for the challenge modes
   helpers.areaLabel = id => {
