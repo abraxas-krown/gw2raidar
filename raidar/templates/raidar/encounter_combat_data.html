@@ -137,10 +137,10 @@
               [[#with squad.actual.breakbar ? clamp(100 * section.value / squad.actual.breakbar) : 0 as width]]
                 [[#if page.breakbar_boss]]
                   {# total breakbar backdrop #}
-                  <rect class="chart-hover r-bg-101" on-click="@.set({'page.breakbar_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>[[num(section.total, 0)]]</strong> damage to all defiance bars." x='0%' y='16px' height='16px' width='[[squad.actual.breakbar ? clamp(100 * section.total / squad.actual.breakbar) : 0]]%' opacity='0.3' />
+                  <rect class="chart-hover r-bg-0" on-click="@.set({'page.breakbar_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>[[num(section.total, 0)]]</strong> damage to all defiance bars." x='0%' y='16px' height='16px' width='[[squad.actual.breakbar ? clamp(100 * section.total / squad.actual.breakbar) : 0]]%' opacity='0.3' />
                 [[/if]]
                 {# graph #}
-                <rect class="chart-hover r-bg-101" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.value, 0)]]</strong> damage to [[page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars']]." x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
+                <rect class="chart-hover r-bg-0" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.value, 0)]]</strong> damage to [[page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars']]." x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
                 {# text #}
                 <text x='[[width < 35 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 35 ? 'start' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14'>[[num(section.value, 0)]]</text>
               [[/with]]
@@ -434,10 +434,10 @@
               [[#with encounter.max_player_breakbar ? clamp(100 * section.value / encounter.max_player_breakbar) : 0 as width]]
                 [[#if page.breakbar_boss]]
                   {# total breakbar backdrop #}
-                  <rect class="chart-hover r-bg-101" on-click="@.set({'page.breakbar_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>[[num(section.total, 0)]]</strong> damage to all defiance bars." x='0%' y='16px' height='16px' width='[[encounter.max_player_breakbar ? clamp(100 * section.total / encounter.max_player_breakbar) : 0]]%' opacity='0.3' />
+                  <rect class="chart-hover r-bg-0" on-click="@.set({'page.breakbar_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>[[num(section.total, 0)]]</strong> damage to all defiance bars." x='0%' y='16px' height='16px' width='[[encounter.max_player_breakbar ? clamp(100 * section.total / encounter.max_player_breakbar) : 0]]%' opacity='0.3' />
                 [[/if]]
                 {# graph #}
-                <rect class="chart-hover r-bg-101" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.value, 0)]]</strong> damage to [[page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars']]." x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
+                <rect class="chart-hover r-bg-0" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.value, 0)]]</strong> damage to [[page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars']]." x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
                 {# text #}
                 <text x='[[width < 35 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 35 ? 'start' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14'>[[num(section.value, 0)]]</text>
               [[/with]]
