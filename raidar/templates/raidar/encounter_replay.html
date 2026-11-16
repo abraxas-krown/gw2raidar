@@ -68,6 +68,16 @@
                 <span class="r-replay-unit-value">[[#if state == 'dead']]Dead[[else]][[num(health, 1)]]%[[/if]]</span>
               </div>
               <div class="r-replay-bar"><div class="r-replay-bar-fill" style="width: [[health]]%"></div></div>
+              [[#if breakbar != null]]
+                {# the defiance bar, while it is up; 0 is a broken bar #}
+                <div class="r-replay-unit-line r-replay-breakbar-line">
+                  <span>Defiance</span>
+                  <span class="r-replay-unit-value">[[round(breakbar)]]%</span>
+                </div>
+                <div class="r-replay-bar r-replay-breakbar" title="Defiance bar [[round(breakbar)]]%">
+                  <div class="r-replay-bar-fill" style="width: [[breakbar]]%"></div>
+                </div>
+              [[/if]]
             </div>
           </div>
         [[/each]]

@@ -288,6 +288,16 @@
 .r-replay-target .r-replay-bar-fill {
   background-color: #BF3F47;
 }
+.r-replay-breakbar-line {
+  color: #958cbb;
+  font-size: 11px;
+}
+.r-replay-breakbar {
+  height: 4px;
+}
+.r-replay-target .r-replay-breakbar .r-replay-bar-fill {
+  background-color: #58C4D8;
+}
 .r-replay-bar-barrier {
   position: absolute;
   top: 0;

@@ -48,6 +48,10 @@ def make_log():
             {"name": "Full Fight", "start": 0, "end": 900, "targets": [0, 1], "subPhases": [1]},
             {"name": "Phase 1", "start": 0, "end": 400, "targets": [0]},
             {"name": "Breakbar 1", "start": 100, "end": 200, "breakbarPhase": True},
+            # the boss's defiance bar: up from breakbarActive, or else 2 seconds after the phase starts
+            {"name": "Test Boss Breakbar 1", "start": 100, "end": 500, "breakbarPhase": True, "targets": [0],
+             "breakbarActive": 300},
+            {"name": "Test Boss Breakbar 2", "start": -1400, "end": 5000, "breakbarPhase": True, "targets": [0]},
         ],
         "players": [
             # pixel (0, 0) is the top left of the map: the smallest x and the largest y
@@ -57,6 +61,7 @@ def make_log():
         ],
         "targets": [
             {"name": "Test Boss", "id": 12345, "healthPercents": [[0, 100.0], [600, 42.123]],
+             "breakbarPercents": [[0, 100], [350, 61.27], [500, 0], [700, 100]],
              "combatReplayData": {"start": 0, "end": 900, "positions": [[375, 187.5]] * 3, "orientations": [0, 0, 0],
                                   "dead": [[850, INT64_MAX]]}},
             {"name": "Add", "id": 54321, "combatReplayData": {"start": 250, "end": 600,
@@ -143,6 +148,16 @@ class ReplayTest(unittest.TestCase):
         self.assertEqual(alpha["barrier"], [[0, 0.0], [100, 12.5]])
         # only buffs of the kept tabs that were ever on; EI's open end is clamped
         self.assertEqual(alpha["buffs"], {"might": [[0, 5], [400, 25]]})
+
+    def test_target_breakbar(self):
+        result = self.convert()
+        boss = self.actor(result, "Test Boss")
+        self.assertEqual(boss["breakbar"], [[0, 100.0], [350, 61.3], [500, 0.0], [700, 100.0]])
+        # the second phase has no breakbarActive: up 2 seconds after its start, until the end of the log
+        self.assertEqual(boss["breakbar_active"], [[300, 500], [600, 900]])
+        # a target without a defiance bar has neither field
+        self.assertNotIn("breakbar", self.actor(result, "Add"))
+        self.assertNotIn("breakbar_active", self.actor(result, "Add"))
 
     def test_target_health(self):
         boss = self.actor(self.convert(), "Test Boss")

@@ -27,6 +27,8 @@ Format, version 1 (all times are milliseconds from the start of the log, clamped
         "health": [[time, percent], ...],           # health over time; each value holds until the next
         "barrier": [[time, percent], ...],          # players: barrier, in percent of their health
         "buffs": {"might": [[time, stacks], ...], ...},   # players: buff codes (analyser.buffs), see REPLAY_BUFF_TABS
+        "breakbar": [[time, percent], ...],         # targets with a defiance bar: its value over time
+        "breakbar_active": [[start, end], ...],     # targets with a defiance bar: when it is up (can be broken)
         "damage": [...],               # players: running damage total at each second, to everything
         "boss_damage": [...],          # players: running damage total at each second, to the fight's targets
       }, ...],
@@ -59,6 +61,9 @@ IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 EI_MAP_PIXELS = 750
 # EI rounds inchToPixel to 3 decimals
 SCALE_TOLERANCE = 0.0006
+
+# EI's breakbar phases start this long before the bar is up, when breakbarActive is not given
+BREAKBAR_ACTIVE_DELAY = 2000
 
 # The buffs kept for each player, by the tab the site lists them on (analyser.buffs.BUFF_CATEGORIES)
 REPLAY_BUFF_TABS = frozenset([BOONS_TAB, "offensive_buffs", "support_buffs", "defensive_buffs"])
@@ -185,6 +190,25 @@ def _player_buffs(player, code_by_id, duration):
     return buffs
 
 
+def _breakbar_windows(log, duration):
+    """{index into the log's targets: [[start, end], ...]}: when each target's defiance bar is up.
+
+    EI makes a phase of each (breakbarPhase); the bar is up from breakbarActive (EI: 2 seconds after the
+    phase starts) until the phase ends, when it is broken or has recovered.
+    """
+    windows = {}
+    for phase in log.get("phases") or []:
+        if not phase.get("breakbarPhase") or not phase.get("targets"):
+            continue
+        start = phase.get("breakbarActive")
+        if start is None:
+            start = phase["start"] + BREAKBAR_ACTIVE_DELAY
+        start, end = _clamp(start, duration), _clamp(phase["end"], duration)
+        if end > start:
+            windows.setdefault(phase["targets"][0], []).append([start, end])
+    return {index: sorted(spans) for index, spans in windows.items()}
+
+
 def _running_total(series):
     return [int(value) for value in series or []]
 
@@ -230,13 +254,17 @@ def _convert(log, boss, maps_path):
         actor["boss_damage"] = _boss_damage(player, target_indices)
         actors.append(actor)
 
-    for target in log.get("targets") or []:
+    breakbars = _breakbar_windows(log, duration)
+    for index, target in enumerate(log.get("targets") or []):
         data = target.get("combatReplayData") or {}
         if target.get("isFake") or not data.get("positions"):
             continue
         actor = {"kind": "target", "name": target["name"], "species": target.get("id")}
         actor.update(_movement(data, world, pixels, interval, duration))
         actor["health"] = _steps(target.get("healthPercents"), duration, 2)
+        if index in breakbars:
+            actor["breakbar"] = _steps(target.get("breakbarPercents"), duration, 1)
+            actor["breakbar_active"] = breakbars[index]
         actors.append(actor)
 
     player_names = set(player["name"] for player in players)

@@ -29,6 +29,7 @@
     down: '#CF890F',
     dead: '#BF3F47',
     target: '#BF3F47',
+    breakbar: '#58C4D8',
     targetEdge: '#461530',
     selected: '#FCF1E2',
   };
@@ -405,6 +406,12 @@
       return place;
     }
 
+    // a target's defiance bar (percent) while it is up, or null
+    breakbarOf(target, time) {
+      if (!target.breakbar_active || !within(target.breakbar_active, time) || within(target.dead, time)) return null;
+      return valueAt(target.breakbar, time, 100);
+    }
+
     stateOf(actor, time) {
       if (within(actor.dc, time)) return 'dc';
       if (within(actor.dead, time)) return 'dead';
@@ -445,6 +452,7 @@
           name: target.name,
           state: state,
           health: state === 'dead' ? 0 : valueAt(target.health, time, 100),
+          breakbar: this.breakbarOf(target, time),
           selected: this.selected === target.index,
         };
       });
@@ -573,7 +581,20 @@
       context.lineWidth = 2;
       context.strokeStyle = this.selected === target.index ? COLOURS.selected : COLOURS.targetEdge;
       context.stroke();
+      const breakbar = this.breakbarOf(target, this.time);
+      if (breakbar !== null) this.drawBreakbar(screen, radius, breakbar);
       return {actor: target, x: screen.x, y: screen.y, radius: radius};
+    }
+
+    // the defiance bar under a target, while it is up
+    drawBreakbar(screen, radius, percent) {
+      const context = this.context;
+      const width = Math.max(32, radius * 2.2), height = 5;
+      const x = screen.x - width / 2, y = screen.y + radius + 5;
+      context.fillStyle = 'rgba(21, 20, 30, 0.9)';
+      context.fillRect(x - 1, y - 1, width + 2, height + 2);
+      context.fillStyle = COLOURS.breakbar;
+      context.fillRect(x, y, width * clamp(percent, 0, 100) / 100, height);
     }
 
     drawTrail(player, time) {
@@ -603,6 +624,8 @@
       let text = actor.name || 'Private player';
       if (actor.kind === 'target') {
         text += ' – ' + valueAt(actor.health, this.time, 100).toFixed(1) + '%';
+        const breakbar = this.breakbarOf(actor, this.time);
+        if (breakbar !== null) text += ', defiance ' + Math.round(breakbar) + '%';
       }
       context.font = '600 13px "Source Sans Pro", sans-serif';
       const width = context.measureText(text).width + 12;
