@@ -19,6 +19,8 @@
   // back and forward skip 5 seconds of watching: more of the fight when it plays faster
   const SKIP_MS = 5000;
   const MAX_ZOOM = 16;
+  // the target lock zooms in to this, as a multiple of the whole-map view
+  const LOCK_ZOOM = 4;
   const MIN_MAP_HEIGHT = 320;
   // space left above options.topElement and below the timeline when the view fills the window
   const WINDOW_MARGIN_TOP = 8;
@@ -118,6 +120,8 @@
       this.playing = false;
       this.speedIndex = SPEEDS.indexOf(1);
       this.selected = null;
+      // the map follows the selected player or target, centred
+      this.locked = false;
       this.hovered = null;
       this.lastViewAt = 0;
       this.listeners = [];
@@ -179,10 +183,9 @@
       const speeds = element('div', 'uk-button-group', controls);
       this.slowerButton = button(speeds, 'keyboard_double_arrow_left', 'Slower', () => this.setSpeed(this.speedIndex - 1));
       this.fasterButton = button(speeds, 'keyboard_double_arrow_right', 'Faster', () => this.setSpeed(this.speedIndex + 1));
-      // a magnifier with a minus: it zooms all the way out (corner-arrow icons read as full screen,
-      // a crosshair as "go to the selected player"); on the far right
-      button(controls, 'zoom_out', 'Zoom out to the whole map', () => { this.fit(); this.render(); })
-        .classList.add('r-replay-zoom-out');
+      // the target lock (a crosshair with a dot), on the far right; double-clicking the map shows all of it
+      this.lockButton = button(controls, 'my_location', '', () => this.setLock(!this.locked));
+      this.lockButton.classList.add('r-replay-lock');
 
       this.buildTimeline(root.querySelector('.r-replay-timeline'));
       this.updateControls();
@@ -192,7 +195,7 @@
       this.listen(window, 'mousemove', event => this.onMouseMove(event));
       this.listen(window, 'mouseup', event => this.onMouseUp(event));
       this.listen(this.canvas, 'mouseleave', () => { this.hovered = null; this.render(); });
-      this.listen(this.canvas, 'dblclick', event => { event.preventDefault(); this.fit(); this.render(); });
+      this.listen(this.canvas, 'dblclick', event => { event.preventDefault(); this.setLock(false); this.fit(); this.render(); });
       this.listen(this.canvas, 'keydown', event => this.onKey(event));
       this.listen(window, 'resize', () => { this.resize(); this.render(); });
     }
@@ -409,16 +412,40 @@
       this.updateControls();
     }
 
+    // selecting someone else while locked moves the lock to them; deselecting ends it
     select(index) {
       this.selected = this.selected === index ? null : index;
+      if (this.selected === null) this.locked = false;
+      this.updateControls();
       this.render();
       this.emitView(true);
+    }
+
+    setLock(on) {
+      const locking = on && this.selected !== null && !this.locked;
+      this.locked = on && this.selected !== null;
+      if (locking) this.scale = Math.max(this.scale, Math.min(this.fitScale * LOCK_ZOOM, this.fitScale * MAX_ZOOM));
+      this.updateControls();
+      this.render();
+    }
+
+    // put the selected player or target in the middle of the map; while they are not there, the view stays
+    centerOnSelected() {
+      const place = this.placeOf(this.actors[this.selected], this.time);
+      if (!place) return;
+      this.originX = this.size.width / 2 - (place.x - this.world.minX) * this.scale;
+      this.originY = this.size.height / 2 - (this.world.maxY - place.y) * this.scale;
     }
 
     updateControls() {
       this.playButton.innerHTML = '<i class="material-icons">' + (this.playing ? 'pause' : 'play_arrow') + '</i>';
       this.playButton.title = this.playing ? 'Pause (space)' : 'Play (space)';
       this.speedLabel.textContent = SPEEDS[this.speedIndex] + '×';
+      this.lockButton.disabled = this.selected === null;
+      this.lockButton.classList.toggle('uk-active', this.locked);
+      this.lockButton.title = this.selected === null ? 'Select a player or target to lock onto' :
+        this.locked ? 'Stop following ' + (this.actors[this.selected].name || 'Private player') :
+        'Lock onto ' + (this.actors[this.selected].name || 'Private player');
       const seconds = this.skipLength() / 1000, speed = SPEEDS[this.speedIndex];
       const at = speed === 1 ? '' : ' (5 seconds at ' + speed + '×)';
       this.backButton.title = 'Back ' + seconds + ' seconds' + at + ' (←)';
@@ -518,6 +545,7 @@
     /* -------------------------------------------------------------- drawing */
 
     render() {
+      if (this.locked) this.centerOnSelected();
       const context = this.context, size = this.size;
       context.fillStyle = COLOURS.background;
       context.fillRect(0, 0, size.width, size.height);
@@ -696,13 +724,14 @@
 
     onWheel(event) {
       event.preventDefault();
-      const point = this.pointer(event);
+      // while locked, zoom about the middle, where the locked-on player or target is
+      const point = this.locked ? {x: this.size.width / 2, y: this.size.height / 2} : this.pointer(event);
       const factor = Math.pow(1.0015, -event.deltaY * (event.deltaMode === 1 ? 33 : 1));
       const scale = clamp(this.scale * factor, this.fitScale, this.fitScale * MAX_ZOOM);
       this.originX = point.x - (point.x - this.originX) * scale / this.scale;
       this.originY = point.y - (point.y - this.originY) * scale / this.scale;
       this.scale = scale;
-      if (scale === this.fitScale) this.fit();
+      if (scale === this.fitScale && !this.locked) this.fit();
       this.root.classList.add('r-replay-used');
       this.render();
     }
@@ -721,6 +750,8 @@
         const point = this.pointer(event);
         const dx = point.x - this.drag.x, dy = point.y - this.drag.y;
         if (Math.abs(dx) + Math.abs(dy) > 3) this.drag.moved = true;
+        // panning away ends the target lock
+        if (this.drag.moved && this.locked) this.setLock(false);
         this.originX = this.drag.originX + dx;
         this.originY = this.drag.originY + dy;
         this.root.classList.add('r-replay-used');
