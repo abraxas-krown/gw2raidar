@@ -16,6 +16,7 @@
   'use strict';
 
   const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16];
+  // back and forward skip 5 seconds of watching: more of the fight when it plays faster
   const SKIP_MS = 5000;
   const MAX_ZOOM = 16;
   const MIN_MAP_HEIGHT = 320;
@@ -168,21 +169,20 @@
       const controls = root.querySelector('.r-replay-controls');
       const transport = element('div', 'uk-button-group r-replay-transport', controls);
       button(transport, 'replay', 'Restart', () => this.seek(0));
-      button(transport, 'replay_5', 'Back 5 seconds', () => this.seek(this.time - SKIP_MS));
+      this.backButton = button(transport, 'replay_5', '', () => this.skip(-1));
       this.playButton = button(transport, 'play_arrow', 'Play (space)', () => this.toggle());
-      button(transport, 'forward_5', 'Forward 5 seconds', () => this.seek(this.time + SKIP_MS));
+      this.forwardButton = button(transport, 'forward_5', '', () => this.skip(1));
       this.clock = element('div', 'r-replay-clock', controls);
-      const speeds = element('div', 'uk-button-group r-replay-speeds', controls);
-      this.speedButtons = SPEEDS.map((speed, index) => {
-        const node = element('button', 'uk-button uk-button-default uk-button-small', speeds);
-        node.type = 'button';
-        node.textContent = speed + '×';
-        node.addEventListener('click', () => this.setSpeed(index));
-        return node;
-      });
+      // the current speed after the clock, then slower and faster
+      this.speedLabel = element('span', 'r-replay-speed', controls);
+      this.speedLabel.title = 'Playback speed';
+      const speeds = element('div', 'uk-button-group', controls);
+      this.slowerButton = button(speeds, 'keyboard_double_arrow_left', 'Slower', () => this.setSpeed(this.speedIndex - 1));
+      this.fasterButton = button(speeds, 'keyboard_double_arrow_right', 'Faster', () => this.setSpeed(this.speedIndex + 1));
       // a magnifier with a minus: it zooms all the way out (corner-arrow icons read as full screen,
-      // a crosshair as "go to the selected player")
-      button(controls, 'zoom_out', 'Zoom out to the whole map', () => { this.fit(); this.render(); });
+      // a crosshair as "go to the selected player"); on the far right
+      button(controls, 'zoom_out', 'Zoom out to the whole map', () => { this.fit(); this.render(); })
+        .classList.add('r-replay-zoom-out');
 
       this.buildTimeline(root.querySelector('.r-replay-timeline'));
       this.updateControls();
@@ -395,8 +395,17 @@
       this.emitView(true);
     }
 
+    // fight time covered by 5 seconds of playback at the current speed
+    skipLength() {
+      return SKIP_MS * SPEEDS[this.speedIndex];
+    }
+
+    skip(direction) {
+      this.seek(this.time + direction * this.skipLength());
+    }
+
     setSpeed(index) {
-      this.speedIndex = index;
+      this.speedIndex = clamp(index, 0, SPEEDS.length - 1);
       this.updateControls();
     }
 
@@ -409,7 +418,13 @@
     updateControls() {
       this.playButton.innerHTML = '<i class="material-icons">' + (this.playing ? 'pause' : 'play_arrow') + '</i>';
       this.playButton.title = this.playing ? 'Pause (space)' : 'Play (space)';
-      this.speedButtons.forEach((node, index) => node.classList.toggle('uk-active', index === this.speedIndex));
+      this.speedLabel.textContent = SPEEDS[this.speedIndex] + '×';
+      const seconds = this.skipLength() / 1000, speed = SPEEDS[this.speedIndex];
+      const at = speed === 1 ? '' : ' (5 seconds at ' + speed + '×)';
+      this.backButton.title = 'Back ' + seconds + ' seconds' + at + ' (←)';
+      this.forwardButton.title = 'Forward ' + seconds + ' seconds' + at + ' (→)';
+      this.slowerButton.disabled = this.speedIndex === 0;
+      this.fasterButton.disabled = this.speedIndex === SPEEDS.length - 1;
       this.updateTimeline();
     }
 
@@ -739,9 +754,9 @@
       if (event.key === ' ') {
         this.toggle();
       } else if (event.key === 'ArrowLeft') {
-        this.seek(this.time - SKIP_MS);
+        this.skip(-1);
       } else if (event.key === 'ArrowRight') {
-        this.seek(this.time + SKIP_MS);
+        this.skip(1);
       } else {
         return;
       }
