@@ -100,9 +100,10 @@
                 </span>
               </div>
               <div class="r-replay-bar" title="Health [[round(health)]]%[[#if barrier]], barrier [[round(barrier)]]%[[/if]]">
-                <div class="r-replay-bar-fill" style="width: [[health]]%"></div>
+                {# health, then barrier after it; with more barrier than missing health, the two share the bar #}
+                <div class="r-replay-bar-fill" style="width: [[bar.health]]%"></div>
                 [[#if barrier]]
-                  <div class="r-replay-bar-barrier" style="left: [[health]]%; width: [[Math.min(barrier, 100 - health)]]%"></div>
+                  <div class="r-replay-bar-barrier" style="left: [[bar.health]]%; width: [[bar.barrier]]%"></div>
                 [[/if]]
               </div>
               [[#if ~/replay_show.players.dps]]

@@ -101,6 +101,13 @@
     return series[second] + (series[next] - series[second]) * (at - second);
   }
 
+  // the widths of the health and barrier sections of a health bar: barrier fills missing health, and when there is
+  // more of it than that, the bar is rescaled so health and barrier fill it together (as in the game)
+  function healthBar(health, barrier) {
+    const scale = 100 / Math.max(100, health + barrier);
+    return {health: health * scale, barrier: barrier * scale};
+  }
+
   function formatTime(ms, tenths) {
     ms = Math.max(0, ms);
     const minutes = Math.floor(ms / 60000);
@@ -553,6 +560,8 @@
       const maxDps = Math.max(1, ...Array.from(dps.values(), value => value.total));
       this.players.forEach(player => {
         const state = this.stateOf(player, time);
+        const health = state === 'dead' ? 0 : valueAt(player.health, time, 100);
+        const barrier = state === 'dead' ? 0 : valueAt(player.barrier, time, 0);
         const playerDps = dps.get(player);
         const party = player.party || 0;
         (parties[party] = parties[party] || {party: party, colour: partyColour(party), players: []}).players.push({
@@ -563,8 +572,9 @@
           commander: within(player.commander, time),
           spec: player.spec,
           state: state,
-          health: state === 'dead' ? 0 : valueAt(player.health, time, 100),
-          barrier: state === 'dead' ? 0 : valueAt(player.barrier, time, 0),
+          health: health,
+          barrier: barrier,
+          bar: healthBar(health, barrier),
           buffs: this.activeBuffs(player.buffs, time, this.buffRank),
           conditions: this.activeBuffs(player.conditions, time, this.conditionRank),
           dps: {
