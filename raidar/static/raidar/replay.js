@@ -549,12 +549,12 @@
           selected: this.selected === target.index,
         };
       });
-      // the bosses first, each group in the log's order
-      targets.sort((a, b) => (b.boss - a.boss) || (a.index - b.index));
+      // the panel lists the bosses above the players and the other targets below them
       return {
         time: time,
         parties: Object.keys(parties).sort((a, b) => a - b).map(party => parties[party]),
-        targets: targets,
+        bosses: targets.filter(target => target.boss),
+        adds: targets.filter(target => !target.boss),
       };
     }
 
