@@ -10,8 +10,7 @@
       </span>
     [[/each]]
   [[/partial]]
-  {# a boss or other target in the panel; the context is one of replay.view.bosses or replay.view.adds, whose
-     buffs and conditions follow their group's toggles (replay_show.bosses or replay_show.targets) #}
+  {# a boss or other target in the panel (replay.view.bosses or replay.view.adds); its buffs follow its group's toggles (replay_show.bosses or replay_show.targets) #}
   [[#partial replayTarget]]
     <div class="r-replay-unit r-replay-target [[boss ? 'r-replay-boss' : '']] r-replay-[[state]] [[selected ? 'r-replay-selected' : '']]" on-click="@this.replaySelect(index)">
       <div class="r-replay-unit-body">
