@@ -550,6 +550,8 @@
           index: player.index,
           name: player.name,
           private: !!player.private,
+          // while they have a commander tag
+          commander: within(player.commander, time),
           spec: player.spec,
           state: state,
           health: state === 'dead' ? 0 : valueAt(player.health, time, 100),

@@ -25,6 +25,7 @@ Format, version 1 (all times are milliseconds from the start of the log, clamped
         "x": [...], "y": [...],        # game world position in inches, one sample every sample_interval
         "facing": [...],               # degrees counter-clockwise from +x (world, y up), one per sample, or empty
         "down": [[start, end], ...], "dead": [...], "dc": [...],
+        "commander": [[start, end], ...],           # players with a commander tag: when they had it
         "health": [[time, percent], ...],           # health over time; each value holds until the next
         "barrier": [[time, percent], ...],          # players: barrier, in percent of their health
         "buffs": {"might": [[time, stacks], ...], ...},   # buff codes (analyser.buffs), see REPLAY_BUFF_TABS
@@ -279,6 +280,10 @@ def _convert(log, boss, maps_path):
         actor["health"] = _steps(player.get("healthPercents"), duration, 1)
         actor["barrier"] = _steps(player.get("barrierPercents"), duration, 1)
         add_buffs(actor, player.get("buffUptimes"))
+        if player.get("hasCommanderTag"):
+            commander = _intervals(player.get("commanderTagStates"), duration)
+            if commander:
+                actor["commander"] = commander
         actor["damage"] = _running_total(player["damage1S"][0])
         actor["boss_damage"] = _boss_damage(player, target_indices)
         actors.append(actor)

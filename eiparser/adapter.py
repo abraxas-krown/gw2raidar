@@ -347,6 +347,8 @@ def convert(log):
             "healing": player["healing"],
             "condition": player["condition"],
             "concentration": player["concentration"],
+            # whether they had a commander tag at some time in the fight
+            "commander": bool(player.get("hasCommanderTag")),
         }
 
     arc_version = log.get("arcVersion") or ""

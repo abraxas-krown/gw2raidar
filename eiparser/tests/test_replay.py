@@ -159,6 +159,14 @@ class ReplayTest(unittest.TestCase):
         self.assertEqual(alpha["buffs"], {"might": [[0, 5], [400, 25]]})
         self.assertEqual(alpha["conditions"], {"bleeding": [[0, 0], [200, 3], [500, 0]]})
 
+    def test_commander(self):
+        log = make_log()
+        # EI's open end is clamped
+        log["players"][1].update(hasCommanderTag=True, commanderTagStates=[[0, 300], [500, INT64_MAX]])
+        result = self.convert(log)
+        self.assertEqual(self.actor(result, "Bravo Character")["commander"], [[0, 300], [500, 900]])
+        self.assertNotIn("commander", self.actor(result, "Alpha Character"))
+
     def test_target_buffs_and_conditions(self):
         result = self.convert()
         boss = self.actor(result, "Test Boss")

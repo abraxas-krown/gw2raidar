@@ -96,6 +96,7 @@
                 [[#if private]]
                   <span class="private" data-text="PRIVATE">PRIVATE</span>
                 [[else]]
+                  [[#if commander]]{% include 'raidar/commander_tag.html' %}[[/if]]
                   <span class="r-replay-unit-name uk-text-truncate">[[name]]</span>
                 [[/if]]
                 <span class="r-replay-unit-value">
