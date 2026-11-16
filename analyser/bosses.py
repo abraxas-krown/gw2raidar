@@ -78,16 +78,21 @@ class Boss:
     ``name`` is unique and includes the mode ("Cairn (CM)"); ``base_name`` is the name of the boss alone
     ("Cairn"), which is what the site shows next to a tag for the mode.
 
+    ``base_area_id`` is the area ID of the normal mode encounter, shared by all its modes; the boss image
+    is ``raidar/static/raidar/img/icon/<base_area_id>.png``.
+
     ``metrics`` are the mechanics the pre-EI analyser recorded; they are only
     used to label mechanics of encounters parsed before the EI switch.
     Mechanics of EI-parsed encounters are stored with the encounter itself.
     """
     def __init__(self, name, kind, area_id, ei_ids, metrics=None, enrage=None,
-                 has_cm=False, has_legendary_cm=False, non_cm_allowed=True, mode=Mode.NORMAL, base_name=None):
+                 has_cm=False, has_legendary_cm=False, non_cm_allowed=True, mode=Mode.NORMAL, base_name=None,
+                 base_area_id=None):
         self.name = name
         self.base_name = base_name or name
         self.kind = kind
         self.area_id = area_id
+        self.base_area_id = base_area_id or area_id
         self.ei_ids = ei_ids if isinstance(ei_ids, (list, tuple)) else [ei_ids]
         self.metrics = [] if metrics is None else metrics
         self.enrage = enrage
@@ -108,7 +113,8 @@ class Boss:
 
     def variant(self, mode):
         return Boss(self.name + MODE_SUFFIXES[mode], self.kind, mode_area_id(self.area_id, mode), self.ei_ids,
-                    metrics=self.metrics, enrage=self.enrage, mode=mode, base_name=self.name)
+                    metrics=self.metrics, enrage=self.enrage, mode=mode, base_name=self.name,
+                    base_area_id=self.area_id)
 
     def __repr__(self):
         return "%s (#%d)" % (self.name, self.area_id)

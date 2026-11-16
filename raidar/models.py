@@ -738,6 +738,7 @@ class Encounter(models.Model):
                 "name": self.area.name,
                 "mode": self.area.mode,
                 "mode_tag": self.area.mode_tag,
+                "icon": BOSSES[self.area_id].base_area_id if self.area_id in BOSSES else None,
                 "filename": self.filename,
                 "uploaded_at": self.uploaded_on.timestamp(),
                 "uploaded_by": self.uploaded_by.username,
