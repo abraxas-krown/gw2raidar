@@ -1,6 +1,15 @@
 {% load static %}
 {# The map, its controls and the timeline are drawn by RaidarReplay.Viewer (replay.js); the panel on the right shows its state (replay.view) #}
 <div class="r-replay uk-margin-top" as-replayViewer="page.no" data-static="{% static 'raidar/img/' %}">
+  {# a row of buff (or condition) icons; the context is a list of {name, icon, stacks} #}
+  [[#partial replayBuffList]]
+    [[#each this]]
+      <span class="r-replay-buff" title="[[name]][[#if stacks > 1]] ([[stacks]])[[/if]]">
+        <img src="[[icon]]" alt="[[name]]">
+        [[#if stacks > 1]]<span class="r-replay-buff-stacks">[[stacks]]</span>[[/if]]
+      </span>
+    [[/each]]
+  [[/partial]]
   <div class="r-replay-stage">
     {# the viewer adds its canvas to .r-replay-map; Ractive's messages are kept out of it #}
     <div class="r-replay-map"></div>
@@ -14,6 +23,18 @@
   </div>
 
   <div class="r-replay-side">
+    [[#if replay.view.parties.length]]
+      <div class="r-replay-section-head">
+        <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">Players</h6>
+        {# the Boons and Condis toggles (replay_show) #}
+        <div class="r-replay-toggles">
+          <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.boons ? 'uk-active' : '']]"
+                  title="[[~/replay_show.players.boons ? 'Hide' : 'Show']] boons and buffs" on-click="@this.toggle('replay_show.players.boons')">Boons</button>
+          <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.players.conditions ? 'uk-active' : '']]"
+                  title="[[~/replay_show.players.conditions ? 'Hide' : 'Show']] conditions" on-click="@this.toggle('replay_show.players.conditions')">Condis</button>
+        </div>
+      </div>
+    [[/if]]
     [[#each replay.view.parties]]
       <div class="r-replay-group">
         <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">
@@ -41,16 +62,12 @@
                   <div class="r-replay-bar-barrier" style="left: [[health]]%; width: [[Math.min(barrier, 100 - health)]]%"></div>
                 [[/if]]
               </div>
-              <div class="r-replay-buffs">
-                [[#each buffs]]
-                  [[#if ~/encounter.buffs[code]]]
-                    <span class="r-replay-buff" title="[[~/encounter.buffs[code].name]][[#if stacks > 1]] ([[stacks]])[[/if]]">
-                      <img src="[[~/encounter.buffs[code].icon]]" alt="[[~/encounter.buffs[code].name]]">
-                      [[#if stacks > 1]]<span class="r-replay-buff-stacks">[[stacks]]</span>[[/if]]
-                    </span>
-                  [[/if]]
-                [[/each]]
-              </div>
+              [[#if ~/replay_show.players.boons]]
+                <div class="r-replay-buffs">[[> replayBuffList buffs]]</div>
+              [[/if]]
+              [[#if ~/replay_show.players.conditions]]
+                <div class="r-replay-buffs r-replay-conditions">[[> replayBuffList conditions]]</div>
+              [[/if]]
             </div>
           </div>
         [[/each]]
@@ -59,7 +76,16 @@
 
     [[#if replay.view.targets.length]]
       <div class="r-replay-group">
-        <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">Targets</h6>
+        <div class="r-replay-section-head">
+          <h6 class="r-replay-group-title uk-font-family-secondary uk-text-uppercase">Targets</h6>
+          {# the Boons and Condis toggles (replay_show) #}
+          <div class="r-replay-toggles">
+            <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.targets.boons ? 'uk-active' : '']]"
+                    title="[[~/replay_show.targets.boons ? 'Hide' : 'Show']] boons and buffs" on-click="@this.toggle('replay_show.targets.boons')">Boons</button>
+            <button type="button" class="uk-button uk-button-default uk-button-small r-replay-toggle [[~/replay_show.targets.conditions ? 'uk-active' : '']]"
+                    title="[[~/replay_show.targets.conditions ? 'Hide' : 'Show']] conditions" on-click="@this.toggle('replay_show.targets.conditions')">Condis</button>
+          </div>
+        </div>
         [[#each replay.view.targets]]
           <div class="r-replay-unit r-replay-target r-replay-[[state]] [[selected ? 'r-replay-selected' : '']]" on-click="@this.replaySelect(index)">
             <div class="r-replay-unit-body">
@@ -73,6 +99,12 @@
                 <div class="r-replay-bar r-replay-breakbar" title="Defiance bar [[round(breakbar)]]%">
                   <div class="r-replay-bar-fill" style="width: [[breakbar]]%"></div>
                 </div>
+              [[/if]]
+              [[#if ~/replay_show.targets.boons && buffs.length]]
+                <div class="r-replay-buffs">[[> replayBuffList buffs]]</div>
+              [[/if]]
+              [[#if ~/replay_show.targets.conditions && conditions.length]]
+                <div class="r-replay-buffs r-replay-conditions">[[> replayBuffList conditions]]</div>
               [[/if]]
             </div>
           </div>

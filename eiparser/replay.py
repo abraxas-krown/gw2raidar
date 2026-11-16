@@ -26,14 +26,21 @@ Format, version 1 (all times are milliseconds from the start of the log, clamped
         "down": [[start, end], ...], "dead": [...], "dc": [...],
         "health": [[time, percent], ...],           # health over time; each value holds until the next
         "barrier": [[time, percent], ...],          # players: barrier, in percent of their health
-        "buffs": {"might": [[time, stacks], ...], ...},   # players: buff codes (analyser.buffs), see REPLAY_BUFF_TABS
+        "buffs": {"might": [[time, stacks], ...], ...},   # buff codes (analyser.buffs), see REPLAY_BUFF_TABS
+        "conditions": {"bleeding": [[time, stacks], ...], ...},   # see REPLAY_CONDITION_TABS
         "breakbar": [[time, percent], ...],         # targets with a defiance bar: its value over time
         "breakbar_active": [[start, end], ...],     # targets with a defiance bar: when it is up (can be broken)
         "damage": [...],               # players: running damage total at each second, to everything
         "boss_damage": [...],          # players: running damage total at each second, to the fight's targets
       }, ...],
-      "mechanics": [{"time": 215810, "actor": "Character Name", "name": "Dead"}, ...]   # EncounterMechanic.name
+      "mechanics": [{"time": 215810, "actor": "Character Name", "name": "Dead"}, ...],  # EncounterMechanic.name
+      "buffs": {"bleeding": {"name": "Bleeding", "icon": "https://...", "category": "conditions"}, ...},
     }
+
+Players and targets both have "buffs" and "conditions": the buffs and conditions on them that were ever on. The
+top level "buffs" describes every code they use. The encounter's own buff list only covers what was on players,
+which misses the conditions the squad puts on targets without ever getting them. Replays made before conditions
+were added have no "conditions", no target "buffs" and no top level "buffs"; readers take them as empty.
 
 Positions are game world coordinates, so they are independent of EI's map images and pixel sizes. The map of
 each boss is the site's own: ``replay_maps.json`` in this package lists, per boss, the image (a file in
@@ -67,6 +74,7 @@ BREAKBAR_ACTIVE_DELAY = 2000
 
 # The buffs kept for each player, by the tab the site lists them on (analyser.buffs.BUFF_CATEGORIES)
 REPLAY_BUFF_TABS = frozenset([BOONS_TAB, "offensive_buffs", "support_buffs", "defensive_buffs"])
+REPLAY_CONDITION_TABS = frozenset(["conditions"])
 
 
 class ReplayException(Exception):
@@ -178,9 +186,10 @@ def _steps(points, duration, digits=None):
     return result
 
 
-def _player_buffs(player, code_by_id, duration):
+def _buff_states(uptimes, code_by_id, duration):
+    """{buff code: [[time, stacks], ...]} of EI's buff uptimes, for the buffs that were ever on."""
     buffs = {}
-    for buff in player.get("buffUptimes") or []:
+    for buff in uptimes or []:
         code = code_by_id.get(buff["id"])
         if code is None:
             continue
@@ -220,6 +229,16 @@ def _boss_damage(player, target_indices):
     return [int(sum(series[second] for series in per_target if second < len(series))) for second in range(length)]
 
 
+def _used_buffs(actors, buff_info):
+    """{buff code: {"name", "icon", "category"}} for the buffs and conditions on the actors."""
+    used = set()
+    for actor in actors:
+        used.update(actor["buffs"])
+        used.update(actor["conditions"])
+    return {buff["code"]: {"name": buff["name"], "icon": buff["icon"], "category": buff["category"]}
+            for buff in buff_info if buff["code"] in used}
+
+
 def _convert(log, boss, maps_path):
     entry = boss_map(boss, maps_path)
     world = entry["world"]
@@ -239,9 +258,18 @@ def _convert(log, boss, maps_path):
 
     actors = []
     players = _select_players(log)
-    code_by_id, buff_info = _buff_info(log, players)
-    kept = set(buff["code"] for buff in buff_info if buff["category"] in REPLAY_BUFF_TABS)
-    code_by_id = {buff_id: code for buff_id, code in code_by_id.items() if code in kept}
+    targets = [(index, target) for index, target in enumerate(log.get("targets") or [])
+               if not target.get("isFake") and (target.get("combatReplayData") or {}).get("positions")]
+    # EI lists the buffs on targets under "buffs", in the same form as the players' "buffUptimes"
+    code_by_id, buff_info = _buff_info(log, players + [{"buffUptimes": target.get("buffs")} for _, target in targets])
+    category = {buff["code"]: buff["category"] for buff in buff_info}
+    buff_ids = {buff_id: code for buff_id, code in code_by_id.items() if category[code] in REPLAY_BUFF_TABS}
+    condition_ids = {buff_id: code for buff_id, code in code_by_id.items() if category[code] in REPLAY_CONDITION_TABS}
+
+    def add_buffs(actor, uptimes):
+        actor["buffs"] = _buff_states(uptimes, buff_ids, duration)
+        actor["conditions"] = _buff_states(uptimes, condition_ids, duration)
+
     for player in players:
         profession, elite = SPECIALISATION_BY_NAME[player["profession"]]
         actor = {"kind": "player", "name": player["name"], "profession": int(profession), "elite": int(elite),
@@ -249,19 +277,17 @@ def _convert(log, boss, maps_path):
         actor.update(_movement(player.get("combatReplayData") or {}, world, pixels, interval, duration))
         actor["health"] = _steps(player.get("healthPercents"), duration, 1)
         actor["barrier"] = _steps(player.get("barrierPercents"), duration, 1)
-        actor["buffs"] = _player_buffs(player, code_by_id, duration)
+        add_buffs(actor, player.get("buffUptimes"))
         actor["damage"] = _running_total(player["damage1S"][0])
         actor["boss_damage"] = _boss_damage(player, target_indices)
         actors.append(actor)
 
     breakbars = _breakbar_windows(log, duration)
-    for index, target in enumerate(log.get("targets") or []):
-        data = target.get("combatReplayData") or {}
-        if target.get("isFake") or not data.get("positions"):
-            continue
+    for index, target in targets:
         actor = {"kind": "target", "name": target["name"], "species": target.get("id")}
-        actor.update(_movement(data, world, pixels, interval, duration))
+        actor.update(_movement(target["combatReplayData"], world, pixels, interval, duration))
         actor["health"] = _steps(target.get("healthPercents"), duration, 2)
+        add_buffs(actor, target.get("buffs"))
         if index in breakbars:
             actor["breakbar"] = _steps(target.get("breakbarPercents"), duration, 1)
             actor["breakbar_active"] = breakbars[index]
@@ -283,6 +309,7 @@ def _convert(log, boss, maps_path):
                     "parent": parents.get(name)} for _, name, phase in phases],
         "actors": actors,
         "mechanics": mechanics,
+        "buffs": _used_buffs(actors, buff_info),
     }
 
 

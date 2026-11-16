@@ -8,6 +8,8 @@
  *     topElement: tabs,                            // sized to fit, with the map and timeline, in the window
  *     specialisation: (profession, elite) => name,
  *     buffOrder: ['might', 'fury', ...],          // the order buffs are listed in
+ *     conditionOrder: ['bleeding', ...],          // the order conditions are listed in
+ *     buffInfo: {might: {name, icon}, ...},       // buffs and conditions without info are not listed
  *     onView: view => ...,                         // the state of players and targets, a few times a second
  *   });
  *   viewer.seek(ms); viewer.select(actorIndex); viewer.destroy();
@@ -135,8 +137,9 @@
       // the boss is drawn larger: the target with the most health data, usually the first
       this.mainTarget = this.targets.reduce((best, target) =>
         !best || (target.health || []).length > (best.health || []).length ? target : best, null);
-      this.buffRank = {};
-      (this.options.buffOrder || []).forEach((code, rank) => this.buffRank[code] = rank);
+      this.buffInfo = this.options.buffInfo || {};
+      this.buffRank = this.ranks(this.options.buffOrder);
+      this.conditionRank = this.ranks(this.options.conditionOrder);
 
       this.build();
       this.loadImages();
@@ -144,6 +147,25 @@
       this.fit();
       this.render();
       this.emitView(true);
+    }
+
+    ranks(order) {
+      const rank = {};
+      (order || []).forEach((code, index) => rank[code] = index);
+      return rank;
+    }
+
+    // the buffs (or conditions) of series that are on at time: [{code, stacks, name, icon}], in rank order,
+    // then by name
+    activeBuffs(series, time, rank) {
+      const active = [];
+      Object.keys(series || {}).forEach(code => {
+        const info = this.buffInfo[code];
+        const stacks = valueAt(series[code], time, 0);
+        if (info && stacks > 0) active.push({code: code, stacks: stacks, name: info.name, icon: info.icon});
+      });
+      const order = buff => buff.code in rank ? rank[buff.code] : Infinity;
+      return active.sort((a, b) => order(a) !== order(b) ? order(a) - order(b) : a.name.localeCompare(b.name));
     }
 
     // the area the actors moved in, for a boss without a map
@@ -492,13 +514,6 @@
       const parties = {};
       this.players.forEach(player => {
         const state = this.stateOf(player, time);
-        const buffs = [];
-        Object.keys(player.buffs || {}).forEach(code => {
-          const stacks = valueAt(player.buffs[code], time, 0);
-          if (stacks > 0) buffs.push({code: code, stacks: stacks});
-        });
-        buffs.sort((a, b) => (a.code in this.buffRank ? this.buffRank[a.code] : 999) -
-                             (b.code in this.buffRank ? this.buffRank[b.code] : 999));
         const party = player.party || 0;
         (parties[party] = parties[party] || {party: party, colour: partyColour(party), players: []}).players.push({
           index: player.index,
@@ -508,7 +523,8 @@
           state: state,
           health: state === 'dead' ? 0 : valueAt(player.health, time, 100),
           barrier: state === 'dead' ? 0 : valueAt(player.barrier, time, 0),
-          buffs: buffs,
+          buffs: this.activeBuffs(player.buffs, time, this.buffRank),
+          conditions: this.activeBuffs(player.conditions, time, this.conditionRank),
           selected: this.selected === player.index,
         });
       });
@@ -520,6 +536,8 @@
           state: state,
           health: state === 'dead' ? 0 : valueAt(target.health, time, 100),
           breakbar: this.breakbarOf(target, time),
+          buffs: this.activeBuffs(target.buffs, time, this.buffRank),
+          conditions: this.activeBuffs(target.conditions, time, this.conditionRank),
           selected: this.selected === target.index,
         };
       });

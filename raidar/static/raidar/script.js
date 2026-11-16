@@ -38,14 +38,17 @@
     $.get({ url: 'replay/' + urlId + '.json' }).then(data => {
       if (removed) return;
       const buffTabs = ['boons', 'offensive_buffs', 'support_buffs', 'defensive_buffs'];
-      const buffOrder = [].concat(...(ractive.get('encounter.buff_tabs') || [])
-        .filter(tab => buffTabs.indexOf(tab.id) != -1).map(tab => tab.order));
+      const tabOrder = ids => [].concat(...(ractive.get('encounter.buff_tabs') || [])
+        .filter(tab => ids.indexOf(tab.id) != -1).map(tab => tab.order));
       viewer = new RaidarReplay.Viewer(node, data, {
         staticRoot: node.dataset.static,
         // the tabs, the map and the timeline fit in the window together
         topElement: document.getElementById('encounter-tabs'),
         specialisation: (profession, elite) => (ractive.get('data.specialisations')[profession] || {})[elite],
-        buffOrder: buffOrder,
+        buffOrder: tabOrder(buffTabs),
+        conditionOrder: tabOrder(['conditions']),
+        // the replay describes the buffs on targets the encounter's own list lacks; the site's boon icons win
+        buffInfo: Object.assign({}, data.buffs || {}, ractive.get('encounter.buffs')),
         onView: view => ractive.set('replay.view', view),
       });
       activeReplay = viewer;
@@ -654,6 +657,11 @@ ${body}
     is_staff: window.raidar_data.is_staff,
     page: initialPage,
     persistent_page: { tab: 'combat_stats' },
+    // the replay panel's Boons and Condis toggles, above the players and above the targets
+    replay_show: {
+      players: { boons: true, conditions: false },
+      targets: { boons: false, conditions: false },
+    },
     encounters: [],
     settings: {
       encounterSort: { prop: 'uploaded_at', dir: 'down', filters: false, filter: { success: null } },

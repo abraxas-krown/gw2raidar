@@ -31,6 +31,7 @@ def _player(name, account, group, profession, pixels):
             {"id": 740, "buffData": [{"uptime": 10}], "states": [[0, 0], [0, 5], [400, 25], [INT64_MAX, 25]]},
             {"id": 1187, "buffData": [{"uptime": 0}], "states": [[0, 0]]},  # never on: left out
             {"id": 9001, "buffData": [{"uptime": 50}], "states": [[0, 1], [300, 0]]},  # a personal buff: left out
+            {"id": 736, "buffData": [{"uptime": 5}], "states": [[0, 0], [200, 3], [500, 0]]},  # a condition
         ],
     }
 
@@ -41,7 +42,11 @@ def make_log():
         "durationMS": 900,
         "buffMap": {"b740": {"name": "Might", "classification": "Boon", "stacking": True},
                     "b1187": {"name": "Quickness", "classification": "Boon"},
-                    "b9001": {"name": "Personal Thing", "classification": "Other"}},
+                    "b9001": {"name": "Personal Thing", "classification": "Other"},
+                    "b717": {"name": "Protection", "classification": "Boon"},
+                    "b736": {"name": "Bleeding", "classification": "Condition", "stacking": True, "icon": "bleed.png"},
+                    "b19426": {"name": "Torment", "classification": "Condition", "stacking": True,
+                               "icon": "torment.png"}},
         "combatReplayMetaData": {"inchToPixel": 7.5, "pollingRate": 300, "sizes": [750, 375],
                                  "maps": [{"url": "https://example.invalid/map.png", "interval": [-5000, 5900]}]},
         "phases": [
@@ -62,6 +67,10 @@ def make_log():
         "targets": [
             {"name": "Test Boss", "id": 12345, "healthPercents": [[0, 100.0], [600, 42.123]],
              "breakbarPercents": [[0, 100], [350, 61.27], [500, 0], [700, 100]],
+             # a boon and a condition no player had, and a condition players had too
+             "buffs": [{"id": 717, "states": [[0, 1], [300, 0]]},
+                       {"id": 19426, "states": [[100, 7], [INT64_MAX, 7]]},
+                       {"id": 736, "states": [[0, 0]]}],
              "combatReplayData": {"start": 0, "end": 900, "positions": [[375, 187.5]] * 3, "orientations": [0, 0, 0],
                                   "dead": [[850, INT64_MAX]]}},
             {"name": "Add", "id": 54321, "combatReplayData": {"start": 250, "end": 600,
@@ -148,6 +157,23 @@ class ReplayTest(unittest.TestCase):
         self.assertEqual(alpha["barrier"], [[0, 0.0], [100, 12.5]])
         # only buffs of the kept tabs that were ever on; EI's open end is clamped
         self.assertEqual(alpha["buffs"], {"might": [[0, 5], [400, 25]]})
+        self.assertEqual(alpha["conditions"], {"bleeding": [[0, 0], [200, 3], [500, 0]]})
+
+    def test_target_buffs_and_conditions(self):
+        result = self.convert()
+        boss = self.actor(result, "Test Boss")
+        self.assertEqual(boss["buffs"], {"protection": [[0, 1], [300, 0]]})
+        # never on: left out
+        self.assertEqual(boss["conditions"], {"torment": [[100, 7]]})
+        add = self.actor(result, "Add")
+        self.assertEqual((add["buffs"], add["conditions"]), ({}, {}))
+
+    def test_buff_info_covers_every_code_used(self):
+        buffs = self.convert()["buffs"]
+        self.assertEqual(sorted(buffs), ["bleeding", "might", "protection", "torment"])
+        # torment is only on a target, so the encounter's own buff list does not have it
+        self.assertEqual(buffs["torment"], {"name": "Torment", "icon": "torment.png", "category": "conditions"})
+        self.assertEqual(buffs["might"]["category"], "boons")
 
     def test_target_breakbar(self):
         result = self.convert()
