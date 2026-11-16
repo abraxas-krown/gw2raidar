@@ -19,8 +19,6 @@
   // back and forward skip 5 seconds of watching: more of the fight when it plays faster
   const SKIP_MS = 5000;
   const MAX_ZOOM = 16;
-  // the target lock zooms in to this, as a multiple of the whole-map view
-  const LOCK_ZOOM = 4;
   const MIN_MAP_HEIGHT = 320;
   // space left above options.topElement and below the timeline when the view fills the window
   const WINDOW_MARGIN_TOP = 8;
@@ -422,9 +420,7 @@
     }
 
     setLock(on) {
-      const locking = on && this.selected !== null && !this.locked;
       this.locked = on && this.selected !== null;
-      if (locking) this.scale = Math.max(this.scale, Math.min(this.fitScale * LOCK_ZOOM, this.fitScale * MAX_ZOOM));
       this.updateControls();
       this.render();
     }
