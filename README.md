@@ -39,4 +39,18 @@ CSS Quickstart
 
 We use [UIkit](https://getuikit.com/docs/introduction) as our base framework which is compiled with our custom CSS.
 
-[SASS](https://getuikit.com/docs/sass) is used to keep the CSS organized and easy to change. You can compile this in several ways, based on your preference and familiarity on CLI. [Codekit](https://codekitapp.com/) is the easiest way to get started but you can also use [Grunt](https://gruntjs.com/) or [Gulp](https://gulpjs.com/) if you are familiar with them.
+[SASS](https://getuikit.com/docs/sass) is used to keep the CSS organized and easy to change. The site's
+stylesheet, `raidar/static/raidar/css/raidar.css`, is built from `node_modules/uikit/src/scss/raidar.scss`:
+UIkit's SCSS, with the site's own settings and styles in `node_modules/uikit/src/scss/raidar/`. Change the
+SCSS, never `raidar.css` itself, and rebuild it:
+
+```
+pip install libsass
+python bin/build_css.py          # writes raidar.css
+python bin/build_css.py --check  # tells whether raidar.css is up to date
+```
+
+The build is a plain Sass compile, without autoprefixer: the vendor prefixes current browsers still need are
+written in the SCSS. If you build with [Codekit](https://codekitapp.com/) instead, turn its Autoprefixer off for
+`raidar.scss` (the project's settings still target IE 10) and set the output to compressed, so it makes the same
+file.

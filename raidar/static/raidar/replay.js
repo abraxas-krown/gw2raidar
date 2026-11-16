@@ -621,12 +621,7 @@
     drawLabel(item) {
       const context = this.context;
       const actor = item.actor;
-      let text = actor.name || 'Private player';
-      if (actor.kind === 'target') {
-        text += ' – ' + valueAt(actor.health, this.time, 100).toFixed(1) + '%';
-        const breakbar = this.breakbarOf(actor, this.time);
-        if (breakbar !== null) text += ', defiance ' + Math.round(breakbar) + '%';
-      }
+      const text = actor.name || 'Private player';
       context.font = '600 13px "Source Sans Pro", sans-serif';
       const width = context.measureText(text).width + 12;
       const x = clamp(item.x - width / 2, 2, this.size.width - width - 2);
