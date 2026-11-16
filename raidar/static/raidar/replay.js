@@ -696,11 +696,14 @@
       context.strokeStyle = colour;
       context.stroke();
       if (this.selected === player.index) {
+        const ring = radius + context.lineWidth + 2;
         context.beginPath();
-        context.arc(screen.x, screen.y, radius + context.lineWidth + 2, 0, 2 * Math.PI);
+        context.arc(screen.x, screen.y, ring, 0, 2 * Math.PI);
         context.lineWidth = 2;
         context.strokeStyle = COLOURS.selected;
         context.stroke();
+        // the ring covers the base of the facing pointer: point from the ring too, in its colour
+        if (state === 'alive') this.drawFacing(screen, ring, place.facing, COLOURS.selected);
       }
       context.restore();
       return {actor: player, x: screen.x, y: screen.y, radius: radius};
