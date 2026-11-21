@@ -4,6 +4,8 @@ import os
 import re
 import copy
 import random
+import secrets
+import string
 import shutil
 from time import time
 from hashlib import md5
@@ -154,6 +156,32 @@ class ValueModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+def _generate_invite_code():
+    alphabet = string.ascii_uppercase.replace('O', '').replace('I', '') + string.digits.replace('0', '').replace('1', '')
+    return ''.join(secrets.choice(alphabet) for _ in range(10))
+
+
+class InviteCode(models.Model):
+    code = models.CharField(max_length=64, unique=True, default=_generate_invite_code)
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="Leave blank for no expiration")
+    max_uses = models.PositiveIntegerField(default=1, help_text="1 = single use")
+    uses = models.PositiveIntegerField(default=0, editable=False)
+    active = models.BooleanField(default=True)
+    note = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_by = models.ManyToManyField(User, blank=True, related_name='invite_codes')
+
+    def is_valid(self, now=None):
+        from django.utils import timezone as dj_timezone
+        now = now or dj_timezone.now()
+        return (self.active
+                and self.uses < self.max_uses
+                and (self.expires_at is None or self.expires_at > now))
+
+    def __str__(self):
+        return self.code
 
 
 class UserProfile(models.Model):
@@ -1524,7 +1552,6 @@ def _delete_encounter_file(sender, instance, using, **kwargs):  # pylint: disabl
         shutil.rmtree(instance.report_folder(), ignore_errors=True)
 
 
-User._meta.get_field("email")._unique = True  # pylint: disable=protected-access
 post_save.connect(_create_user_profile, sender=User)
 post_delete.connect(_delete_upload_file, sender=Upload)
 post_delete.connect(_delete_encounter_file, sender=Encounter)

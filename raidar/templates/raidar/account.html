@@ -3,7 +3,7 @@
           <ul class="uk-tab" uk-tab="connect: #component-tab-left; animation: uk-animation-fade">
             <li><a href="#">Appearance</a></li>
             <li><a href="#">Change Password</a></li>
-            <li><a href="#">Change Email</a></li>
+            <li><a href="#">Email</a></li>
             <li><a href="#">Add API Key</a></li>
             <li><a href="#">Privacy</a></li>
           </ul>
@@ -62,11 +62,11 @@
 
             <form class="uk-grid uk-grid-small">
               <div class="uk-width-1-1 uk-margin-bottom">
-                <p><strong>Current Email:</strong> [[account.email]]</p>
+                <p><strong>Current Email:</strong> [[#if email]][[email]][[else]]<em>Not set</em>[[/if]]</p>
               </div>
               <div class="uk-width-3-4">
 
-                <input class="uk-input" type="email" placeholder="Change email address" value="[[account.email]]" required/>
+                <input class="uk-input" type="email" placeholder="[[#if email]]Change email address[[else]]Set email address[[/if]]" value="[[account.email]]" required/>
               </div>
               <div class="uk-width-1-4">
                 <button class="uk-button uk-button-primary uk-width-1-1" on-click="change_email">Save</button>
@@ -125,11 +125,17 @@
           <tr>
             <th>Linked account</th>
             <th>API key</th>
+            [[#if accounts.length > 1]]<th></th>[[/if]]
           </tr>
           [[#each accounts]]
             <tr>
               <td>[[name]]</td>
               <td>[[[api_key.replace(/-X.*X-/, '<span class="ignore">$&</span>')]]]</td>
+              [[#if accounts.length > 1]]
+                <td class="uk-text-right">
+                  <button type="button" class="uk-button uk-button-danger uk-button-small" on-click="['remove_api_key', name]">Remove key</button>
+                </td>
+              [[/if]]
             </tr>
           [[/each]]
         </table>

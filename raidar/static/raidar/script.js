@@ -653,6 +653,7 @@ ${body}
   let initData = {
     data: window.raidar_data,
     username: window.raidar_data.username,
+    email: window.raidar_data.email,
     privacy: window.raidar_data.privacy,
     is_staff: window.raidar_data.is_staff,
     page: initialPage,
@@ -1174,7 +1175,7 @@ ${body}
       let username = this.get('auth.input.username'),
           password = this.get('auth.input.password'),
           apiKey = this.get('auth.input.api_key'),
-          email = this.get('auth.input.email');
+          inviteCode = this.get('auth.input.invite_code');
 
       $.post({
         url: 'register.json',
@@ -1182,7 +1183,7 @@ ${body}
           username: username,
           password: password,
           api_key: apiKey,
-          email: email,
+          invite_code: inviteCode,
         },
       }).done(didLogin);
 
@@ -1254,7 +1255,8 @@ ${body}
         if (response.error) {
           error(response.error);
         } else {
-          success('Email changed');
+          success('Email saved');
+          r.set('email', response.email);
           r.set('account.email', '');
         }
       });
@@ -1287,6 +1289,25 @@ ${body}
             accounts.push({ name: response.account_name, api_key: api_key });
           }
           r.update('accounts');
+        }
+      });
+      return false;
+    },
+    remove_api_key: function removeAPIKey(x, account_name) {
+      if (!confirm(`Remove the API key for ${account_name}? That GW2 account will be unlinked from your user, and its encounters will no longer be shown here.`)) return false;
+
+      $.post({
+        url: 'remove_api_key.json',
+        data: {
+          account_name: account_name,
+        },
+      }).done(response => {
+        if (response.error) {
+          error(response.error);
+        } else {
+          success(`API key for ${response.account_name} removed`);
+          r.set('accounts', r.get('accounts').filter(a => a.name != response.account_name));
+          r.set('encounters', r.get('encounters').filter(e => e.account != response.account_name));
         }
       });
       return false;

@@ -11,9 +11,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.templatetags.static import static
 from django.core import serializers
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.core.mail import EmailMessage
 from django.views.decorators.csrf import csrf_exempt
 from smtplib import SMTPException
+from django.db import transaction
 from django.db.utils import IntegrityError
 from django.http import JsonResponse, HttpResponse, Http404, UnreadablePostError
 from django.middleware.csrf import get_token
@@ -61,6 +64,7 @@ def _userprops(request):
         accounts = request.user.accounts.all() if request.user.is_authenticated else []
         return {
                 'username': request.user.username,
+                'email': request.user.email,
                 'is_staff': request.user.is_staff,
                 'accounts': [{
                         "name": account.name,
@@ -595,9 +599,15 @@ def register(request):
 
     username = request.POST.get('username').strip()
     password = request.POST.get('password').strip()
-    email = request.POST.get('email').strip()
+    invalid_invite = 'Invalid or expired invite code'
+    invite_code = (request.POST.get('invite_code') or '').strip()
     api_key = request.POST.get('api_key').strip()
     gw2api = GW2API(api_key)
+
+    # Cheap early check; re-verified atomically when the code is consumed below
+    invite = InviteCode.objects.filter(code=invite_code).first() if invite_code else None
+    if not invite or not invite.is_valid():
+        return _error(invalid_invite)
 
     try:
         token_info = gw2api.query("/tokeninfo")
@@ -629,7 +639,14 @@ def register(request):
             pass
 
     try:
-        user = User.objects.create_user(username, email, password)
+        with transaction.atomic():
+            locked = InviteCode.objects.select_for_update().get(pk=invite.pk)
+            if not locked.is_valid():
+                return _error(invalid_invite)
+            user = User.objects.create_user(username, password=password)
+            locked.uses += 1
+            locked.save(update_fields=['uses'])
+            locked.used_by.add(user)
     except IntegrityError:
         return _error('Such a user already exists')
 
@@ -829,9 +846,16 @@ def set_tags_cat(request):
 @login_required
 @require_POST
 def change_email(request):
-    request.user.email = request.POST.get('email')
+    email = (request.POST.get('email') or '').strip()
+    try:
+        validate_email(email)
+    except ValidationError:
+        return _error('Please enter a valid email address')
+    if User.objects.filter(email__iexact=email).exclude(pk=request.user.pk).exists():
+        return _error('This email address is already in use')
+    request.user.email = email
     request.user.save()
-    return JsonResponse({})
+    return JsonResponse({'email': email})
 
 
 @login_required
@@ -871,6 +895,23 @@ def contact(request):
         return _error(e)
 
     return JsonResponse({})
+
+
+@login_required
+@require_POST
+def remove_api_key(request):
+    account_name = (request.POST.get('account_name') or '').strip()
+    accounts = request.user.accounts.all()
+    if accounts.count() <= 1:
+        return _error('You must keep at least one API key')
+    account = accounts.filter(name=account_name).first()
+    if not account:
+        return _error('API key not found')
+    account.user = None
+    account.api_key = ''
+    account.save()
+
+    return JsonResponse({'account_name': account_name})
 
 
 @login_required

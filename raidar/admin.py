@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 
-from .models import Era, Category, Area, Account, Encounter, Participation, UserProfile
+from .models import Era, Category, Area, Account, Encounter, Participation, UserProfile, InviteCode
 
 
 # XXX HACK https://stackoverflow.com/q/46460800/240443
@@ -124,9 +124,26 @@ class AccountAdmin(QuotedSearchModelAdmin):
         css = { 'all' : ('raidar/hide_admin_original.css',) }
 
 
+class InviteCodeAdmin(QuotedSearchModelAdmin):
+    def usage(self, obj):
+        return '%d / %d' % (obj.uses, obj.max_uses)
+    usage.short_description = 'Uses'
+
+    def deactivate(self, request, queryset):
+        queryset.update(active=False)
+    deactivate.short_description = 'Deactivate selected invite codes'
+
+    search_fields = ('=code', 'note')
+    list_display = ('code', 'expires_at', 'usage', 'active', 'note', 'created_at')
+    list_filter = ('active',)
+    readonly_fields = ('uses', 'used_by', 'created_at')
+    actions = ('deactivate',)
+
+
 admin.site.register(Area, AreaAdmin)
 admin.site.register(Era, EraAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Account, AccountAdmin)
 admin.site.register(Encounter, EncounterAdmin)
 admin.site.register(UserProfile)
+admin.site.register(InviteCode, InviteCodeAdmin)

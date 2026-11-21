@@ -316,7 +316,7 @@
                         <input id="register_username" class="uk-input uk-form-width-medium" value="[[auth.input.username]]" placeholder="Username" pattern="[\w.@+-]+" required on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use letters, numbers, and ._+-@')">
                       </div>
                       <div class="uk-margin">
-                        <input id="register_email" class="uk-input uk-form-width-medium" value="[[auth.input.email]]" type="email" placeholder="Email" required>
+                        <input id="register_invite_code" class="uk-input uk-form-width-medium" value="[[auth.input.invite_code]]" placeholder="Invite code" autocomplete="off" required>
                       </div>
                       <div class="uk-margin">
                         <input id="register_password" class="uk-input uk-form-width-medium" value="[[auth.input.password]]" placeholder="Password" type="password" required pattern=".{8,}" on-input="@this.set('auth.passpattern', @node.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')), @node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use at least 8 characters')">
