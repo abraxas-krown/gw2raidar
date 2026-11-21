@@ -64,7 +64,7 @@ def _userprops(request):
         accounts = request.user.accounts.all() if request.user.is_authenticated else []
         return {
                 'username': request.user.username,
-                'email': request.user.email,
+                'email': request.user.email if request.user.is_authenticated else '',
                 'is_staff': request.user.is_staff,
                 'accounts': [{
                         "name": account.name,
