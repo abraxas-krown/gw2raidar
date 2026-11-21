@@ -295,17 +295,25 @@
 
                   [[#if page.name == "login"]]
 
-                    <form class="uk-form-stacked uk-padding-large uk-text-center">
-                      <div class="uk-margin">
-                        <input id="login_username" class="uk-input uk-form-width-medium" value="[[auth.input.username]]" placeholder="Username (or Email)" required>
+                    <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
+                      <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
+                        <fieldset class="uk-fieldset">
+                          <legend class="uk-h4 uk-margin-remove-bottom">Log in</legend>
+                          <p class="uk-text-small uk-text-muted uk-margin-small">Use your username, or your email if you've set one.</p>
+                          <div class="uk-margin-small">
+                            <input id="login_username" class="uk-input uk-width-1-1" value="[[auth.input.username]]" placeholder="Username or email" autocomplete="username" required>
+                          </div>
+                          <div class="uk-margin-small">
+                            <input id="login_password" class="uk-input uk-width-1-1" value="[[auth.input.password]]" placeholder="Password" type="password" autocomplete="current-password" required>
+                          </div>
+                          <p class="uk-text-small uk-text-right uk-margin-small"><a href="[[@this.getPageURL('reset_pw')]]" on-click="@this.page('reset_pw')">Forgot password?</a></p>
+                        </fieldset>
                       </div>
+
                       <div class="uk-margin">
-                        <input id="login_password" class="uk-input uk-form-width-medium" value="[[auth.input.password]]" placeholder="Password" type="password" required>
-                        <p class="[[page.name=='reset_pw' ? 'uk-active' : '']]"><a class="uk-text-small" href="[[@this.getPageURL('reset_pw')]]" on-click="@this.page('reset_pw')">Forgot Password?</a></p>
+                        <button id="login_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_login">Log in</button>
                       </div>
-                      <div class="uk-margin">
-                        <button id="login_submit" class="uk-button uk-button-default" on-click="auth_login">Login</button><br>
-                      </div>
+                      <p class="uk-text-small uk-text-muted uk-text-center">Have an invite code? <a href="[[@this.getPageURL('register')]]" on-click="@this.page('register')">Register</a></p>
                     </form>
 
 
@@ -361,13 +369,23 @@
 
                   [[elseif page.name == "reset_pw"]]
 
-                    <form class="uk-form-stacked uk-padding-large uk-text-center">
-                      <div class="uk-margin">
-                        <input id="reset_pw_email" class="uk-input uk-form-width-medium" value="[[auth.input.email]]" placeholder="Email" type="email" required>
+                    <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
+                      <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
+                        <fieldset class="uk-fieldset">
+                          <legend class="uk-h4 uk-margin-remove-bottom">Reset your password</legend>
+                          <p class="uk-text-small uk-text-muted uk-margin-small">
+                            Enter the email address on your account and we'll send you a reset link.
+                          </p>
+                          <div class="uk-margin-small">
+                            <input id="reset_pw_email" class="uk-input uk-width-1-1" value="[[auth.input.email]]" placeholder="Email" type="email" autocomplete="email" required>
+                          </div>
+                        </fieldset>
                       </div>
+
                       <div class="uk-margin">
-                        <button id="reset_pw_submit" class="uk-button uk-button-default" on-click="auth_reset_pw">Reset password</button><br>
+                        <button id="reset_pw_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_reset_pw">Send reset link</button>
                       </div>
+                      <p class="uk-text-small uk-text-muted uk-text-center"><a href="[[@this.getPageURL('login')]]" on-click="@this.page('login')">Back to log in</a></p>
                     </form>
 
                   [[else]]
