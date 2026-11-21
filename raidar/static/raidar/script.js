@@ -777,7 +777,7 @@ ${body}
       $('#login_username').select().focus();
     },
     register: page => {
-      $('#register_username').select().focus();
+      $('#register_invite_code').select().focus();
     },
     reset_pw: page => {
       $('#reset_pw_email').select().focus();
