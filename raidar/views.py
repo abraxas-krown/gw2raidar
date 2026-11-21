@@ -847,6 +847,11 @@ def set_tags_cat(request):
 @require_POST
 def change_email(request):
     email = (request.POST.get('email') or '').strip()
+    if not email:
+        # Blank clears the email
+        request.user.email = ''
+        request.user.save()
+        return JsonResponse({'email': ''})
     try:
         validate_email(email)
     except ValidationError:

@@ -1211,6 +1211,7 @@ ${body}
       }).done(response => {
         this.set({
           username: null,
+          email: '',
         });
         setPage('info-help');
       });
@@ -1249,15 +1250,14 @@ ${body}
       $.post({
         url: 'change_email.json',
         data: {
-          email: r.get('account.email'),
+          email: r.get('email') || '',
         },
       }).done(response => {
         if (response.error) {
           error(response.error);
         } else {
-          success('Email saved');
+          success(response.email ? 'Email saved' : 'Email removed');
           r.set('email', response.email);
-          r.set('account.email', '');
         }
       });
       return false;
