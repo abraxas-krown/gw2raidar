@@ -55,9 +55,6 @@ EMAIL_PORT = 1025
 # STATIC_ROOT = '/var/www/apps/gw2raidar/static/'
 
 
-# Google Analytics
-# GA_PROPERTY_ID = 'UA-XXXXX-Y'
-
 # Save uploaded files (default: "uploads")
 # UPLOAD_DIR = "uploads"
 

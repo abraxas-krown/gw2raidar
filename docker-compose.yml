@@ -40,7 +40,6 @@ services:
       EMAIL_HOST: ${EMAIL_HOST:-}
       EMAIL_PORT: ${EMAIL_PORT:-}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
-      GA_PROPERTY_ID: ${GA_PROPERTY_ID:-}
     expose:
       - "8000"
     volumes:

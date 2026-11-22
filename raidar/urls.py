@@ -29,6 +29,7 @@ urlpatterns = [
     re_path(r'^change_email.json$', views.change_email, name = "change_email"),
     re_path(r'^change_password.json$', views.change_password, name = "change_password"),
     re_path(r'^add_api_key.json$', views.add_api_key, name = "add_api_key"),
+    re_path(r'^remove_api_key.json$', views.remove_api_key, name = "remove_api_key"),
     re_path(r'^encounter/(?P<url_id>\w+)(?P<json>\.json)?$', views.encounter, name = "encounter"),
     re_path(r'^profile(?:/(?P<era_id>[0-9]+))?\.json$', views.profile, name = "profile"),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),

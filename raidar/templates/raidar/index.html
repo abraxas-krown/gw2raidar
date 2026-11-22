@@ -28,25 +28,7 @@
     <script>
       window.baseURL = "{% url 'index' %}";
       window.raidar_data = {{ userprops|safe }};
-
-      if (window.raidar_data.ga_property_id) {
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-        ga('create', window.raidar_data.ga_property_id, 'auto');
-        ga('send', 'pageview');
-      }
     </script>
-
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-TJZK4W9');</script>
-    <!-- End Google Tag Manager -->
     <link rel="apple-touch-icon" sizes="57x57" href="{% static 'raidar/img/favicon/apple-icon-57x57.png' %}">
     <link rel="apple-touch-icon" sizes="60x60" href="{% static 'raidar/img/favicon/apple-icon-60x60.png' %}">
     <link rel="apple-touch-icon" sizes="72x72" href="{% static 'raidar/img/favicon/apple-icon-72x72.png' %}">
@@ -295,59 +277,97 @@
 
                   [[#if page.name == "login"]]
 
-                    <form class="uk-form-stacked uk-padding-large uk-text-center">
-                      <div class="uk-margin">
-                        <input id="login_username" class="uk-input uk-form-width-medium" value="[[auth.input.username]]" placeholder="Username (or Email)" required>
+                    <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
+                      <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
+                        <fieldset class="uk-fieldset">
+                          <legend class="uk-h4 uk-margin-remove-bottom">Log in</legend>
+                          <p class="uk-text-small uk-text-muted uk-margin-small">Use your username, or your email if you've set one.</p>
+                          <div class="uk-margin-small">
+                            <input id="login_username" class="uk-input uk-width-1-1" value="[[auth.input.username]]" placeholder="Username or email" autocomplete="username" required>
+                          </div>
+                          <div class="uk-margin-small">
+                            <input id="login_password" class="uk-input uk-width-1-1" value="[[auth.input.password]]" placeholder="Password" type="password" autocomplete="current-password" required>
+                          </div>
+                          <p class="uk-text-small uk-text-right uk-margin-small"><a href="[[@this.getPageURL('reset_pw')]]" on-click="@this.page('reset_pw')">Forgot password?</a></p>
+                        </fieldset>
                       </div>
+
                       <div class="uk-margin">
-                        <input id="login_password" class="uk-input uk-form-width-medium" value="[[auth.input.password]]" placeholder="Password" type="password" required>
-                        <p class="[[page.name=='reset_pw' ? 'uk-active' : '']]"><a class="uk-text-small" href="[[@this.getPageURL('reset_pw')]]" on-click="@this.page('reset_pw')">Forgot Password?</a></p>
+                        <button id="login_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_login">Log in</button>
                       </div>
-                      <div class="uk-margin">
-                        <button id="login_submit" class="uk-button uk-button-default" on-click="auth_login">Login</button><br>
-                      </div>
+                      <p class="uk-text-small uk-text-muted uk-text-center">Have an invite code? <a href="[[@this.getPageURL('register')]]" on-click="@this.page('register')">Register</a></p>
                     </form>
 
 
                   [[elseif page.name == "register"]]
 
-                    <form class="uk-form-stacked uk-padding-large uk-text-center">
-                      <div class="uk-margin">
-                        <input id="register_username" class="uk-input uk-form-width-medium" value="[[auth.input.username]]" placeholder="Username" pattern="[\w.@+-]+" required on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use letters, numbers, and ._+-@')">
+                    <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
+                      <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
+                        <fieldset class="uk-fieldset">
+                          <legend class="uk-h4 uk-margin-remove-bottom">1. Invite code</legend>
+                          <p class="uk-text-small uk-text-muted uk-margin-small">Registration is invite-only. Enter the invite code you were given.</p>
+                          <div class="uk-margin-small">
+                            <input id="register_invite_code" class="uk-input uk-width-1-1" value="[[auth.input.invite_code]]" placeholder="Invite code" autocomplete="off" required>
+                          </div>
+                        </fieldset>
                       </div>
-                      <div class="uk-margin">
-                        <input id="register_email" class="uk-input uk-form-width-medium" value="[[auth.input.email]]" type="email" placeholder="Email" required>
+
+                      <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
+                        <fieldset class="uk-fieldset">
+                          <legend class="uk-h4 uk-margin-remove-bottom">2. Your login</legend>
+                          <p class="uk-text-small uk-text-muted uk-margin-small">Letters, numbers and ._+-@ for the username; at least 8 characters for the password.</p>
+                          <div class="uk-margin-small">
+                            <input id="register_username" class="uk-input uk-width-1-1" value="[[auth.input.username]]" placeholder="Username" autocomplete="username" pattern="[\w.@+-]+" required on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use letters, numbers, and ._+-@')">
+                          </div>
+                          <div class="uk-margin-small">
+                            <input id="register_password" class="uk-input uk-width-1-1" value="[[auth.input.password]]" placeholder="Password" type="password" autocomplete="new-password" required pattern=".{8,}" on-input="@this.set('auth.passpattern', @node.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')), @node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use at least 8 characters')">
+                          </div>
+                          <div class="uk-margin-small">
+                            <input id="register_password2" class="uk-input uk-width-1-1" value="[[auth.input.password2]]" placeholder="Confirm password" type="password" autocomplete="new-password" required pattern="[[auth.passpattern]]" on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please make sure the password fields match')">
+                          </div>
+                        </fieldset>
                       </div>
-                      <div class="uk-margin">
-                        <input id="register_password" class="uk-input uk-form-width-medium" value="[[auth.input.password]]" placeholder="Password" type="password" required pattern=".{8,}" on-input="@this.set('auth.passpattern', @node.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')), @node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use at least 8 characters')">
+
+                      <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
+                        <fieldset class="uk-fieldset">
+                          <legend class="uk-h4 uk-margin-remove-bottom">3. Link your GW2 account</legend>
+                          <p class="uk-text-small uk-text-muted uk-margin-small">
+                            Create a key on <a href="https://account.arena.net/applications" target="gw2apps">ArenaNet's Applications page</a> with only the "account" permission.
+                            Its name must contain "<em>GW2Raidar</em>" (any case), e.g. "GW2Raidar" or "The key for GW2Raidar".
+                          </p>
+                          <div class="uk-margin-small">
+                            <div class="uk-inline uk-width-1-1">
+                              <a class="uk-form-icon uk-form-icon-flip" href="https://account.arena.net/applications" uk-icon="icon: link" target="gw2apps"></a>
+                              <input id="register_api_key" class="uk-input uk-width-1-1" value="[[auth.input.api_key]]" placeholder="'gw2raidar' API key" autocomplete="off" required pattern="^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{20}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$" on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please paste a valid GW2 API key')">
+                            </div>
+                          </div>
+                        </fieldset>
                       </div>
+
                       <div class="uk-margin">
-                        <input id="register_password2" class="uk-input uk-form-width-medium" value="[[auth.input.password2]]" placeholder="Again" type="password" required on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please make sure the password fields match')">
-                      </div>
-                      <div class="uk-margin">
-                        <div class="uk-inline">
-                          <a class="uk-form-icon uk-form-icon-flip" href="https://account.arena.net/applications" uk-icon="icon: link" target="gw2apps"></a>
-                          <input id="register_api_key" class="uk-input uk-form-width-medium" value="[[auth.input.api_key]]" placeholder="'gw2raidar' API key" autocomplete="off" required pattern="^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{20}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$" on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please paste a valid GW2 API key')">
-                        </div>
-                      </div>
-                      <div class="uk-margin">
-                        <button id="register_submit" class="uk-button uk-button-default" on-click="auth_register" >Register</button><br>
+                        <button id="register_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_register">Register</button>
                       </div>
                     </form>
 
-                    <p>
-                      For security reasons, please make sure that you use an API key specifically generated for GW2Raidar: the key needs to contain "<em>GW2Raidar</em>" (case insensitive) in its name. For example, here are some valid API key names: "The key for GW2Raidar", "http://gw2raidar.com/", "GW2Raidar".
-                    </p>
-
                   [[elseif page.name == "reset_pw"]]
 
-                    <form class="uk-form-stacked uk-padding-large uk-text-center">
-                      <div class="uk-margin">
-                        <input id="reset_pw_email" class="uk-input uk-form-width-medium" value="[[auth.input.email]]" placeholder="Email" type="email" required>
+                    <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
+                      <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
+                        <fieldset class="uk-fieldset">
+                          <legend class="uk-h4 uk-margin-remove-bottom">Reset your password</legend>
+                          <p class="uk-text-small uk-text-muted uk-margin-small">
+                            Enter the email address on your account and we'll send you a reset link.
+                          </p>
+                          <div class="uk-margin-small">
+                            <input id="reset_pw_email" class="uk-input uk-width-1-1" value="[[auth.input.email]]" placeholder="Email" type="email" autocomplete="email" required>
+                          </div>
+                        </fieldset>
                       </div>
+
                       <div class="uk-margin">
-                        <button id="reset_pw_submit" class="uk-button uk-button-default" on-click="auth_reset_pw">Reset password</button><br>
+                        <button id="reset_pw_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_reset_pw">Send reset link</button>
                       </div>
+                      <p class="uk-text-small uk-text-muted uk-text-center"><a href="[[@this.getPageURL('login')]]" on-click="@this.page('login')">Back to log in</a></p>
                     </form>
 
                   [[else]]
@@ -393,26 +413,10 @@
   <body class="uk-height-viewport">
     {% csrf_token %}
 
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TJZK4W9"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-
     <div id="container" class="uk-height-viewport">
     </div>
     <script src="{% static 'raidar/replay.js' %}"></script>
     <script src="{% static 'raidar/script.js' %}"></script>
-    <!-- Hotjar Tracking Code for https://www.gw2raidar.com -->
-    <script>
-        (function(h,o,t,j,a,r){
-            h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-            h._hjSettings={hjid:710737,hjsv:6};
-            a=o.getElementsByTagName('head')[0];
-            r=o.createElement('script');r.async=1;
-            r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
-            a.appendChild(r);
-        })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
-    </script>
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js"></script>
     <script>
      WebFont.load({
