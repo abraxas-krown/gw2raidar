@@ -1,12 +1,41 @@
 "use strict";
 
 
+// The page shell carries only `window.raidar_boot` ({page, debug, version}); the reference data
+// (bootstrap.json), the signed-in user (initial.json) and, on an encounter page, the encounter itself are
+// fetched in parallel, and the app starts once the first two arrive.
+(function loadAndStart() {
+  const boot = window.raidar_boot;
+  delete window.raidar_boot;
+
+  function getJSON(url) {
+    return fetch(baseURL + url, { credentials: 'same-origin' }).then(response => {
+      if (!response.ok) throw new Error(url + ': ' + response.status);
+      return response.json();
+    });
+  }
+
+  // started now so it overlaps the other two; the encounter page picks it up
+  let prefetched = {};
+  if (boot.page && boot.page.name == 'encounter' && boot.page.no) {
+    prefetched.encounter = { no: boot.page.no, promise: getJSON('encounter/' + boot.page.no + '.json') };
+  }
+
+  Promise.all([
+    getJSON('bootstrap.json?v=' + encodeURIComponent(boot.version)),
+    getJSON('initial.json'),
+  ]).then(([bootstrap, session]) => main(boot, bootstrap, session, prefetched), err => {
+    console.error(err);
+    UIkit.notification('Error communicating to server', 'danger');
+  });
+})();
+
 // Acquire Django CSRF token for AJAX, and prefix the base URL
-(function setupAjaxForAuth() {
+function main(boot, bootstrap, session, prefetched) {
   const PAGE_SIZE = 10;
   const PAGINATION_WINDOW = 5;
 
-  const DEBUG = raidar_data.debug;
+  const DEBUG = boot.debug;
   Ractive.DEBUG = DEBUG;
 
 
@@ -637,10 +666,10 @@ ${body}
     return `background: url("data:image/svg+xml;utf8,${svg}")`
   }
 
-  let loggedInPage = Object.assign({}, window.raidar_data.page);
+  let loggedInPage = Object.assign({}, boot.page);
   let initialPage = loggedInPage;
   const PERMITTED_PAGES = ['encounter', 'index', 'login', 'register', 'reset_pw', 'info-about', 'info-help', 'info-releasenotes', 'info-contact', 'global_stats', 'thank-you'];
-  if (!window.raidar_data.username) {
+  if (!session.username) {
     if (!initialPage.name) {
       loggedInPage = { name: 'info-releasenotes' };
       initialPage = { name: 'info-help' };
@@ -651,11 +680,12 @@ ${body}
     initialPage = { name: 'info-releasenotes' };
   }
   let initData = {
-    data: window.raidar_data,
-    username: window.raidar_data.username,
-    email: window.raidar_data.email,
-    privacy: window.raidar_data.privacy,
-    is_staff: window.raidar_data.is_staff,
+    data: bootstrap,
+    username: session.username,
+    email: session.email,
+    privacy: session.privacy,
+    is_staff: session.is_staff,
+    accounts: session.accounts,
     page: initialPage,
     persistent_page: { tab: 'combat_stats' },
     // the replay panel's Boons and Condis toggles, above the bosses, the players and the other targets, and the
@@ -675,45 +705,15 @@ ${body}
     loc.bosses = {};
     loc.wings.forEach(wing => wing.bosses.forEach(id => loc.bosses[id] = true ));
   });
-  let lastNotificationId = window.raidar_data.last_notification_id;
+  let lastNotificationId = session.last_notification_id;
+  // the Encounters page loads the list on first visit (see loadEncounters)
+  let encountersLoaded = false;
   let storedSettingsJSON = localStorage.getItem('settings');
   if (storedSettingsJSON) {
     Object.assign(initData.settings, JSON.parse(storedSettingsJSON));
   }
   if (!initData.settings.comparePerc) initData.settings.comparePerc = 50;
   if (!initData.settings.compareGlobalPerc) initData.settings.compareGlobalPerc = [99,90,50];
-  // TODO: Load from server
-  initData.data.boons = [
-    { boon: 'might', stacks: 25 },
-    { boon: 'fury' },
-    { boon: 'quickness' },
-    { boon: 'alacrity' },
-    { boon: 'protection' },
-    { boon: 'retaliation' },
-    { boon: 'regen' },
-    { boon: 'aegis' },
-    { boon: 'resist' },
-    { boon: 'stab', stacks: 25 },
-    { boon: 'swift' },
-    { boon: 'vigor' },
-    { boon: 'spotter' },
-    { boon: 'glyph_of_empowerment' },
-    { boon: 'spirit_of_frost' },
-    { boon: 'sun_spirit' },
-    { boon: 'stone_spirit' },
-    { boon: 'storm_spirit' },
-    { boon: 'empower_allies' },
-    { boon: 'banner_strength' },
-    { boon: 'banner_discipline' },
-    { boon: 'banner_tactics' },
-    { boon: 'banner_defence' },
-    { boon: 'assassins_presence' },
-    { boon: 'naturalistic_resonance' },
-    { boon: 'pinpoint_distribution' },
-    { boon: 'soothing_mist' },
-    { boon: 'vampiric_presence' },
-  ];
-  delete window.raidar_data;
 
   function getPageURLFromObject(page) {
     let url = baseURL + page.name;
@@ -790,13 +790,23 @@ ${body}
         "page.dps_boss": true,
         "page.breakbar_boss": true,
       });
-      $.get({
-        url: 'encounter/' + page.no + '.json',
-      }).then(setData).then(() => {
+      // the first encounter page reuses the request started alongside bootstrap.json
+      let prefetchedRequest = prefetched.encounter && prefetched.encounter.no == page.no
+        ? prefetched.encounter.promise : null;
+      delete prefetched.encounter;
+      let request = prefetchedRequest || $.get({ url: 'encounter/' + page.no + '.json' });
+      Promise.resolve(request).then(setData).then(() => {
         // the tab is kept from encounter to encounter, but not every encounter has a replay
         if (r.get('persistent_page.tab') == 'replay' && !r.get('encounter.has_replay')) {
           r.set('persistent_page.tab', 'combat_stats');
         }
+      }, err => {
+        // jQuery requests report through ajaxError; the prefetch is a plain fetch
+        if (request === prefetchedRequest) {
+          console.error(err);
+          error("Error communicating to server");
+        }
+        r.set('loading', false);
       });
     },
     profile: page => {
@@ -835,10 +845,36 @@ ${body}
       r.set('page.leaderboards.kind', 0);
       loadLeaderboards();
     },
+    encounters: page => {
+      loadEncounters();
+    },
   };
 
+  function loadEncounters() {
+    if (encountersLoaded || !r.get('username')) return;
+    encountersLoaded = true;
+    r.set('loading', true);
+    $.get({
+      url: 'encounters.json',
+    }).then(response => {
+      if (response.error) {
+        encountersLoaded = false;
+        error(response.error);
+      } else {
+        updateRactiveFromResponse(response);
+      }
+    }, () => {
+      encountersLoaded = false;
+    }).always(() => {
+      r.set('loading', false);
+    });
+  }
+
   $(window).on('popstate', evt => {
-    r.set('page', evt.originalEvent.state);
+    let page = evt.originalEvent.state;
+    r.set('page', page);
+    // the other pages keep the data they had; the encounter list may never have loaded
+    if (page && page.name == 'encounters') loadEncounters();
   });
 
 
@@ -1079,11 +1115,6 @@ ${body}
     sortEncounters();
   }
 
-  // test for shenanigans
-  $.ajax({
-    url: 'initial.json',
-  }).done(updateRactiveFromResponse);
-
 
 
   function didLogin(response) {
@@ -1096,10 +1127,16 @@ ${body}
         'auth.input.password2': '',
         'auth.input.api_key': '',
       });
-      setPage(response.page || loggedInPage);
       csrftoken = response.csrftoken;
       delete response.csrftoken;
+      lastNotificationId = response.last_notification_id;
+      delete response.last_notification_id;
+      // a different user may have signed in; the Encounters page loads their list
+      encountersLoaded = false;
+      response.encounters = [];
       updateRactiveFromResponse(response);
+      // after the user is set, so the landing page's init sees them
+      setPage(response.page || loggedInPage);
     }
   }
 
@@ -1208,7 +1245,9 @@ ${body}
         this.set({
           username: null,
           email: '',
+          encounters: [],
         });
+        encountersLoaded = false;
         setPage('info-help');
       });
     },
@@ -1381,11 +1420,14 @@ ${body}
           category: encounter.category,
         },
       }).done(() => {
+        // the list may not be loaded yet, and need not hold this encounter
         let eRowId = r.get('encounters').findIndex(e => e.id == encounter.id);
-        let eRow = r.get('encounters.' + eRowId);
-        eRow.category = encounter.category;
-        eRow.tags = encounter.tags.split(',');
-        r.update('encounters.' + eRowId);
+        if (eRowId != -1) {
+          let eRow = r.get('encounters.' + eRowId);
+          eRow.category = encounter.category;
+          eRow.tags = encounter.tags.split(',');
+          r.update('encounters.' + eRowId);
+        }
 
         notification('Category and tags saved.', 'success');
       });
@@ -1573,12 +1615,15 @@ ${body}
         r.push('uploads', newEntry);
       }
 
-      let encounters = r.get('encounters');
-      encounters = encounters.filter(encounter => encounter.id != notification.encounter_id)
-      if (notification.encounter) {
-        encounters.push(notification.encounter);
+      // once the list is loaded, keep it current; until then, its first load includes this encounter
+      if (encountersLoaded) {
+        let encounters = r.get('encounters');
+        encounters = encounters.filter(encounter => encounter.id != notification.encounter_id)
+        if (notification.encounter) {
+          encounters.push(notification.encounter);
+        }
+        updateRactiveFromResponse({ encounters: encounters });
       }
-      updateRactiveFromResponse({ encounters: encounters });
     },
     upload_error: notification => {
       let uploads = r.get('uploads');
@@ -1689,4 +1734,4 @@ ${body}
   $(document).on('change', '#upload_input_helper', handle_upload);
 
   if (DEBUG) window.r = r; // XXX DEBUG Ractive
-})();
+}
