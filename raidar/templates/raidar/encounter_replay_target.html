@@ -1,0 +1,22 @@
+{# A boss or other target in the replay panel (encounter_replay.html), as `unit` (replay.view.bosses or replay.view.adds); its buffs follow its group's toggles (replay_show.bosses or replay_show.targets) #}
+<div class="r-replay-unit r-replay-target" :class="(unit.boss ? 'r-replay-boss ' : '') + 'r-replay-' + unit.state + (unit.selected ? ' r-replay-selected' : '')" @click="replaySelect(unit.index)">
+  <div class="r-replay-unit-body">
+    <div class="r-replay-unit-line">
+      <span class="r-replay-unit-name uk-text-truncate" x-text="unit.name"></span>
+      <span class="r-replay-unit-value" x-text="unit.state == 'dead' ? 'Dead' : num(unit.health, 1) + '%'"></span>
+    </div>
+    <div class="r-replay-bar"><div class="r-replay-bar-fill" :style="'width: ' + unit.health + '%'"></div></div>
+    <template x-if="unit.breakbar != null">
+      {# the defiance bar, while it is up, right under the HP bar; 0 is a broken bar #}
+      <div class="r-replay-bar r-replay-breakbar" :title="'Defiance bar ' + round(unit.breakbar) + '%'">
+        <div class="r-replay-bar-fill" :style="'width: ' + unit.breakbar + '%'"></div>
+      </div>
+    </template>
+    <template x-if="replay_show[unit.boss ? 'bosses' : 'targets'].boons && unit.buffs.length">
+      <div class="r-replay-buffs">{% include 'raidar/encounter_replay_buffs.html' with list='unit.buffs' %}</div>
+    </template>
+    <template x-if="replay_show[unit.boss ? 'bosses' : 'targets'].conditions && unit.conditions.length">
+      <div class="r-replay-buffs r-replay-conditions">{% include 'raidar/encounter_replay_buffs.html' with list='unit.conditions' %}</div>
+    </template>
+  </div>
+</div>

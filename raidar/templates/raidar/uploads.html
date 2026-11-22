@@ -1,11 +1,11 @@
 <div class="uk-margin-small uk-flex uk-flex-bottom">
-  <select as-ukUpdate class="uk-select uk-margin-small uk-form-small" style="width: 150px" value="[[upload.category]]">
-    <option value="[[null]]">No category</option>
-    [[#each data.categories:id]]
-      <option value="[[id]]">[[.]]</option>
-    [[/each]]
+  <select x-uk-update class="uk-select uk-margin-small uk-form-small" style="width: 150px" x-select-model="upload.category">
+    <option value="null">No category</option>
+    <template x-for="(category, id) in data.categories">
+      <option :value="JSON.stringify(id)" x-text="category"></option>
+    </template>
   </select>
-  <input class="uk-flex-auto uk-margin-small" placeholder="Tags" as-tagsInput="'upload.tags'">
+  <input class="uk-flex-auto uk-margin-small" placeholder="Tags" x-tags-input="upload.tags">
 </div>
 
 <table class="uk-table uk-table-striped">
@@ -23,31 +23,20 @@
     </tr>
   </thead>
   <tbody>
-    [[#each uploads]]
-      <tr [[#if success]]class="link" on-click="@this.page({ name: 'encounter', no: encounterUrlId })"[[/if]]>
-        <td class="[[success === true ? 'uk-text-success' : success === false ? 'uk-text-danger' : '']]">
-          [[name]]
+    <template x-for="entry in uploads">
+      <tr :class="{link: entry.success}" @click="entry.success && setPage({ name: 'encounter', no: entry.encounterUrlId })">
+        <td :class="entry.success === true ? 'uk-text-success' : entry.success === false ? 'uk-text-danger' : ''" x-text="entry.name">
         </td>
-        <td>
-          [[uploaded_by]]
+        <td x-text="entry.uploaded_by">
         </td>
-        <td>
-          [[#if success]]
-            Success
-          [[elseif success === false]]
-            [[error || "Error"]]
-          [[elseif progress]]
-            [[#if progress < 100]]
-              Uploading [[progress]]% (Don't leave this page)
-            [[else]]
-              Analysing (This will finish even if you leave the website)
-            [[/if]]
-          [[else]]
-            Queued
-          [[/if]]
+        <td x-text="entry.success ? 'Success'
+          : entry.success === false ? entry.error || 'Error'
+          : !entry.progress ? 'Queued'
+          : entry.progress < 100 ? 'Uploading ' + entry.progress + '% (Don\'t leave this page)'
+          : 'Analysing (This will finish even if you leave the website)'">
         </td>
       </tr>
-    [[/each]]
+    </template>
   </tbody>
 </table>
 <p>

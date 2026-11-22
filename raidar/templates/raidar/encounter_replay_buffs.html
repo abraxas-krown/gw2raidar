@@ -1,0 +1,7 @@
+{# A row of buff (or condition) icons in the replay panel (encounter_replay.html); `list` names the expression of the {name, icon, stacks} to show #}
+<template x-for="buff in {{ list }}">
+  <span class="r-replay-buff" :title="buff.name + (buff.stacks > 1 ? ' (' + buff.stacks + ')' : '')">
+    <img :src="buff.icon" :alt="buff.name">
+    <span x-visible="buff.stacks > 1" class="r-replay-buff-stacks" x-text="buff.stacks"></span>
+  </span>
+</template>

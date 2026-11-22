@@ -3,77 +3,73 @@
 The buff tabs and the buffs on them differ per encounter: `encounter.buff_tabs` and `encounter.buffs`.
 {% endcomment %}
 
-<div class="table-container uk-margin-top">
+<div class="table-container uk-margin-top" x-with="{buff_tab: (encounter.buff_tabs || []).find(tab => tab.id == persistent_page.tab)}">
   <div class="r-encounter-stats-container uk-background-default uk-margin-remove-bottom" style="z-index: 980;" uk-sticky="bottom: #offset">
     <div class="r-stats-row r-stats-header">
       <div class="uk-visible@m">Spec</div>
       <div class="r-toggle">
-        <a href="#" class-uk-active="!page.boon_output" on-click="@.set({'page.boon_output': false}) && false">Uptime</a>
+        <a href="#" :class="{'uk-active': !page.boon_output}" @click.prevent.stop="set({'page.boon_output': false})">Uptime</a>
         |
-        <a href="#" class-uk-active="page.boon_output" on-click="@.set({'page.boon_output': true}) && false">Output</a>
+        <a href="#" :class="{'uk-active': page.boon_output}" @click.prevent.stop="set({'page.boon_output': true})">Output</a>
       </div>
     </div>
   </div>
 
-  [[#each encounter.buff_tabs as buff_tab]]
-  [[#if buff_tab.id == persistent_page.tab]]
-
-      [[#with encounter.phases[page.phase]]]
-      <div class="r-encounter-stats-container squad">
+      <template x-if="buff_tab">
+      <div class="r-encounter-stats-container squad" x-with="encounter.phases[page.phase]">
         <div class="r-stats-row r-stats-buffs">
-          <div class="r-encounter-player uk-text-right@m [[self && 'compare-show']]">
+          <div class="r-encounter-player uk-text-right@m" :class="{'compare-show': self}">
             <div>
                 <h5 class="uk-margin-remove">Squad</h5>
             </div>
           </div>
           <div class="r-encounter-buff-container" >
-            [[#each buff_tab.order as code]]
-              [[#with {
+            <template x-for="code in buff_tab.order">
+              <div class="r-encounter-buff r-tooltip-help"
+                   x-with="{
                 buff: encounter.buffs[code],
                 format: ('stacks' in encounter.buffs[code]) ? num : perc,
                 section: page.boon_output ? {
                     name: 'Output',
                     value: buffs_out ? buffs_out[code] : 0,
-                    percentiles: pctl(@context.get(`performance.buffs_out.${code}_perc`))
+                    percentiles: pctl(performance.buffs_out[code + '_perc'])
                   } : {
                     name: 'Uptime',
                     value: buffs ? buffs[code] : 0,
-                    percentiles: pctl(@context.get(`performance.buffs.${code}_perc`))
+                    percentiles: pctl(performance.buffs[code + '_perc'])
                   }
-              }]]
-                [[#with bsearch(section.value, section.percentiles) as buff_pctl]]
-                  <div class="r-encounter-buff r-tooltip-help" uk-tooltip="pos:bottom-left" title="<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[buff.name]] [[section.name]]</h5><strong>Performance:</strong> [[th(buff_pctl)]] Percentile">
-                    <img src="[[buff.icon]]" alt="[[buff.name]]"/>
-                    <span class="r-buff-number r-bg-[[buff_pctl]]">[[format(section.value, 1)]]</span>
-                    <span class="r-buff-number r-bg-[[settings.comparePerc]] compare">[[format(section.percentiles[settings.comparePerc], 1)]]</span>
-                  </div>
-                [[/with]]
-              [[/with]]
-            [[/each]]
+              }"
+                   x-with:pctl="{buff_pctl: bsearch(section.value, section.percentiles)}"
+                   uk-tooltip="pos:bottom-left" :title="`<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${buff.name} ${section.name}</h5><strong>Performance:</strong> ${th(buff_pctl)} Percentile`">
+                    <img :src="buff.icon" :alt="buff.name"/>
+                    <span class="r-buff-number" :class="'r-bg-' + buff_pctl" x-text="format(section.value, 1)"></span>
+                    <span class="r-buff-number compare" :class="'r-bg-' + settings.comparePerc" x-text="format(section.percentiles[settings.comparePerc], 1)"></span>
+              </div>
+            </template>
           </div>
         </div>
       </div>
-      [[/with]]
+      </template>
 
-      [[#each encounter.phases[page.phase].parties:partyNo]]
-      <div class="r-encounter-stats-container">
+      <template x-for="(party, partyNo) in (buff_tab ? encounter.phases[page.phase].parties : {})">
+      <div class="r-encounter-stats-container" x-with="party">
 
-          <!-- <h5 class="uk-heading-line"><span>Party [[partyNo]]</span></h5> -->
           <div class="r-stats-row r-stats-buffs r-party">
-            <div class="r-encounter-player uk-text-right@m" uk-tooltip="pos: bottom-left; delay: 350" title="[[#with events]]
-                  Deaths: [[dead_count]][[#if dead_count]] ([[formatTime(dead_time / 1000)]])[[/if]]<br>
-                  Downs: [[down_count]][[#if down_count]] ([[formatTime(down_time / 1000)]])[[/if]]<br>
-                  Disconnects: [[disconnect_count]][[#if disconnect_count]] ([[formatTime(disconnect_time / 1000)]])[[/if]]<br>
-                [[/with]]">
+            <div class="r-encounter-player uk-text-right@m" uk-tooltip="pos: bottom-left; delay: 350" :title="`
+                  Deaths: ${events.dead_count}${events.dead_count ? ` (${formatTime(events.dead_time / 1000)})` : ''}<br>
+                  Downs: ${events.down_count}${events.down_count ? ` (${formatTime(events.down_time / 1000)})` : ''}<br>
+                  Disconnects: ${events.disconnect_count}${events.disconnect_count ? ` (${formatTime(events.disconnect_time / 1000)})` : ''}<br>
+                `">
               <div>
 
-                <h5 class="uk-margin-remove">Party [[partyNo]] </h5>
-                <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase">[[members.length]] member[[members.length > 1 && 's' || '']]</h6>
+                <h5 class="uk-margin-remove" x-text="'Party ' + partyNo + ' '"></h5>
+                <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase" x-text="members.length + ' member' + (members.length > 1 ? 's' : '')"></h6>
               </div>
             </div>
             <div class="r-encounter-buff-container">
-              [[#each buff_tab.order as code]]
-                [[#with {
+              <template x-for="code in buff_tab.order">
+                <div class="r-encounter-buff r-tooltip-help"
+                     x-with="{
                   buff: encounter.buffs[code],
                   format: ('stacks' in encounter.buffs[code]) ? num : perc,
                   section: page.boon_output ? {
@@ -83,67 +79,63 @@ The buff tabs and the buffs on them differ per encounter: `encounter.buff_tabs` 
                       name: 'Uptime',
                       value: buffs ? buffs[code] : 0
                     }
-                }]]
-                  <div class="r-encounter-buff r-tooltip-help" uk-tooltip="pos:bottom-left" title="<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[buff.name]] [[section.name]]</h5>">
-                    <img src="[[buff.icon]]" alt="[[buff.name]]"/>
-                    <span class="r-buff-number r-bg-101">[[format(section.value, 1)]]</span>
-                  </div>
-                [[/with]]
-              [[/each]]
+                }"
+                     uk-tooltip="pos:bottom-left" :title="`<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${buff.name} ${section.name}</h5>`">
+                    <img :src="buff.icon" :alt="buff.name"/>
+                    <span class="r-buff-number r-bg-101" x-text="format(section.value, 1)"></span>
+                </div>
+              </template>
             </div>
           </div>
 
-        [[#each members]]
-            <div class="r-stats-row r-stats-buffs r-member activity-[[#with events]][[#with encounter]][[num(((duration - ((down_time / 1000) + (dead_time / 1000) + (disconnect_time / 1000)))/duration)*100, 0)]][[/with]][[/with]]">
-              <div class="r-encounter-player uk-text-right@m [[self && 'compare-show']]" uk-tooltip="pos: bottom-left; delay: 350" title="[[#if account]][[name]]</br><strong>Account:</strong> [[account]][[else]]ACCOUNT PRIVATE[[/if]]<br><strong>Activity:</strong> [[#with events]][[#with encounter]][[perc(((duration - ((down_time / 1000) + (dead_time / 1000) + (disconnect_time / 1000)))/duration)*100, 0)]][[/with]][[/with]][[#with events]]<br>
-                <strong>Deaths:</strong> [[dead_count]][[#if dead_count]] ([[formatTime(dead_time / 1000)]])[[/if]]<br>
-                <strong>Downed:</strong> [[down_count]][[#if down_count]] ([[formatTime(down_time / 1000)]])[[/if]]<br>
-                <strong>Disconnects:</strong> [[disconnect_count]][[#if disconnect_count]] ([[formatTime(disconnect_time / 1000)]])[[/if]]
-              [[/with]]">
+        <template x-for="member in members">
+            <div class="r-stats-row r-stats-buffs r-member" x-with="member" :class="'activity-' + num(activity(events), 0)">
+              <div class="r-encounter-player uk-text-right@m" :class="{'compare-show': self}" uk-tooltip="pos: bottom-left; delay: 350" :title="`${account ? `${name}</br><strong>Account:</strong> ${account}` : 'ACCOUNT PRIVATE'}<br><strong>Activity:</strong> ${perc(activity(events), 0)}<br>
+                <strong>Deaths:</strong> ${events.dead_count}${events.dead_count ? ` (${formatTime(events.dead_time / 1000)})` : ''}<br>
+                <strong>Downed:</strong> ${events.down_count}${events.down_count ? ` (${formatTime(events.down_time / 1000)})` : ''}<br>
+                <strong>Disconnects:</strong> ${events.disconnect_count}${events.disconnect_count ? ` (${formatTime(events.disconnect_time / 1000)})` : ''}`">
                 <div class="uk-text-truncate">
-                  <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase">[[data.archetypes[archetype]]]</h6>
-                  [[#if name]]
-                    <h5 class="uk-margin-remove uk-text-truncate">[[#if commander]]{% include 'raidar/commander_tag.html' %}[[/if]][[name]]</h5>
-                  [[else]]
+                  <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase" x-text="data.archetypes[archetype]"></h6>
+                  <template x-if="name">
+                    <h5 class="uk-margin-remove uk-text-truncate"><template x-if="commander">{% include 'raidar/commander_tag.html' %}</template> <span x-text="name"></span></h5>
+                  </template>
+                  <template x-if="!name">
                     <h5 class="private uk-margin-remove" data-text="PRIVATE">PRIVATE</h5>
-                  [[/if]]
+                  </template>
                 </div>
                 <div class="r-encounter-player-image">
-                  <img alt="[[data.specialisations[profession][elite]]]" src="{% static 'raidar/img/48px/' %}/[[data.specialisations[profession][elite]]]_tango_icon_48px.png"/>
-                  <img class="r-encounter-player-archetype" alt="[[data.archetypes[../../archetype]]]" src="{% static 'raidar/img/arch/' %}[[data.archetypes[archetype]]].png"/>
+                  <img :alt="data.specialisations[profession][elite]" :src="'{% static 'raidar/img/48px/' %}/' + data.specialisations[profession][elite] + '_tango_icon_48px.png'"/>
+                  <img class="r-encounter-player-archetype" :alt="data.archetypes[archetype]" :src="'{% static 'raidar/img/arch/' %}' + data.archetypes[archetype] + '.png'"/>
                 </div>
               </div>
 
               <div class="r-encounter-buff-container" >
-                [[#each buff_tab.order as code]]
-                  [[#with {
+                <template x-for="code in buff_tab.order">
+                  <div class="r-encounter-buff r-tooltip-help"
+                       x-with="{
                     buff: encounter.buffs[code],
                     format: ('stacks' in encounter.buffs[code]) ? num : perc,
                     section: page.boon_output ? {
                         name: 'Output',
                         value: buffs_out ? buffs_out[code] : 0,
-                        percentiles: pctl(@context.get(`performance.buffs_out.${code}_perc`))
+                        percentiles: pctl(performance.buffs_out[code + '_perc'])
                       } : {
                         name: 'Uptime',
                         value: buffs ? buffs[code] : 0,
-                        percentiles: pctl(@context.get(`performance.buffs.${code}_perc`))
+                        percentiles: pctl(performance.buffs[code + '_perc'])
                       }
-                  }]]
-                    [[#with bsearch(section.value, section.percentiles) as buff_pctl]]
-                      <div class="r-encounter-buff r-tooltip-help [[section.value > 0 ? ' ' : 'uk-invisible' ]]" uk-tooltip="pos:bottom-left" title="<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[buff.name]] [[section.name]]</h5><strong>Performance:</strong> [[th(buff_pctl)]] Percentile">
-                        <img src="[[buff.icon]]" alt="[[buff.name]]"/>
-                        <span class="r-buff-number r-bg-[[buff_pctl]]">[[format(section.value, 1)]] </span>
-                        <span class="r-buff-number r-bg-[[settings.comparePerc]] compare">[[format(section.percentiles[settings.comparePerc], 1)]]</span>
-                      </div>
-                    [[/with]]
-                  [[/with]]
-                [[/each]]
+                  }"
+                       x-with:pctl="{buff_pctl: bsearch(section.value, section.percentiles)}"
+                       :class="section.value > 0 ? ' ' : 'uk-invisible'"
+                       uk-tooltip="pos:bottom-left" :title="`<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${buff.name} ${section.name}</h5><strong>Performance:</strong> ${th(buff_pctl)} Percentile`">
+                        <img :src="buff.icon" :alt="buff.name"/>
+                        <span class="r-buff-number" :class="'r-bg-' + buff_pctl" x-text="format(section.value, 1) + ' '"></span>
+                        <span class="r-buff-number compare" :class="'r-bg-' + settings.comparePerc" x-text="format(section.percentiles[settings.comparePerc], 1)"></span>
+                  </div>
+                </template>
               </div>
             </div>
-        [[/each]]
+        </template>
         </div>
-      [[/each]]
-
-  [[/if]]
-  [[/each]]
+      </template>
 </div>

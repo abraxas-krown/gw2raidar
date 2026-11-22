@@ -1,11 +1,11 @@
 {% load static %}
 <div class="table-container">
-<button class="uk-button" on-click="encounter_filter_toggle">[[settings.encounterSort.filters ? 'Show' : 'Hide']] Filters <i class="material-icons">filter_list</i></button>
-[[#if settings.encounterSort.filter.any]]
-  <button class="uk-button" on-click="encounter_filter_clear">Clear Filters <i class="material-icons">close</i></button>
-[[/if]]
+<button class="uk-button" @click="fire('encounter_filter_toggle', $event)"><span x-text="settings.encounterSort.filters ? 'Show' : 'Hide'"></span> Filters <i class="material-icons">filter_list</i></button>
+<template x-if="settings.encounterSort.filter.any">
+  <button class="uk-button" @click="fire('encounter_filter_clear', $event)">Clear Filters <i class="material-icons">close</i></button>
+</template>
   <div uk-grid>
-    [[#if !settings.encounterSort.filters]]
+    <template x-if="!settings.encounterSort.filters">
     <div class="uk-width-1-4@m uk-width-1-1">
       <form class="uk-form-stacked uk-margin-top">
         <legend class="uk-h6 uk-font-family-secondary uk-text-uppercase uk-text-light">Filters</legend>
@@ -13,41 +13,41 @@
             <div class="uk-margin">
               <label class="uk-form-label uk-h5 uk-invisible-access">By Success</label>
               <div class="uk-button-group uk-form-controls">
-                <button class="uk-button uk-button-default uk-button-small [[settings.encounterSort.filter.success === true && 'uk-button-primary' || '']]" value="true" on-click="encounter_filter_success"><i class="material-icons uk-text-success">check_circle</i> Success</button>
-                <button class="uk-button uk-button-default uk-button-small [[settings.encounterSort.filter.success === false && 'uk-button-primary' || '']]" value="false" on-click="encounter_filter_success"><i class="material-icons uk-text-danger">cancel</i> Wipe</button>
-                <button class="uk-button uk-button-default uk-button-small [[settings.encounterSort.filter.success === null && 'uk-button-primary' || '']]" value="null" on-click="encounter_filter_success">All</button>
+                <button class="uk-button uk-button-default uk-button-small" :class="{'uk-button-primary': settings.encounterSort.filter.success === true}" value="true" @click="fire('encounter_filter_success', $event)"><i class="material-icons uk-text-success">check_circle</i> Success</button>
+                <button class="uk-button uk-button-default uk-button-small" :class="{'uk-button-primary': settings.encounterSort.filter.success === false}" value="false" @click="fire('encounter_filter_success', $event)"><i class="material-icons uk-text-danger">cancel</i> Wipe</button>
+                <button class="uk-button uk-button-default uk-button-small" :class="{'uk-button-primary': settings.encounterSort.filter.success === null}" value="null" @click="fire('encounter_filter_success', $event)">All</button>
               </div>
             </div>
 
             <div class="uk-margin">
               <label class="uk-form-label uk-h5 uk-invisible-access">By Mode</label>
               <div class="uk-button-group uk-form-controls">
-                <button class="uk-button uk-button-default uk-button-small [[settings.encounterSort.filter.mode === 0 && 'uk-button-primary' || '']]" value="0" on-click="encounter_filter_mode">Normal</button>
-                <button class="uk-button uk-button-default uk-button-small [[settings.encounterSort.filter.mode === 1 && 'uk-button-primary' || '']]" value="1" on-click="encounter_filter_mode" uk-tooltip title="Challenge mode">CM</button>
-                <button class="uk-button uk-button-default uk-button-small [[settings.encounterSort.filter.mode === 2 && 'uk-button-primary' || '']]" value="2" on-click="encounter_filter_mode" uk-tooltip title="Legendary challenge mode">LCM</button>
-                <button class="uk-button uk-button-default uk-button-small [[settings.encounterSort.filter.mode == null && 'uk-button-primary' || '']]" value="null" on-click="encounter_filter_mode">All</button>
+                <button class="uk-button uk-button-default uk-button-small" :class="{'uk-button-primary': settings.encounterSort.filter.mode === 0}" value="0" @click="fire('encounter_filter_mode', $event)">Normal</button>
+                <button class="uk-button uk-button-default uk-button-small" :class="{'uk-button-primary': settings.encounterSort.filter.mode === 1}" value="1" @click="fire('encounter_filter_mode', $event)" uk-tooltip title="Challenge mode">CM</button>
+                <button class="uk-button uk-button-default uk-button-small" :class="{'uk-button-primary': settings.encounterSort.filter.mode === 2}" value="2" @click="fire('encounter_filter_mode', $event)" uk-tooltip title="Legendary challenge mode">LCM</button>
+                <button class="uk-button uk-button-default uk-button-small" :class="{'uk-button-primary': settings.encounterSort.filter.mode == null}" value="null" @click="fire('encounter_filter_mode', $event)">All</button>
               </div>
             </div>
 
             <div class="uk-margin">
               <label class="uk-form-label uk-h5 uk-invisible-access" for="encounterSelect">By Encounter</label>
               <div class="uk-form-controls">
-                <select id="encounterSelect" class="uk-select" value="[[settings.encounterSort.filter.area]]">
-                  <option value="[[null]]">-- Show all encounters --</option>
-                  [[#each encountersAreas]]
-                    <option value="[[.]]">[[.]]</option>
-                  [[/each]]
+                <select id="encounterSelect" class="uk-select" x-select-model="settings.encounterSort.filter.area">
+                  <option value="null">-- Show all encounters --</option>
+                  <template x-for="area in encountersAreas">
+                    <option :value="JSON.stringify(area)" x-text="area"></option>
+                  </template>
                 </select>
               </div>
             </div>
             <div class="uk-margin">
               <label for="#characterName" class="uk-form-label uk-h5 uk-invisible-access">By Character</label>
               <div class="uk-form-controls">
-                <select id="characterSelect" class="uk-select" value="[[settings.encounterSort.filter.character]]">
-                  <option value="[[null]]">-- Show all characters --</option>
-                  [[#each encountersCharacters]]
-                    <option value="[[.]]">[[.]]</option>
-                  [[/each]]
+                <select id="characterSelect" class="uk-select" x-select-model="settings.encounterSort.filter.character">
+                  <option value="null">-- Show all characters --</option>
+                  <template x-for="character in encountersCharacters">
+                    <option :value="JSON.stringify(character)" x-text="character"></option>
+                  </template>
                 </select>
               </div>
             </div>
@@ -55,23 +55,23 @@
             <div class="uk-margin">
               <label for="#accountName" class="uk-form-label uk-h5 uk-invisible-access">By Account</label>
               <div class="uk-form-controls">
-                <select id="accountSelect" class="uk-select" value="[[settings.encounterSort.filter.account]]">
-                  <option value="[[null]]">-- Show all accounts --</option>
-                  [[#each encountersAccounts]]
-                    <option value="[[.]]">[[.]]</option>
-                  [[/each]]
+                <select id="accountSelect" class="uk-select" x-select-model="settings.encounterSort.filter.account">
+                  <option value="null">-- Show all accounts --</option>
+                  <template x-for="account in encountersAccounts">
+                    <option :value="JSON.stringify(account)" x-text="account"></option>
+                  </template>
                 </select>
               </div>
             </div>
-            <div class-uk-hidden="!moreFilters">
+            <div :class="{'uk-hidden': !moreFilters}">
               <div class="uk-margin">
                 <label for="" class="uk-form-label uk-h5">By Encounter Duration</label>
                 <div uk-grid>
                   <div class="uk-width-1-2">
-                    <input class="uk-input" value="[[settings.encounterSort.filter.duration_from]]" placeholder="Longer than...">
+                    <input class="uk-input" x-model="settings.encounterSort.filter.duration_from" placeholder="Longer than...">
                   </div>
                   <div class="uk-width-1-2">
-                    <input class="uk-input" value="[[settings.encounterSort.filter.duration_till]]" placeholder="Shorter than...">
+                    <input class="uk-input" x-model="settings.encounterSort.filter.duration_till" placeholder="Shorter than...">
                   </div>
                 </div>
               </div>
@@ -80,11 +80,11 @@
                 <div uk-grid>
                   <div class="uk-width-1-2">
                     <label for="timeFrom" class="uk-form-label">From</label>
-                    <input class="uk-input" value="[[settings.encounterSort.filter.started_from]]" placeholder="From" type="date" id="timeFrom">
+                    <input class="uk-input" x-model="settings.encounterSort.filter.started_from" placeholder="From" type="date" id="timeFrom">
                   </div>
                   <div class="uk-width-1-2">
                     <label for="timeTill" class="uk-form-label">Till</label>
-                    <input class="uk-input" value="[[settings.encounterSort.filter.started_till]]" placeholder="Till" type="date" id="timeTill">
+                    <input class="uk-input" x-model="settings.encounterSort.filter.started_till" placeholder="Till" type="date" id="timeTill">
                   </div>
                 </div>
               </div>
@@ -93,150 +93,97 @@
                 <div uk-grid>
                   <div class="uk-width-1-2">
                     <label for="timeFrom" class="uk-form-label">From</label>
-                    <input class="uk-input" value="[[settings.encounterSort.filter.uploaded_from]]" placeholder="From" type="date" id="timeFrom">
+                    <input class="uk-input" x-model="settings.encounterSort.filter.uploaded_from" placeholder="From" type="date" id="timeFrom">
                   </div>
                   <div class="uk-width-1-2">
                     <label for="timeTill" class="uk-form-label">Till</label>
-                    <input class="uk-input" value="[[settings.encounterSort.filter.uploaded_till]]" placeholder="Till" type="date" id="timeTill">
+                    <input class="uk-input" x-model="settings.encounterSort.filter.uploaded_till" placeholder="Till" type="date" id="timeTill">
                   </div>
                 </div>
               </div>
               <div class="uk-margin">
                 <label for="#category" class="uk-form-label uk-h5">By Category</label>
-                <select id="category" as-ukUpdate class="uk-select uk-margin-remove" value="[[settings.encounterSort.filter.category]]">
-                  <option value="[[null]]">-- no filter --</option>
-                  <option value="[[0]]">-- uncategorised --</option>
-                  [[#each data.categories:id]]
-                    <option value="[[parseInt(id)]]">[[.]]</option>
-                  [[/each]]
+                <select id="category" x-uk-update class="uk-select uk-margin-remove" x-select-model="settings.encounterSort.filter.category">
+                  <option value="null">-- no filter --</option>
+                  <option value="0">-- uncategorised --</option>
+                  <template x-for="(category, id) in data.categories">
+                    <option :value="JSON.stringify(parseInt(id))" x-text="category"></option>
+                  </template>
                 </select>
               </div>
 
               <div class="uk-margin">
                 <label for="#tag" class="uk-form-label uk-h5">By Tag</label>
-                <input placeholder="Tag search" class="uk-input" id="tag" value="[[settings.encounterSort.filter.tag]]">
+                <input placeholder="Tag search" class="uk-input" id="tag" x-model="settings.encounterSort.filter.tag">
               </div>
             </div>
-            <a class="uk-visible@s" on-click="toggle('moreFilters')">[[moreFilters ? 'Less' : 'More']] Filters</a>
+            <a class="uk-visible@s" @click="toggle('moreFilters')" x-text="(moreFilters ? 'Less' : 'More') + ' Filters'"></a>
       </form>
 
     </div>
-    [[/if]]
+    </template>
     <div class="uk-width-expand">
       <table  class="uk-table uk-table-striped uk-table-small uk-table-responsive encounters">
         <thead>
           <tr>
-            <th class="uk-width-small uk-visible@l" on-click="sort_encounters" data-sort="area:up">
-              <span>Encounter
-              [[#if settings.encounterSort.prop != 'area']]
-                <span>-</span>
-              [[elseif settings.encounterSort.dir == 'up']]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_up</i>
-              [[else]]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_down</i>
-              [[/if]]</span>
-            </th>
-            <th class="uk-width-small" on-click="sort_encounters" data-sort="started_at:down">
-              <span>Time
-              [[#if settings.encounterSort.prop != 'started_at']]
-                <span>-</span>
-              [[elseif settings.encounterSort.dir == 'up']]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_up</i>
-              [[else]]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_down</i>
-              [[/if]]</span>
-            </th>
-            <th class="uk-width-small" on-click="sort_encounters" data-sort="duration:down">
-              Dur.
-              [[#if settings.encounterSort.prop != 'duration']]
-                <span>-</span>
-              [[elseif settings.encounterSort.dir == 'up']]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_up</i>
-              [[else]]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_down</i>
-              [[/if]]
-            </th>
-            <th class="uk-width-small" on-click="sort_encounters" data-sort="character:up">
-              Character
-              [[#if settings.encounterSort.prop != 'character']]
-                <span>-</span>
-              [[elseif settings.encounterSort.dir == 'up']]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_up</i>
-              [[else]]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_down</i>
-              [[/if]]
-            </th>
-            <th class="uk-width-small" on-click="sort_encounters" data-sort="account:up">
-                Account
-                [[#if settings.encounterSort.prop != 'account']]
-                  <span>-</span>
-                [[elseif settings.encounterSort.dir == 'up']]
-                  <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_up</i>
-                [[else]]
-                  <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_down</i>
-                [[/if]]
-            </th>
-            <th class="uk-width-small" on-click="sort_encounters" data-sort="uploaded_at:down">
-              Upload
-              [[#if settings.encounterSort.prop != 'uploaded_at']]
-                <span>-</span>
-              [[elseif settings.encounterSort.dir == 'up']]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_up</i>
-              [[else]]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_down</i>
-              [[/if]]
-            </th>
-            <th class="uk-width-small" on-click="sort_encounters" data-sort="category:up">
-              Category
-              [[#if settings.encounterSort.prop != 'category']]
-                <span>-</span>
-              [[elseif settings.encounterSort.dir == 'up']]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_up</i>
-              [[else]]
-                <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom;">keyboard_arrow_down</i>
-              [[/if]]
-            </th>
+            {# a column's sort arrow: up or down where the list is sorted by it, a dash elsewhere #}
+            <template x-for="column in [
+              {prop: 'area', sort: 'area:up', title: 'Encounter', th: 'uk-width-small uk-visible@l'},
+              {prop: 'started_at', sort: 'started_at:down', title: 'Time', th: 'uk-width-small'},
+              {prop: 'duration', sort: 'duration:down', title: 'Dur.', th: 'uk-width-small'},
+              {prop: 'character', sort: 'character:up', title: 'Character', th: 'uk-width-small'},
+              {prop: 'account', sort: 'account:up', title: 'Account', th: 'uk-width-small'},
+              {prop: 'uploaded_at', sort: 'uploaded_at:down', title: 'Upload', th: 'uk-width-small'},
+              {prop: 'category', sort: 'category:up', title: 'Category', th: 'uk-width-small'}
+            ]">
+              <th :class="column.th" @click="fire('sort_encounters', $event)" :data-sort="column.sort">
+                <span><span x-text="column.title"></span>
+                <span x-visible="settings.encounterSort.prop != column.prop">-</span>
+                <i x-visible="settings.encounterSort.prop == column.prop" class="material-icons" style="font-size: 16px; vertical-align: text-bottom;" x-text="settings.encounterSort.dir == 'up' ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"></i></span>
+              </th>
+            </template>
           </tr>
 
 
         </thead>
 
-        [[#each encounterSlice]]
-          <a class="r-encounters-list" on-click="(@event.ctrlKey || @event.metaKey) || @this.page({ name: 'encounter', no: url_id })" href="[[baseURL]]/encounter/[[url_id]]">
+        {# each row is a link to the encounter: a click opens it here, ctrl/cmd or the middle button in a new tab #}
+        <template x-for="row in encounterSlice" :key="row.id">
+          <tr class="r-encounters-list" role="link" tabindex="0" style="cursor: pointer"
+              @click="($event.ctrlKey || $event.metaKey) ? window.open(getPageURL({ name: 'encounter', no: row.url_id }), '_blank') : setPage({ name: 'encounter', no: row.url_id })"
+              @auxclick="$event.button == 1 && window.open(getPageURL({ name: 'encounter', no: row.url_id }), '_blank')"
+              @keydown.enter="setPage({ name: 'encounter', no: row.url_id })">
             <td colspan="3">
-              <h4 class="uk-margin-remove">[[area]][[#if mode_tag]] <span class="uk-label r-mode-[[mode_tag]]">[[mode_tag]]</span>[[/if]]</h4>
-              <span class="uk-badge uk-text-bold [[success ? 'uk-label-success' : 'uk-label-danger']]">[[success ? 'Success' : 'Wipe']]  ([[formatTime(duration)]])</span>
-              <span class="uk-badge uk-text-bold r-bg-0">[[formatDate(started_at)]]</span>
-                [[#each tags]]
-                  <span class="tag uk-badge uk-text-bold" style="margin-right:2px;">[[.]]</span>
-                [[/each]]
+              <h4 class="uk-margin-remove"><span x-text="row.area"></span> <span x-visible="row.mode_tag" class="uk-label" :class="'r-mode-' + row.mode_tag" x-text="row.mode_tag"></span></h4>
+              <span class="uk-badge uk-text-bold" :class="row.success ? 'uk-label-success' : 'uk-label-danger'" x-text="(row.success ? 'Success' : 'Wipe') + '  (' + formatTime(row.duration) + ')'"></span>
+              <span class="uk-badge uk-text-bold r-bg-0" x-text="formatDate(row.started_at)"></span>
+                <template x-for="tag in row.tags">
+                  <span class="tag uk-badge uk-text-bold" style="margin-right:2px;" x-text="tag"></span>
+                </template>
             </td>
             <td colspan="2">
                 <div class="max-content-width">
-                  <p class="uk-margin-remove"><img alt="[[data.archetypes[archetype]]]" src="{% static 'raidar/img/arch/' %}/[[data.archetypes[archetype]]].png"/>
-                  <img alt="[[data.specialisations[profession][elite]]]" src="{% static 'raidar/img/20px/' %}/[[data.specialisations[profession][elite]]]_tango_icon_20px.png"/>[[character]]</p>
-                  <p class="uk-text-small uk-margin-remove">Account: [[account]]</p>
+                  <p class="uk-margin-remove"><img :alt="data.archetypes[row.archetype]" :src="'{% static 'raidar/img/arch/' %}/' + data.archetypes[row.archetype] + '.png'"/>
+                  <img :alt="data.specialisations[row.profession][row.elite]" :src="'{% static 'raidar/img/20px/' %}/' + data.specialisations[row.profession][row.elite] + '_tango_icon_20px.png'"/><span x-text="row.character"></span></p>
+                  <p class="uk-text-small uk-margin-remove">Account: <span x-text="row.account"></span></p>
                 </div>
             </td>
-            <td class="uk-visible@m">
-              [[formatDate(uploaded_at)]]
+            <td class="uk-visible@m" x-text="formatDate(row.uploaded_at)">
             </td>
-            <td class="uk-visible@m">
-              [[category ? data.categories[category] : '']]
+            <td class="uk-visible@m" x-text="row.category ? data.categories[row.category] : ''">
             </td>
-          </a>
-        [[/each]]
+          </tr>
+        </template>
       </table>
     </div>
   </div>
 </div>
 
 <ul class="uk-pagination uk-flex-center">
-  [[#each encounterPages]]
-    [[#if a || d]]
-      <li class="[[a ? 'uk-active' : 'uk-disabled']]"><span class="[[c]]">[[t]]</span></li>
-    [[else]]
-      <li><a href="#" class="[[c]]" data-page="[[n || t]]" on-click="page_no">[[t]]</a></li>
-    [[/if]]
-  [[/each]]
+  <template x-for="pageLink in encounterPages">
+    <li :class="pageLink.a ? 'uk-active' : pageLink.d ? 'uk-disabled' : ''">
+      <span x-visible="pageLink.a || pageLink.d" :class="pageLink.c" x-text="pageLink.t"></span>
+      <a x-visible="!(pageLink.a || pageLink.d)" href="#" :class="pageLink.c" :data-page="pageLink.n || pageLink.t" @click="fire('page_no', $event)" x-text="pageLink.t"></a>
+    </li>
+  </template>
 </ul>

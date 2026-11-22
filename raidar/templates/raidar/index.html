@@ -11,10 +11,6 @@
       integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
       crossorigin="anonymous"></script>
     <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/ractive/1.0.0-build-99/ractive.min.js"
-      integrity="sha256-mExWZGcRUInQaORXu+FR6iqAtQzfHZ8YQeE+LIVC2a0="
-      crossorigin="anonymous"></script>
-    <script
       src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-beta.39/js/uikit.min.js"
       integrity="sha256-w7qX33Gtp81CF0B7UK16G8ekF0FN5UIhJTY66Un9n0c="
       crossorigin="anonymous"></script>
@@ -46,8 +42,9 @@
     <meta name="msapplication-TileColor" content="#832759">
     <meta name="msapplication-TileImage" content="{% static 'raidar/img/favicon/ms-icon-144x144.png' %}">
     <meta name="theme-color" content="#832759">
-    <script id="template" type="text/ractive">
-      <div class="percentile-[[settings.palette || 'default']]">
+    {# The page, which script.js puts into #container once the data has loaded; Alpine.js runs it (see alpine-setup.js) #}
+    <template id="template">
+      <div :class="'percentile-' + (settings.palette || 'default')">
           {# Logo #}
           <div class="custom-header uk-overflow-hidden uk-overflow-auto uk-margin-bottom">
             <div class="r-main-nav">
@@ -57,40 +54,21 @@
                         <nav class="uk-navbar uk-navbar-container uk-navbar-transparent" id="top">
                             <div class="uk-navbar-right">
                               <ul class="uk-navbar-nav uk-visible@m">
-                                [[#if username]]
-                                  [[#if is_staff]]
-                                    <li class="no-hover"><a href="{% url 'admin:index' %}[[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
-                                  [[/if]]
-                                  <!-- Uncomment this to enable notifications.
-                                  <li class="uk-inline">
-                                    <a href="#">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" icon="warning" ratio="1"><circle fill="#fff" cx="10" cy="14" r="1"></circle><circle fill="none" stroke="#fff" stroke-width="1.1" cx="10" cy="10" r="9"></circle><path fill="#fff" d="M10.97,7.72 C10.85,9.54 10.56,11.29 10.56,11.29 C10.51,11.87 10.27,12 9.99,12 C9.69,12 9.49,11.87 9.43,11.29 C9.43,11.29 9.16,9.54 9.03,7.72 C8.96,6.54 9.03,6 9.03,6 C9.03,5.45 9.46,5.02 9.99,5 C10.53,5.01 10.97,5.44 10.97,6 C10.97,6 11.04,6.54 10.97,7.72 L10.97,7.72 Z"></path></svg>
-                                    </a>
-                                    <div class="uk-background-secondary uk-light" uk-dropdown="mode: click; pos: bottom-center; offset: 20" style="width:300px;">
-                                      <p class="uk-text-center">No notifications.</p>
-                                    </div>
-                                  </li>
-                                  <li class="uk-inline">
-                                    <a href="#">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" icon="warning" ratio="1"><circle fill="#32d296" cx="10" cy="14" r="1"></circle><circle fill="none" stroke="#32d296" stroke-width="1.1" cx="10" cy="10" r="9"></circle><path fill="#32d296" d="M10.97,7.72 C10.85,9.54 10.56,11.29 10.56,11.29 C10.51,11.87 10.27,12 9.99,12 C9.69,12 9.49,11.87 9.43,11.29 C9.43,11.29 9.16,9.54 9.03,7.72 C8.96,6.54 9.03,6 9.03,6 C9.03,5.45 9.46,5.02 9.99,5 C10.53,5.01 10.97,5.44 10.97,6 C10.97,6 11.04,6.54 10.97,7.72 L10.97,7.72 Z"></path></svg>
-                                    </a>
-                                    <div class="uk-background-secondary uk-light" uk-dropdown="mode: click; pos: bottom-center; offset: 20" style="width:300px;">
-                                      <dl class="uk-description-list uk-description-list-divider">
-                                          <dt><a href="">Description term</a></dt>
-                                          <dd class="uk-text-small">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</dd>
-                                          <dt><a href="">Description term</a></dt>
-                                          <dd class="uk-text-small">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</dd>
-                                          <dt><a href="">Description term</a></dt>
-                                          <dd class="uk-text-small">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</dd>
-                                    </dl>
-                                    </div>
-                                  </li>-->
-                                  <li class="[[page.name=='account' ? 'uk-active' : '']] no-hover"><a class=" uk-text-small uk-text-white" href="[[@this.getPageURL('account')]]" on-click="@this.page('account')" uk-tooltip="title: Account: [[username]]"><i class="material-icons uk-margin-small-right">perm_identity</i></a></li>
-                                  <li><a class=" uk-text-small uk-text-white" href="#" on-click="auth_logout" uk-tooltip="title: Logout"><i class="material-icons uk-margin-small-right">exit_to_app</i></a></li>
-                                [[else]]
-                                  <li class="[[page.name=='login' ? 'uk-active' : '']] no-hover"><a class=" uk-text-small uk-text-white" href="[[@this.getPageURL('login')]]" on-click="@this.page('login')" uk-tooltip="title: Login"><i class="material-icons uk-margin-small-right">input</i></a></li>
-                                  <li class="[[page.name=='register' ? 'uk-active' : '']]"><a class=" uk-text-small uk-text-white" href="[[@this.getPageURL('register')]]" on-click="@this.page('register')">Register</a></li>
-                                [[/if]]
+                                <template x-if="username && is_staff">
+                                  <li class="no-hover"><a :href="'{% url 'admin:index' %}' + (page.name == 'encounter' ? 'raidar/encounter/' + encounter.id + '/change/' : '')">Admin</a></li>
+                                </template>
+                                <template x-if="username">
+                                  <li class="no-hover" :class="{'uk-active': page.name == 'account'}"><a class=" uk-text-small uk-text-white" :href="getPageURL('account')" @click.prevent.stop="setPage('account')" :uk-tooltip="'title: Account: ' + username"><i class="material-icons uk-margin-small-right">perm_identity</i></a></li>
+                                </template>
+                                <template x-if="username">
+                                  <li><a class=" uk-text-small uk-text-white" href="#" @click="fire('auth_logout', $event)" uk-tooltip="title: Logout"><i class="material-icons uk-margin-small-right">exit_to_app</i></a></li>
+                                </template>
+                                <template x-if="!username">
+                                  <li class="no-hover" :class="{'uk-active': page.name == 'login'}"><a class=" uk-text-small uk-text-white" :href="getPageURL('login')" @click.prevent.stop="setPage('login')" uk-tooltip="title: Login"><i class="material-icons uk-margin-small-right">input</i></a></li>
+                                </template>
+                                <template x-if="!username">
+                                  <li :class="{'uk-active': page.name == 'register'}"><a class=" uk-text-small uk-text-white" :href="getPageURL('register')" @click.prevent.stop="setPage('register')">Register</a></li>
+                                </template>
                               </ul>
                             </div>
                         </nav>
@@ -108,28 +86,37 @@
                                   <img width="40" height="40" class="uk-hidden@m  uk-margin-small-top uk-margin-small-right uk-margin-small-bottom" src="{% static 'raidar/img/logo/mark-logo.svg' %}" alt="GW2 Raidar Logo" uk-svg>
                                 </span>
                                 <ul class="uk-navbar-nav r-navbar-hover">
-                                  <li class="[[page.name=='global_stats' ? 'uk-active' : '']]"><a href="[[@this.getPageURL('global_stats')]]" on-click="@this.page('global_stats')">Global Stats</a></li>
-                                  <li class="[[page.name=='leaderboards' ? 'uk-active' : '']]"><a href="[[@this.getPageURL('leaderboards')]]" on-click="@this.page({name: 'leaderboards'})">Leaderboards</a></li>
-                                  [[#if username]]
-                                    <li class="[[page.name=='profile' ? 'uk-active' : '']]"><a href="[[@this.getPageURL('profile')]]" on-click="@this.page('profile')">Personal Stats</a></li>
-                                    <li class="[[page.name=='encounters' || page.name=='encounter' ? 'uk-active' : '']]"><a href="[[@this.getPageURL({name: 'encounters', no: 1})]]" on-click="@this.page({name: 'encounters', no: 1})">Encounters</a></li>
-                                  [[#if is_staff]]
-                                    <li class="uk-hidden@m "><a href="{% url 'admin:index' %}[[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
-                                  [[/if]]
-                                    <li class="uk-hidden@m [[page.name=='account' ? 'uk-active' : '']]"><a class=" uk-text-small uk-text-white" href="[[@this.getPageURL('account')]]" on-click="@this.page('account')" title="Account: [[username]]" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">perm_identity</i></a></li>
-                                    <li class="uk-hidden@m"><a class=" uk-text-small uk-text-white" href="#" on-click="auth_logout" title="Logout" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">exit_to_app</i> </a></li>
-                                  [[else]]
-                                    <li class="uk-hidden@m [[page.name=='login' ? 'uk-active' : '']]"><a class=" uk-text-small uk-text-white" href="[[@this.getPageURL('login')]]" on-click="@this.page('login')"><i class="material-icons uk-margin-small-right">input</i> Login</a></li>
-                                    <li class="uk-hidden@m [[page.name=='register' ? 'uk-active' : '']]"><a class=" uk-text-small uk-text-white" href="[[@this.getPageURL('register')]]" on-click="@this.page('register')">Register</a></li>
-                                  [[/if]]
+                                  <li :class="{'uk-active': page.name == 'global_stats'}"><a :href="getPageURL('global_stats')" @click.prevent.stop="setPage('global_stats')">Global Stats</a></li>
+                                  <li :class="{'uk-active': page.name == 'leaderboards'}"><a :href="getPageURL('leaderboards')" @click.prevent.stop="setPage({name: 'leaderboards'})">Leaderboards</a></li>
+                                  <template x-if="username">
+                                    <li :class="{'uk-active': page.name == 'profile'}"><a :href="getPageURL('profile')" @click.prevent.stop="setPage('profile')">Personal Stats</a></li>
+                                  </template>
+                                  <template x-if="username">
+                                    <li :class="{'uk-active': page.name == 'encounters' || page.name == 'encounter'}"><a :href="getPageURL({name: 'encounters', no: 1})" @click.prevent.stop="setPage({name: 'encounters', no: 1})">Encounters</a></li>
+                                  </template>
+                                  <template x-if="username && is_staff">
+                                    <li class="uk-hidden@m "><a :href="'{% url 'admin:index' %}' + (page.name == 'encounter' ? 'raidar/encounter/' + encounter.id + '/change/' : '')">Admin</a></li>
+                                  </template>
+                                  <template x-if="username">
+                                    <li class="uk-hidden@m" :class="{'uk-active': page.name == 'account'}"><a class=" uk-text-small uk-text-white" :href="getPageURL('account')" @click.prevent.stop="setPage('account')" :title="'Account: ' + username" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">perm_identity</i></a></li>
+                                  </template>
+                                  <template x-if="username">
+                                    <li class="uk-hidden@m"><a class=" uk-text-small uk-text-white" href="#" @click="fire('auth_logout', $event)" title="Logout" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">exit_to_app</i> </a></li>
+                                  </template>
+                                  <template x-if="!username">
+                                    <li class="uk-hidden@m" :class="{'uk-active': page.name == 'login'}"><a class=" uk-text-small uk-text-white" :href="getPageURL('login')" @click.prevent.stop="setPage('login')"><i class="material-icons uk-margin-small-right">input</i> Login</a></li>
+                                  </template>
+                                  <template x-if="!username">
+                                    <li class="uk-hidden@m" :class="{'uk-active': page.name == 'register'}"><a class=" uk-text-small uk-text-white" :href="getPageURL('register')" @click.prevent.stop="setPage('register')">Register</a></li>
+                                  </template>
                                 </ul>
                               </div>
                               <div class="uk-navbar-right uk-visible@m">
                                  <ul class="uk-navbar-nav r-navbar-hover">
-                                   [[#if username]]
-                                     <li class="[[page.name=='uploads' ? 'uk-active' : '']]"><a href="[[@this.getPageURL('uploads')]]" on-click="@this.page('uploads')"><i class="material-icons uk-margin-small-right">file_upload</i>Upload</a></li>
-                                   [[/if]]
-                                   <li class="[[page.name=='info-help' ? 'uk-active' : '']]"><a href="[[@this.getPageURL('info-help')]]" on-click="@this.page('info-help')"><i class="material-icons uk-margin-small-right">help_outline</i>Help</a></li>
+                                   <template x-if="username">
+                                     <li :class="{'uk-active': page.name == 'uploads'}"><a :href="getPageURL('uploads')" @click.prevent.stop="setPage('uploads')"><i class="material-icons uk-margin-small-right">file_upload</i>Upload</a></li>
+                                   </template>
+                                   <li :class="{'uk-active': page.name == 'info-help'}"><a :href="getPageURL('info-help')" @click.prevent.stop="setPage('info-help')"><i class="material-icons uk-margin-small-right">help_outline</i>Help</a></li>
                                  </ul>
                                </div>
                             </nav>
@@ -138,11 +125,10 @@
                 </div>
       <div class="uk-container uk-container-large">
           <div class="uk-height-viewport uk-flex uk-flex-column">
-              {# content #}
+              {# content: the page view() names (script.js) #}
               <div class="uk-flex-1">
 
-                [[#if loading]]
-
+                <template x-if="view() == 'loading'">
                 <div class="r-loading-container">
                   <svg width="100%" height="405" viewBox="0 0 283 405" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                     <desc>Loading</desc>
@@ -203,111 +189,139 @@
                     </svg>
                     <p class="uk-text-center uk-width-1-1">Want to help improve GW2 Raidar? Contribute to the <a target="_blank" href="https://github.com/GW2Raidar/gw2raidar">project on Github</a>.</p>
                 </div>
+                </template>
 
-                [[elseif page.name == "encounter"]]
+                <template x-if="view() == 'encounter'">
+                  <div>
+                    {% include 'raidar/encounter.html' %}
+                    {% include 'raidar/donation_cta.html' %}
+                  </div>
+                </template>
 
-                  {% include 'raidar/encounter.html' %}
-                  {% include 'raidar/donation_cta.html' %}
+                <template x-if="view() == 'info-help'">
+                  <div>
+                    {% include 'raidar/info_help.html' %}
+                  </div>
+                </template>
 
-                [[elseif page.name == "info-help"]]
+                <template x-if="view() == 'info-api'">
+                  <div>
+                    {% include 'raidar/info_api.html' %}
+                  </div>
+                </template>
 
-                  {% include 'raidar/info_help.html' %}
+                <template x-if="view() == 'info-releasenotes'">
+                  <div>
+                    {% include 'raidar/info_releasenotes.html' %}
+                  </div>
+                </template>
 
-                [[elseif page.name == "info-api"]]
+                <template x-if="view() == 'info-contact'">
+                  <div>
+                    {% include 'raidar/info_contact.html' %}
+                  </div>
+                </template>
 
-                  {% include 'raidar/info_api.html' %}
+                <template x-if="view() == 'info-about'">
+                  <div>
+                    {% include 'raidar/info_about.html' %}
+                  </div>
+                </template>
 
-                [[elseif page.name == "info-releasenotes"]]
+                <template x-if="view() == 'global_stats'">
+                  <div>
+                    {% include 'raidar/global_stats.html' %}
+                    {% include 'raidar/donation_cta.html' %}
+                  </div>
+                </template>
 
-                  {% include 'raidar/info_releasenotes.html' %}
+                <template x-if="view() == 'thank-you'">
+                  <div>
+                    {% include 'raidar/thank-you.html' %}
+                  </div>
+                </template>
 
-                [[elseif page.name == "info-contact"]]
+                <template x-if="view() == 'leaderboards'">
+                  <div>
+                    {% include 'raidar/leaderboards.html' %}
+                    {% include 'raidar/donation_cta.html' %}
+                  </div>
+                </template>
 
-                  {% include 'raidar/info_contact.html' %}
+                <template x-if="view() == 'info-framework'">
+                  <div>
+                    {% include 'raidar/info_framework.html' %}
+                  </div>
+                </template>
 
-                [[elseif page.name == "info-about"]]
-
-                  {% include 'raidar/info_about.html' %}
-
-                [[elseif page.name == "global_stats"]]
-
-                  {% include 'raidar/global_stats.html' %}
-                  {% include 'raidar/donation_cta.html' %}
-                [[elseif page.name == "thank-you"]]
-
-                  {% include 'raidar/thank-you.html' %}
-
-              [[elseif page.name == "leaderboards"]]
-
-                {% include 'raidar/leaderboards.html' %}
-                {% include 'raidar/donation_cta.html' %}
-              [[elseif page.name == "info-framework"]]
-
-                  {% include 'raidar/info_framework.html' %}
-
-                [[elseif username]]
-
-                  [[#if page.name == "encounters"]]
-
-                    [[#if encounters.length]]
-                      {% include 'raidar/encounters.html' %}
-                      {% include 'raidar/donation_cta.html' %}
-                    [[else]]
+                {# signed in #}
+                <template x-if="view() == 'encounters'">
+                  <div>
+                    <template x-if="encounters.length">
+                      <div>
+                        {% include 'raidar/encounters.html' %}
+                        {% include 'raidar/donation_cta.html' %}
+                      </div>
+                    </template>
+                    <template x-if="!encounters.length">
                       <p>
                         Drag and drop evtc files to this window to upload.
                       </p>
-                    [[/if]]
+                    </template>
+                  </div>
+                </template>
 
-                  [[elseif page.name == "profile"]]
-
+                <template x-if="view() == 'profile'">
+                  <div>
                     {% include 'raidar/profile.html' %}
+                  </div>
+                </template>
 
-                  [[elseif page.name == "uploads"]]
-
+                <template x-if="view() == 'uploads'">
+                  <div>
                     {% include 'raidar/uploads.html' %}
                     {% include 'raidar/donation_cta.html' %}
+                  </div>
+                </template>
 
-                  [[elseif page.name == "account"]]
-
+                <template x-if="view() == 'account'">
+                  <div>
                     {% include 'raidar/account.html' %}
+                  </div>
+                </template>
 
-                  [[/if]]
-
-                [[else]]{# username #}
-
-                  [[#if page.name == "login"]]
-
+                {# signed out #}
+                <template x-if="view() == 'login'">
                     <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
                       <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
                         <fieldset class="uk-fieldset">
                           <legend class="uk-h4 uk-margin-remove-bottom">Log in</legend>
                           <p class="uk-text-small uk-text-muted uk-margin-small">Use your username, or your email if you've set one.</p>
                           <div class="uk-margin-small">
-                            <input id="login_username" class="uk-input uk-width-1-1" value="[[auth.input.username]]" placeholder="Username or email" autocomplete="username" required>
+                            <input id="login_username" class="uk-input uk-width-1-1" x-model="auth.input.username" placeholder="Username or email" autocomplete="username" required>
                           </div>
                           <div class="uk-margin-small">
-                            <input id="login_password" class="uk-input uk-width-1-1" value="[[auth.input.password]]" placeholder="Password" type="password" autocomplete="current-password" required>
+                            <input id="login_password" class="uk-input uk-width-1-1" x-model="auth.input.password" placeholder="Password" type="password" autocomplete="current-password" required>
                           </div>
-                          <p class="uk-text-small uk-text-right uk-margin-small"><a href="[[@this.getPageURL('reset_pw')]]" on-click="@this.page('reset_pw')">Forgot password?</a></p>
+                          <p class="uk-text-small uk-text-right uk-margin-small"><a :href="getPageURL('reset_pw')" @click.prevent.stop="setPage('reset_pw')">Forgot password?</a></p>
                         </fieldset>
                       </div>
 
                       <div class="uk-margin">
-                        <button id="login_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_login">Log in</button>
+                        <button id="login_submit" class="uk-button uk-button-default uk-width-1-1" @click="fire('auth_login', $event)">Log in</button>
                       </div>
-                      <p class="uk-text-small uk-text-muted uk-text-center">Have an invite code? <a href="[[@this.getPageURL('register')]]" on-click="@this.page('register')">Register</a></p>
+                      <p class="uk-text-small uk-text-muted uk-text-center">Have an invite code? <a :href="getPageURL('register')" @click.prevent.stop="setPage('register')">Register</a></p>
                     </form>
+                </template>
 
-
-                  [[elseif page.name == "register"]]
-
+                <template x-if="view() == 'register'">
                     <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
                       <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
                         <fieldset class="uk-fieldset">
                           <legend class="uk-h4 uk-margin-remove-bottom">1. Invite code</legend>
                           <p class="uk-text-small uk-text-muted uk-margin-small">Registration is invite-only. Enter the invite code you were given.</p>
                           <div class="uk-margin-small">
-                            <input id="register_invite_code" class="uk-input uk-width-1-1" value="[[auth.input.invite_code]]" placeholder="Invite code" autocomplete="off" required>
+                            <input id="register_invite_code" class="uk-input uk-width-1-1" x-model="auth.input.invite_code" placeholder="Invite code" autocomplete="off" required>
                           </div>
                         </fieldset>
                       </div>
@@ -317,13 +331,13 @@
                           <legend class="uk-h4 uk-margin-remove-bottom">2. Your login</legend>
                           <p class="uk-text-small uk-text-muted uk-margin-small">Letters, numbers and ._+-@ for the username; at least 8 characters for the password.</p>
                           <div class="uk-margin-small">
-                            <input id="register_username" class="uk-input uk-width-1-1" value="[[auth.input.username]]" placeholder="Username" autocomplete="username" pattern="[\w.@+-]+" required on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use letters, numbers, and ._+-@')">
+                            <input id="register_username" class="uk-input uk-width-1-1" x-model="auth.input.username" placeholder="Username" autocomplete="username" pattern="[\w.@+-]+" required @input="$el.setCustomValidity(''); $el.validity.patternMismatch && $el.setCustomValidity('Please use letters, numbers, and ._+-@')">
                           </div>
                           <div class="uk-margin-small">
-                            <input id="register_password" class="uk-input uk-width-1-1" value="[[auth.input.password]]" placeholder="Password" type="password" autocomplete="new-password" required pattern=".{8,}" on-input="@this.set('auth.passpattern', @node.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')), @node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please use at least 8 characters')">
+                            <input id="register_password" class="uk-input uk-width-1-1" x-model="auth.input.password" placeholder="Password" type="password" autocomplete="new-password" required pattern=".{8,}" @input="set('auth.passpattern', $el.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')); $el.setCustomValidity(''); $el.validity.patternMismatch && $el.setCustomValidity('Please use at least 8 characters')">
                           </div>
                           <div class="uk-margin-small">
-                            <input id="register_password2" class="uk-input uk-width-1-1" value="[[auth.input.password2]]" placeholder="Confirm password" type="password" autocomplete="new-password" required pattern="[[auth.passpattern]]" on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please make sure the password fields match')">
+                            <input id="register_password2" class="uk-input uk-width-1-1" x-model="auth.input.password2" placeholder="Confirm password" type="password" autocomplete="new-password" required :pattern="auth.passpattern" @input="$el.setCustomValidity(''); $el.validity.patternMismatch && $el.setCustomValidity('Please make sure the password fields match')">
                           </div>
                         </fieldset>
                       </div>
@@ -338,19 +352,19 @@
                           <div class="uk-margin-small">
                             <div class="uk-inline uk-width-1-1">
                               <a class="uk-form-icon uk-form-icon-flip" href="https://account.arena.net/applications" uk-icon="icon: link" target="gw2apps"></a>
-                              <input id="register_api_key" class="uk-input uk-width-1-1" value="[[auth.input.api_key]]" placeholder="'gw2raidar' API key" autocomplete="off" required pattern="^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{20}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$" on-input="@node.setCustomValidity(''), @node.validity.patternMismatch && @node.setCustomValidity('Please paste a valid GW2 API key')">
+                              <input id="register_api_key" class="uk-input uk-width-1-1" x-model="auth.input.api_key" placeholder="'gw2raidar' API key" autocomplete="off" required pattern="^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{20}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$" @input="$el.setCustomValidity(''); $el.validity.patternMismatch && $el.setCustomValidity('Please paste a valid GW2 API key')">
                             </div>
                           </div>
                         </fieldset>
                       </div>
 
                       <div class="uk-margin">
-                        <button id="register_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_register">Register</button>
+                        <button id="register_submit" class="uk-button uk-button-default uk-width-1-1" @click="fire('auth_register', $event)">Register</button>
                       </div>
                     </form>
+                </template>
 
-                  [[elseif page.name == "reset_pw"]]
-
+                <template x-if="view() == 'reset_pw'">
                     <form class="uk-form-stacked uk-padding uk-padding-remove-horizontal uk-width-large uk-margin-auto uk-text-left">
                       <div class="uk-card uk-card-default r-panel uk-card-small uk-card-body uk-margin">
                         <fieldset class="uk-fieldset">
@@ -359,25 +373,24 @@
                             Enter the email address on your account and we'll send you a reset link.
                           </p>
                           <div class="uk-margin-small">
-                            <input id="reset_pw_email" class="uk-input uk-width-1-1" value="[[auth.input.email]]" placeholder="Email" type="email" autocomplete="email" required>
+                            <input id="reset_pw_email" class="uk-input uk-width-1-1" x-model="auth.input.email" placeholder="Email" type="email" autocomplete="email" required>
                           </div>
                         </fieldset>
                       </div>
 
                       <div class="uk-margin">
-                        <button id="reset_pw_submit" class="uk-button uk-button-default uk-width-1-1" on-click="auth_reset_pw">Send reset link</button>
+                        <button id="reset_pw_submit" class="uk-button uk-button-default uk-width-1-1" @click="fire('auth_reset_pw', $event)">Send reset link</button>
                       </div>
-                      <p class="uk-text-small uk-text-muted uk-text-center"><a href="[[@this.getPageURL('login')]]" on-click="@this.page('login')">Back to log in</a></p>
+                      <p class="uk-text-small uk-text-muted uk-text-center"><a :href="getPageURL('login')" @click.prevent.stop="setPage('login')">Back to log in</a></p>
                     </form>
+                </template>
 
-                  [[else]]
-
+                <template x-if="view() == 'unknown'">
+                  <div>
                     TODO
                     {#% include 'raidar/intro.html' %#}
-
-                  [[/if]]
-
-                [[/if]]{# username #}
+                  </div>
+                </template>
               </div>
 
             </div>
@@ -387,16 +400,16 @@
           <div class="uk-grid ">
               <div class="uk-width-1-2 uk-width-1-6@m">
                 <ul class="uk-nav">
-                    <li><a href="[[@this.getPageURL({name: 'info-help'})]]" on-click="@this.page({name: 'info-help'})">Help</a></li>
-                    <li><a href="[[@this.getPageURL({name: 'info-releasenotes'})]]" on-click="@this.page({name: 'info-releasenotes'})">Release Notes</a></li>
+                    <li><a :href="getPageURL({name: 'info-help'})" @click.prevent.stop="setPage({name: 'info-help'})">Help</a></li>
+                    <li><a :href="getPageURL({name: 'info-releasenotes'})" @click.prevent.stop="setPage({name: 'info-releasenotes'})">Release Notes</a></li>
                     <li><a target="_blank" href="https://github.com/GW2Raidar/gw2raidar">Contribute</a></li>
                 </ul>
               </div>
 
               <div class="uk-width-1-2 uk-width-1-6@m">
                 <ul class="uk-nav">
-                    <li><a href="[[@this.getPageURL({name: 'info-contact'})]]" on-click="@this.page({name: 'info-contact'})">Contact Us</a></li>
-                    <li><a href="[[@this.getPageURL({name: 'info-about'})]]" on-click="@this.page({name: 'info-about'})">About Us</a></li>
+                    <li><a :href="getPageURL({name: 'info-contact'})" @click.prevent.stop="setPage({name: 'info-contact'})">Contact Us</a></li>
+                    <li><a :href="getPageURL({name: 'info-about'})" @click.prevent.stop="setPage({name: 'info-about'})">About Us</a></li>
                 </ul>
               </div>
 
@@ -408,13 +421,18 @@
 
       </footer>
     </div>
-    </script>
+    </template>
   </head>
   <body class="uk-height-viewport">
     {% csrf_token %}
 
     <div id="container" class="uk-height-viewport">
     </div>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.9/cdn.min.js"
+      integrity="sha384-9Ax3MmS9AClxJyd5/zafcXXjxmwFhZCdsT6HJoJjarvCaAkJlk5QDzjLJm+Wdx5F"
+      crossorigin="anonymous"></script>
+    <script src="{% static 'raidar/alpine-setup.js' %}"></script>
     <script src="{% static 'raidar/replay.js' %}"></script>
     <script src="{% static 'raidar/script.js' %}"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js"></script>

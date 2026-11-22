@@ -1,7 +1,7 @@
 /*
  * Encounter replay viewer: draws a replay (see eiparser/replay.py for the format) on the boss's map, with a
- * timeline and playback controls. The panel of players and targets next to it is a Ractive template that is
- * given the viewer's state through the onView callback.
+ * timeline and playback controls. The panel of players and targets next to it is part of the page template
+ * (encounter_replay.html), given the viewer's state through the onView callback.
  *
  *   let viewer = new RaidarReplay.Viewer(rootElement, replayData, {
  *     staticRoot: '/static/raidar/img/',          // spec icons are under 48px/

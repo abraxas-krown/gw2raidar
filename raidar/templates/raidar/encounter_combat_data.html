@@ -1,5 +1,16 @@
 {% load static %}
-<div class="table-container uk-margin-top">
+{% comment %}
+The squad, its parties and their members in the chosen phase. Each row reads the figures of its own squad, party or
+member by name (x-with), before those of the rows around it: inside a member, `actual` is the member's.
+{% endcomment %}
+<div class="table-container uk-margin-top"
+     x-with="{squad: encounter.phases[page.phase]}"
+     x-with:max="{
+       max_max_dps: Math.max(player.group.max_dps || squad.actual.dps, squad.actual.dps),
+       max_max_recv: Math.max(squad.group.max_total_received || encounter.phases.All.received.total, encounter.phases.All.received.total),
+       max_player_dps: Math.max(squad.individual.max_dps || encounter.max_player_dps, encounter.max_player_dps),
+       max_player_recv: Math.max(squad.individual.max_total_received || encounter.max_player_recv, encounter.max_player_recv)
+     }">
   {% include 'raidar/encounter_row_header.html' %}
   <div class="r-encounter-stats-container uk-background-default uk-margin-remove-bottom" style="z-index: 980;" uk-sticky="bottom: #offset">
     <div class="r-stats-row r-stats-header">
@@ -7,24 +18,24 @@
       <div>
         <div>Damage</div>
         <div class="r-toggle">
-          <a href="#" class-uk-active="page.dps_boss" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false">Boss</a>
+          <a href="#" :class="{'uk-active': page.dps_boss}" @click.prevent.stop="set({'page.dps_boss': true, 'page.dps_toggled': true})">Boss</a>
           |
-          <a href="#" class-uk-active="!page.dps_boss" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false">Total</a>
+          <a href="#" :class="{'uk-active': !page.dps_boss}" @click.prevent.stop="set({'page.dps_boss': false, 'page.dps_toggled': true})">Total</a>
         </div>
       </div>
       <div class="uk-visible@l">Damage Received</div>
       <div class="uk-visible@l">
         <div>Breakbar</div>
         <div class="r-toggle">
-          <a href="#" class-uk-active="page.breakbar_boss" on-click="@.set({'page.breakbar_boss': true}) && false">Boss</a>
+          <a href="#" :class="{'uk-active': page.breakbar_boss}" @click.prevent.stop="set({'page.breakbar_boss': true})">Boss</a>
           |
-          <a href="#" class-uk-active="!page.breakbar_boss" on-click="@.set({'page.breakbar_boss': false}) && false">Total</a>
+          <a href="#" :class="{'uk-active': !page.breakbar_boss}" @click.prevent.stop="set({'page.breakbar_boss': false})">Total</a>
         </div>
       </div>
       <div class="r-toggle uk-text-right uk-text-left@m">
-        <a href="#" class-uk-active="!page.boon_output" on-click="@.set({'page.boon_output': false}) && false">Uptime</a>
+        <a href="#" :class="{'uk-active': !page.boon_output}" @click.prevent.stop="set({'page.boon_output': false})">Uptime</a>
         |
-        <a href="#" class-uk-active="page.boon_output" on-click="@.set({'page.boon_output': true}) && false">Output</a>
+        <a href="#" :class="{'uk-active': page.boon_output}" @click.prevent.stop="set({'page.boon_output': true})">Output</a>
       </div>
       <div class="uk-visible@l">
         Misc
@@ -32,21 +43,13 @@
     </div>
   </div>
   {# SQUAD #}
-  [[#with encounter.phases[page.phase] as squad]]
-    [[#with
-      Math.max(player.group.max_dps || squad.actual.dps, squad.actual.dps) as max_max_dps,
-      Math.max(squad.group.max_total_received || encounter.phases.All.received.total, encounter.phases.All.received.total) as max_max_recv,
-      Math.max(squad.individual.max_dps || encounter.max_player_dps, encounter.max_player_dps) as max_player_dps,
-      Math.max(squad.individual.max_total_received || encounter.max_player_recv, encounter.max_player_recv) as max_player_recv
-    ]]
-      [[#with squad]]
-	<div class="r-encounter-stats-container squad">
+	<div class="r-encounter-stats-container squad" x-with="squad">
 	  <div class="r-stats-row">
 	    <div class="r-encounter-player uk-text-right@l"><h5 class="uk-margin-remove">Squad</h5></div>
 	    <div class="r-encounter-damage">
 	      <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-remove uk-text-uppercase">DPS</h6>
-	      <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart chart-100" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-		[[#with {
+	      <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart chart-100" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+	           x-with="{
 		  section: page.dps_boss ? {
 		      name: 'Boss DPS',
 		      name_total: 'Total DPS',
@@ -64,36 +67,34 @@
 		      max_dps: performance.actual.dps_max,
 		      percentiles_dps: pctl(performance.actual.dps_perc)
 		    }
-		}]]
-		  [[#with bsearch(section.dps, section.percentiles_dps) as pctl_dps]]
+		}"
+	           x-with:pctl="{pctl_dps: bsearch(section.dps, section.percentiles_dps)}">
 		    {# line #}
 		    <rect class="chart" x='0' y='36px' height='2px' width='100%' fill='#E7CCA9' />
 		    {# tick #}
-		    <rect class="chart" x='[[clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_max_dps)]]%' y='36px' height='6px' width='2px' fill='#E7CCA9' />
+		    <rect class="chart" :x="clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_max_dps) + '%'" y='36px' height='6px' width='2px' fill='#E7CCA9' />
 
-		    [[#if page.dps_boss]]
+		    <template x-if="page.dps_boss">
 		      {#  total DPS backdrop #}
-		      <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_max_dps)]]%' opacity='0.3' />
-		    [[/if]]
+		      <rect class="chart-hover" :class="'r-bg-' + pctl_dps + (page.dps_toggled ? '' : ' chart')" @click.prevent.stop="set({'page.dps_boss': false, 'page.dps_toggled': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name_total}</h5><strong>${num(section.dps_total, 0)}</strong> DPS.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps_total / max_max_dps) + '%'" opacity='0.3' />
+		    </template>
 		    {# primary DPS graph #}
-		    <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.<br/><strong>Performance:</strong> [[th(pctl_dps)]] Percentile[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]]</strong>.[[/if]]" x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps / max_max_dps)]]%' opacity='1' />
-		    [[#unless page.dps_boss]]
+		    <rect class="chart-hover" :class="'r-bg-' + pctl_dps + (page.dps_toggled ? '' : ' chart')" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name}</h5><strong>${num(section.dps, 0)}</strong> DPS.<br/><strong>Performance:</strong> ${th(pctl_dps)} Percentile${section.avg_dps ? `<br/>This role's average ${section.name} is <strong>${num(section.avg_dps, 0)}</strong>.` : ''}`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps / max_max_dps) + '%'" opacity='1' />
+		    <template x-if="!page.dps_boss">
 		      {# boss DPS overlay #}
-		      <rect class-chart="!page.dps_toggled" class="chart-hover" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_max_dps)]]%' opacity='0.15' />
-		    [[/unless]]
+		      <rect class="chart-hover" :class="page.dps_toggled ? '' : 'chart'" @click.prevent.stop="set({'page.dps_boss': true, 'page.dps_toggled': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name_boss}</h5><strong>${num(section.dps_boss, 0)}</strong> DPS.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps_boss / max_max_dps) + '%'" opacity='0.15' />
+		    </template>
 
 		    {# text #}
-		    <text x='[[clamp(100 * section.dps / max_max_dps)]]%' y='-1px' alignment-baseline="baseline" text-anchor="[[(clamp(100 * section.dps / max_max_dps)) > 90 ? 'end' : 'begin']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14'>[[num(section.dps, 0)]]</text>
+		    <text :x="clamp(100 * section.dps / max_max_dps) + '%'" y='-1px' alignment-baseline="baseline" :text-anchor="(clamp(100 * section.dps / max_max_dps)) > 90 ? 'end' : 'begin'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14' x-text="num(section.dps, 0)"></text>
 		    {# tick text #}
-		    <text class="" x='[[clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_max_dps)]]%' y='44px' alignment-baseline="hanging" text-anchor="[[(clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_max_dps)) > 90 ? 'end' : 'middle']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'>[[num(section.percentiles_dps[settings.comparePerc], 0)]]<tspan fill="#958cbb" alignment-baseline="hanging"> ([[th(settings.comparePerc)]])</tspan></text>
-		  [[/with]]
-		[[/with]]
+		    <text class="" :x="clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_max_dps) + '%'" y='44px' alignment-baseline="hanging" :text-anchor="(clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_max_dps)) > 90 ? 'end' : 'middle'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'><tspan x-text="num(section.percentiles_dps[settings.comparePerc], 0)"></tspan><tspan fill="#958cbb" alignment-baseline="hanging" x-text="' (' + th(settings.comparePerc) + ')'"></tspan></text>
 	      </svg>
 	    </div>
 	    <div class="r-encounter-damage in uk-visible@m">
 	      <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase">Damage Received</h6>
-	      <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-		[[#with {
+	      <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+	           x-with="{
 		  section: {
 		      recv: received.total,
 		      recv_dps: received.dps,
@@ -102,31 +103,29 @@
 		      avg_recv_dps: group.avg_dps_received,
 		      percentiles_recv: pctl(performance.received.total_perc)
 		    }
-		}]]
-		  [[#with
-		    bsearchLow(section.recv, section.percentiles_recv) as pctl_recv,
-		    clamp(100 * section.recv / max_max_recv) as width
-		  ]]
+		}"
+	           x-with:pctl="{
+		    pctl_recv: bsearchLow(section.recv, section.percentiles_recv),
+		    width: clamp(100 * section.recv / max_max_recv)
+		  }">
 		    {# line #}
 		    <rect class="chart" x='0' y='36px' height='2px' width='100%' fill='#E7CCA9' />
 		    {# tick #}
-		    <rect class="chart" x='[[clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_max_recv)]]%' y='36px' height='6px' width='2px' fill='#E7CCA9' />
+		    <rect class="chart" :x="clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_max_recv) + '%'" y='36px' height='6px' width='2px' fill='#E7CCA9' />
 
 		    {# graph #}
-		    <rect class="chart chart-hover r-bg-[[pctl_recv]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Damage Received</h5><strong>[[num(recv, 0)]]</strong> damage received and <strong>[[num(recv_dps, 0)]]</strong> per second.[[#if section.avg_recv]]<br/>Squad average is <strong>[[num(section.avg_recv, 0)]]</strong> and <strong>[[num(group.avg_recv_dps, 0)]]</strong> per second.[[/if]]<br/><strong>Performance:</strong> [[th(pctl_recv)]] Percentile" x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
+		    <rect class="chart chart-hover" :class="'r-bg-' + pctl_recv" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Damage Received</h5><strong>${num(section.recv, 0)}</strong> damage received and <strong>${num(section.recv_dps, 0)}</strong> per second.${section.avg_recv ? `<br/>Squad average is <strong>${num(section.avg_recv, 0)}</strong> and <strong>${num(group.avg_recv_dps, 0)}</strong> per second.` : ''}<br/><strong>Performance:</strong> ${th(pctl_recv)} Percentile`" x='0%' y='16px' height='16px' :width="width + '%'" opacity='1' />
 
 		    {# text #}
-		    <text x='[[width < 25 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 25 ? 'begin' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14'>[[num(section.recv, 0)]]</text>
+		    <text :x="(width < 25 ? 0 : width) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="width < 25 ? 'begin' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14' x-text="num(section.recv, 0)"></text>
 		    {# tick text #}
-		    <text class="" x='[[clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_max_recv)]]%' y='44px' alignment-baseline="hanging" text-anchor="[[width < 25 ? 'start' : 'middle']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'>[[num(section.percentiles_recv[100 - settings.comparePerc], 0)]] <tspan fill="#958cbb" alignment-baseline="hanging">([[th(settings.comparePerc)]])</tspan></text>
-		  [[/with]]
-		[[/with]]
+		    <text class="" :x="clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_max_recv) + '%'" y='44px' alignment-baseline="hanging" :text-anchor="width < 25 ? 'start' : 'middle'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'><tspan x-text="num(section.percentiles_recv[100 - settings.comparePerc], 0) + ' '"></tspan><tspan fill="#958cbb" alignment-baseline="hanging" x-text="'(' + th(settings.comparePerc) + ')'"></tspan></text>
 	      </svg>
 	    </div>
 	    <div class="r-encounter-damage breakbar uk-visible@m">
-          <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase">[[#if page.breakbar_boss]]Boss Breakbar[[else]]Total Breakbar[[/if]]</h6>
-          <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-            [[#with {
+          <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase" x-text="page.breakbar_boss ? 'Boss Breakbar' : 'Total Breakbar'"></h6>
+          <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+               x-with="{
               section: {
                   name: page.breakbar_boss ? 'Boss Breakbar Damage' : 'Total Breakbar Damage',
                   value: (page.breakbar_boss ? actual_boss.breakbar : actual.breakbar) || 0,
@@ -134,69 +133,64 @@
                   boss: actual_boss.breakbar || 0,
                   squad: (page.breakbar_boss ? squad.actual_boss.breakbar : squad.actual.breakbar) || 0
                 }
-            }]]
-              [[#with squad.actual.breakbar ? clamp(100 * section.value / squad.actual.breakbar) : 0 as width]]
-                [[#if page.breakbar_boss]]
+            }"
+               x-with:width="{width: squad.actual.breakbar ? clamp(100 * section.value / squad.actual.breakbar) : 0}">
+                <template x-if="page.breakbar_boss">
                   {# total breakbar backdrop #}
-                  <rect class="chart-hover r-bg-0" on-click="@.set({'page.breakbar_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>[[num(section.total, 0)]]</strong> damage to all defiance bars.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[squad.actual.breakbar ? clamp(100 * section.total / squad.actual.breakbar) : 0]]%' opacity='0.3' />
-                [[/if]]
+                  <rect class="chart-hover r-bg-0" @click.prevent.stop="set({'page.breakbar_boss': false})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>${num(section.total, 0)}</strong> damage to all defiance bars.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="(squad.actual.breakbar ? clamp(100 * section.total / squad.actual.breakbar) : 0) + '%'" opacity='0.3' />
+                </template>
                 {# graph #}
-                <rect class="chart-hover r-bg-0" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.value, 0)]]</strong> damage to [[page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars']]." x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
-                [[#unless page.breakbar_boss]]
+                <rect class="chart-hover r-bg-0" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name}</h5><strong>${num(section.value, 0)}</strong> damage to ${page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars'}.`" x='0%' y='16px' height='16px' :width="width + '%'" opacity='1' />
+                <template x-if="!page.breakbar_boss">
                   {# boss breakbar overlay #}
-                  <rect class="chart-hover" on-click="@.set({'page.breakbar_boss': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Boss Breakbar Damage</h5><strong>[[num(section.boss, 0)]]</strong> damage to the defiance bars of the boss.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[squad.actual.breakbar ? clamp(100 * section.boss / squad.actual.breakbar) : 0]]%' opacity='0.15' />
-                [[/unless]]
+                  <rect class="chart-hover" @click.prevent.stop="set({'page.breakbar_boss': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Boss Breakbar Damage</h5><strong>${num(section.boss, 0)}</strong> damage to the defiance bars of the boss.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="(squad.actual.breakbar ? clamp(100 * section.boss / squad.actual.breakbar) : 0) + '%'" opacity='0.15' />
+                </template>
                 {# text #}
-                <text x='[[width < 35 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 35 ? 'start' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14'>[[num(section.value, 0)]]</text>
-              [[/with]]
-            [[/with]]
+                <text :x="(width < 35 ? 0 : width) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="width < 35 ? 'start' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14' x-text="num(section.value, 0)"></text>
           </svg>
         </div>
 	    <div class="r-encounter-buff-container">
-	      [[#each data.buff_tabs[0].order as code]]
-		[[#with {
+	      <template x-for="code in data.buff_tabs[0].order">
+		    <div class="r-encounter-buff r-tooltip-help"
+		         x-with="{
 		  buff: data.buffs[code],
 		  format: data.buffs[code].stacks ? num : perc,
 		  section: page.boon_output ? {
 		      name: 'Output',
 		      value: buffs_out ? buffs_out[code] : 0,
-		      percentiles: pctl(@context.get(`performance.buffs_out.${code}_perc`))
+		      percentiles: pctl(performance.buffs_out[code + '_perc'])
 		    } : {
 		      name: 'Uptime',
 		      value: buffs ? buffs[code] : 0,
-		      percentiles: pctl(@context.get(`performance.buffs.${code}_perc`))
+		      percentiles: pctl(performance.buffs[code + '_perc'])
 		    }
-		}]]
-		  [[#with bsearch(section.value, section.percentiles) as buff_pctl]]
-		    <div class="r-encounter-buff r-tooltip-help" uk-tooltip="pos:bottom-left; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[buff.name]] [[section.name]]</h5><strong>Performance:</strong> [[th(buff_pctl)]] Percentile">
-		      <img src="[[buff.icon]]" alt="[[buff.name]]"/>
-		      <span class="r-buff-number r-bg-[[buff_pctl]]">[[format(section.value, 1)]] </span>
-		      <span class="r-buff-number r-bg-[[settings.comparePerc]] compare">[[format(section.percentiles[settings.comparePerc], 1)]]</span>
+		}"
+		         x-with:pctl="{buff_pctl: bsearch(section.value, section.percentiles)}"
+		         :uk-tooltip="`pos:bottom-left; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${buff.name} ${section.name}</h5><strong>Performance:</strong> ${th(buff_pctl)} Percentile`">
+		      <img :src="buff.icon" :alt="buff.name"/>
+		      <span class="r-buff-number" :class="'r-bg-' + buff_pctl" x-text="format(section.value, 1) + ' '"></span>
+		      <span class="r-buff-number compare" :class="'r-bg-' + settings.comparePerc" x-text="format(section.percentiles[settings.comparePerc], 1)"></span>
 		    </div>
-		  [[/with]]
-		[[/with]]
-	      [[/each]]
+	      </template>
 	    </div>
 	  </div>
 	</div>
-      [[/with]]
       {# SQUAD END #}
 
 
-      [[#each squad.parties:partyNo]]
-	<!-- <h5 class="uk-heading-line uk-font-family-secondary"><span>Party [[partyNo]] ([[members.length]] member[[members.length > 1 && 's' || '']])</span></h5> -->
-	<div class="r-encounter-stats-container">
+      <template x-for="(party, partyNo) in squad.parties">
+	<div class="r-encounter-stats-container" x-with="party">
 	  {# PARTY #}
 	  <div class="r-stats-row r-party compare-hover">
 	    <div class="r-encounter-player uk-text-right@l">
 	      <div>
-      		<h5 class="uk-margin-remove">Party [[partyNo]] </h5>
-          <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase"> [[members.length]] member[[members.length > 1 && 's' || '']]</h6>
+      		<h5 class="uk-margin-remove" x-text="'Party ' + partyNo + ' '"></h5>
+          <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase" x-text="' ' + members.length + ' member' + (members.length > 1 ? 's' : '')"></h6>
 	      </div>
 	    </div>
 	      <div class="r-encounter-damage">
-		<svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-		  [[#with {
+		<svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+		     x-with="{
 		    section: page.dps_boss ? {
 			name: 'Boss DPS',
 			name_total: 'Total DPS',
@@ -214,54 +208,50 @@
 			max_dps: squad.group.max_dps,
 			squad_dps: squad.actual.dps
 		      }
-		  }]]
-		    [[#with clamp(100 * section.dps / max_max_dps) as width]]
+		  }"
+		     x-with:width="{width: clamp(100 * section.dps / max_max_dps)}">
 		      {# line #}
-		      <rect class="chart" x='0' y='36px' height='2px' width='[[clamp(100 * section.squad_dps / max_max_dps)]]%' fill='#E7CCA9' />
+		      <rect class="chart" x='0' y='36px' height='2px' :width="clamp(100 * section.squad_dps / max_max_dps) + '%'" fill='#E7CCA9' />
 
-		      [[#if page.dps_boss]]
+		      <template x-if="page.dps_boss">
 			{# total DPS backdrop #}
-			<rect class-chart="!page.dps_toggled" class="chart-hover r-bg-101" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_max_dps)]]%' opacity='0.3' />
-		      [[/if]]
+			<rect class="chart-hover r-bg-101" :class="page.dps_toggled ? '' : 'chart'" @click.prevent.stop="set({'page.dps_boss': false, 'page.dps_toggled': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name_total}</h5><strong>${num(section.dps_total, 0)}</strong> DPS.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps_total / max_max_dps) + '%'" opacity='0.3' />
+		      </template>
 		      {# primary DPS Graph #}
-		      <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-101" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]]</strong>.[[/if]]" x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
-		      [[#unless page.dps_boss]]
+		      <rect class="chart-hover r-bg-101" :class="page.dps_toggled ? '' : 'chart'" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name}</h5><strong>${num(section.dps, 0)}</strong> DPS.${section.avg_dps ? `<br/>This role's average ${section.name} is <strong>${num(section.avg_dps, 0)}</strong>.` : ''}`" x='0%' y='16px' height='16px' :width="width + '%'" opacity='1' />
+		      <template x-if="!page.dps_boss">
 			{# boss DPS overlay #}
-			<rect class-chart="!page.dps_toggled" class="chart-hover" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_max_dps)]]%' opacity='0.15' />
-		      [[/unless]]
+			<rect class="chart-hover" :class="page.dps_toggled ? '' : 'chart'" @click.prevent.stop="set({'page.dps_boss': true, 'page.dps_toggled': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name_boss}</h5><strong>${num(section.dps_boss, 0)}</strong> DPS.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps_boss / max_max_dps) + '%'" opacity='0.15' />
+		      </template>
 		      {# line text #}
-		      <text x='[[clamp(100 * section.squad_dps / max_max_dps)]]%' y='42px' alignment-baseline="hanging" text-anchor="[[(clamp(100 * section.squad_dps / max_max_dps)) < 25 ? 'begin' : 'end']]" font-family='Source Sans Pro' fill='#958cbb'  font-size='11'>Squad</text>
+		      <text :x="clamp(100 * section.squad_dps / max_max_dps) + '%'" y='42px' alignment-baseline="hanging" :text-anchor="(clamp(100 * section.squad_dps / max_max_dps)) < 25 ? 'begin' : 'end'" font-family='Source Sans Pro' fill='#958cbb'  font-size='11'>Squad</text>
 		      {# text #}
-		      <text x='[[width < 12 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 12 ? 'begin' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14'>[[num(section.dps, 0)]]</text>
-		    [[/with]]
-		  [[/with]]
+		      <text :x="(width < 12 ? 0 : width) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="width < 12 ? 'begin' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14' x-text="num(section.dps, 0)"></text>
 		</svg>
 	      </div>
 
 	      <div class="r-encounter-damage in uk-visible@m">
 		<h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase">Damage Received</h6>
-		<svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-		  [[#with {
+		<svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+		     x-with="{
 		    recv: received.total,
 		    squad_recv: squad.received.total
-		  }]]
-		    [[#with clamp(100 * recv / max_max_recv) as width]]
+		  }"
+		     x-with:width="{width: clamp(100 * recv / max_max_recv)}">
 		      {# line #}
-		      <rect class="chart" x='0' y='36px' height='2px' width='[[clamp(100 * squad_recv / max_max_recv)]]%' fill='#E7CCA9' />
+		      <rect class="chart" x='0' y='36px' height='2px' :width="clamp(100 * squad_recv / max_max_recv) + '%'" fill='#E7CCA9' />
 		      {# tick #}
-		      <rect class="chart r-bg-101" x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
+		      <rect class="chart r-bg-101" x='0%' y='16px' height='16px' :width="width + '%'" opacity='1' />
 		      {# line text #}
-		      <text x='[[clamp(100 * squad_recv / max_max_recv)]]%' y='42px' alignment-baseline="hanging" text-anchor="[[clamp(100 * squad_recv / max_max_recv) < 35 ? 'start' : 'end']]" font-family='Source Sans Pro' fill='#958cbb'  font-size='11'>Squad</text>
+		      <text :x="clamp(100 * squad_recv / max_max_recv) + '%'" y='42px' alignment-baseline="hanging" :text-anchor="clamp(100 * squad_recv / max_max_recv) < 35 ? 'start' : 'end'" font-family='Source Sans Pro' fill='#958cbb'  font-size='11'>Squad</text>
 		      {# text #}
-		      <text x='[[width < 35 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 35 ? 'start' : 'middle']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14'>[[num(recv, 0)]]</text>
-		    [[/with]]
-		  [[/with]]
+		      <text :x="(width < 35 ? 0 : width) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="width < 35 ? 'start' : 'middle'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14' x-text="num(recv, 0)"></text>
 		</svg>
 	      </div>
 	      <div class="r-encounter-damage breakbar uk-visible@m">
-          <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase">[[#if page.breakbar_boss]]Boss Breakbar[[else]]Total Breakbar[[/if]]</h6>
-          <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-            [[#with {
+          <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase" x-text="page.breakbar_boss ? 'Boss Breakbar' : 'Total Breakbar'"></h6>
+          <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+               x-with="{
               section: {
                   name: page.breakbar_boss ? 'Boss Breakbar Damage' : 'Total Breakbar Damage',
                   value: (page.breakbar_boss ? actual_boss.breakbar : actual.breakbar) || 0,
@@ -269,29 +259,28 @@
                   boss: actual_boss.breakbar || 0,
                   squad: (page.breakbar_boss ? squad.actual_boss.breakbar : squad.actual.breakbar) || 0
                 }
-            }]]
-              [[#with squad.actual.breakbar ? clamp(100 * section.value / squad.actual.breakbar) : 0 as width]]
-              <rect class="chart" x='0' y='36px' height='2px' width='[[(squad.actual.breakbar ? clamp(100 * section.squad / squad.actual.breakbar) : 0)]]%' fill='#E7CCA9' />
-              <text x='[[(squad.actual.breakbar ? clamp(100 * section.squad / squad.actual.breakbar) : 0)]]%' y='42px' alignment-baseline="hanging" text-anchor="[[(squad.actual.breakbar ? clamp(100 * section.squad / squad.actual.breakbar) : 0) < 35 ? 'start' : 'end']]" font-family='Source Sans Pro' fill='#958cbb' font-size='11'>Squad</text>
-                [[#if page.breakbar_boss]]
+            }"
+               x-with:width="{width: squad.actual.breakbar ? clamp(100 * section.value / squad.actual.breakbar) : 0}">
+              <rect class="chart" x='0' y='36px' height='2px' :width="(squad.actual.breakbar ? clamp(100 * section.squad / squad.actual.breakbar) : 0) + '%'" fill='#E7CCA9' />
+              <text :x="(squad.actual.breakbar ? clamp(100 * section.squad / squad.actual.breakbar) : 0) + '%'" y='42px' alignment-baseline="hanging" :text-anchor="(squad.actual.breakbar ? clamp(100 * section.squad / squad.actual.breakbar) : 0) < 35 ? 'start' : 'end'" font-family='Source Sans Pro' fill='#958cbb' font-size='11'>Squad</text>
+                <template x-if="page.breakbar_boss">
                   {# total breakbar backdrop #}
-                  <rect class="chart-hover r-bg-101" on-click="@.set({'page.breakbar_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>[[num(section.total, 0)]]</strong> damage to all defiance bars.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[squad.actual.breakbar ? clamp(100 * section.total / squad.actual.breakbar) : 0]]%' opacity='0.3' />
-                [[/if]]
+                  <rect class="chart-hover r-bg-101" @click.prevent.stop="set({'page.breakbar_boss': false})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>${num(section.total, 0)}</strong> damage to all defiance bars.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="(squad.actual.breakbar ? clamp(100 * section.total / squad.actual.breakbar) : 0) + '%'" opacity='0.3' />
+                </template>
                 {# graph #}
-                <rect class="chart-hover r-bg-101" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.value, 0)]]</strong> damage to [[page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars']]." x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
-                [[#unless page.breakbar_boss]]
+                <rect class="chart-hover r-bg-101" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name}</h5><strong>${num(section.value, 0)}</strong> damage to ${page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars'}.`" x='0%' y='16px' height='16px' :width="width + '%'" opacity='1' />
+                <template x-if="!page.breakbar_boss">
                   {# boss breakbar overlay #}
-                  <rect class="chart-hover" on-click="@.set({'page.breakbar_boss': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Boss Breakbar Damage</h5><strong>[[num(section.boss, 0)]]</strong> damage to the defiance bars of the boss.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[squad.actual.breakbar ? clamp(100 * section.boss / squad.actual.breakbar) : 0]]%' opacity='0.15' />
-                [[/unless]]
+                  <rect class="chart-hover" @click.prevent.stop="set({'page.breakbar_boss': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Boss Breakbar Damage</h5><strong>${num(section.boss, 0)}</strong> damage to the defiance bars of the boss.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="(squad.actual.breakbar ? clamp(100 * section.boss / squad.actual.breakbar) : 0) + '%'" opacity='0.15' />
+                </template>
                 {# text #}
-                <text x='[[width < 35 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 35 ? 'start' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14'>[[num(section.value, 0)]]</text>
-              [[/with]]
-            [[/with]]
+                <text :x="(width < 35 ? 0 : width) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="width < 35 ? 'start' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14' x-text="num(section.value, 0)"></text>
           </svg>
         </div>
 	      <div class="r-encounter-buff-container" >
-		[[#each data.buff_tabs[0].order as code]]
-		  [[#with {
+		<template x-for="code in data.buff_tabs[0].order">
+		    <div class="r-encounter-buff r-tooltip-help"
+		         x-with="{
 		    buff: data.buffs[code],
 		    format: data.buffs[code].stacks ? num : perc,
 		    section: page.boon_output ? {
@@ -301,49 +290,49 @@
 			name: 'Uptime',
 			value: buffs ? buffs[code] : 0
 		      }
-		  } ]]
-		    <div class="r-encounter-buff r-tooltip-help" uk-tooltip="pos:bottom-left; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[buff.name]] [[section.name]]</h5>">
-		      <img src="[[buff.icon]]" title="[[buff.name]]" alt="[[buff.name]]"/>
-		      <span class="r-buff-number r-bg-101">[[format(section.value, 1)]]</span>
+		  }"
+		         :uk-tooltip="`pos:bottom-left; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${buff.name} ${section.name}</h5>`">
+		      <img :src="buff.icon" :title="buff.name" :alt="buff.name"/>
+		      <span class="r-buff-number r-bg-101" x-text="format(section.value, 1)"></span>
 		    </div>
-		  [[/with]]
-		[[/each]]
+		</template>
 	      </div>
 
 	      <div class='r-encounter-misc uk-visible@l'>
-		  <div class="uk-badge r-bg-101" uk-tooltip="pos: left; title:Critical: [[perc(100 * actual_boss.crit)]]">C</div>
-		  <div class="uk-badge r-bg-101" uk-tooltip="pos: left; title:Scholar Uptime: [[perc(100 * actual_boss.scholar)]]">S</div>
-		  <div class="uk-badge r-bg-101" uk-tooltip="pos: left; title:Flanking Uptime: [[perc(100 * actual_boss.flanking)]]">F</div>
-		  <div class="uk-badge r-bg-101" uk-tooltip="pos: left; title:Barrier: [[num(shielded.total, 0)]]">B</div>
+		  <div class="uk-badge r-bg-101" :uk-tooltip="'pos: left; title:Critical: ' + perc(100 * actual_boss.crit)">C</div>
+		  <div class="uk-badge r-bg-101" :uk-tooltip="'pos: left; title:Scholar Uptime: ' + perc(100 * actual_boss.scholar)">S</div>
+		  <div class="uk-badge r-bg-101" :uk-tooltip="'pos: left; title:Flanking Uptime: ' + perc(100 * actual_boss.flanking)">F</div>
+		  <div class="uk-badge r-bg-101" :uk-tooltip="'pos: left; title:Barrier: ' + num(shielded.total, 0)">B</div>
 	      </div>
 	  </div>
 	  {# PARTY END #}
 
-	  [[#each members]]
+	  <template x-for="member in members">
 	    {# MEMBER #}
-	    <div class="r-stats-row r-member compare-hover activity-[[#with events]][[#with encounter]][[round(((duration - ((down_time / 1000) + (dead_time / 1000) + (disconnect_time / 1000)))/duration)*100)]][[/with]][[/with]]">
-	      <div class="r-encounter-player uk-text-right@m [[self && 'compare-show']]" uk-tooltip="pos: bottom-left; delay: 350; title:[[#if name]][[name]]</br><strong>Account:</strong> [[account]][[else]]ACCOUNT PRIVATE[[/if]]<br><strong>Activity:</strong> [[#with .events]][[#with encounter]][[perc(((duration - ((down_time / 1000) + (dead_time / 1000) + (disconnect_time / 1000)))/duration)*100, 0)]][[/with]][[/with]][[#with .events]]<br>
-		<strong>Deaths:</strong> [[dead_count]][[#if dead_count]] ([[formatTime(dead_time / 1000)]])[[/if]]<br>
-		<strong>Downed:</strong> [[down_count]][[#if down_count]] ([[formatTime(down_time / 1000)]])[[/if]]<br>
-		<strong>Disconnects:</strong> [[disconnect_count]][[#if disconnect_count]] ([[formatTime(disconnect_time / 1000)]])[[/if]]
-	      [[/with]]">
+	    <div class="r-stats-row r-member compare-hover" x-with="member" :class="'activity-' + round(activity(events))">
+	      <div class="r-encounter-player uk-text-right@m" :class="{'compare-show': self}" :uk-tooltip="`pos: bottom-left; delay: 350; title:${name ? `${name}</br><strong>Account:</strong> ${account}` : 'ACCOUNT PRIVATE'}<br><strong>Activity:</strong> ${perc(activity(events), 0)}<br>
+		<strong>Deaths:</strong> ${events.dead_count}${events.dead_count ? ` (${formatTime(events.dead_time / 1000)})` : ''}<br>
+		<strong>Downed:</strong> ${events.down_count}${events.down_count ? ` (${formatTime(events.down_time / 1000)})` : ''}<br>
+		<strong>Disconnects:</strong> ${events.disconnect_count}${events.disconnect_count ? ` (${formatTime(events.disconnect_time / 1000)})` : ''}`">
 
 		<div class="uk-text-truncate">
-		  <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase"> [[data.archetypes[archetype]]] </h6>
-		  [[#if name]]
-		    <h5 class="uk-margin-remove uk-text-truncate">[[#if commander]]{% include 'raidar/commander_tag.html' %}[[/if]][[name]]</h5>
-		  [[else]]
+		  <h6 class="uk-font-family-secondary uk-text-muted uk-margin-remove uk-text-uppercase" x-text="' ' + data.archetypes[archetype] + ' '"></h6>
+		  <template x-if="name">
+		    <h5 class="uk-margin-remove uk-text-truncate"><template x-if="commander">{% include 'raidar/commander_tag.html' %}</template> <span x-text="name"></span></h5>
+		  </template>
+		  <template x-if="!name">
 		    <h5 class="private uk-margin-remove" data-text="PRIVATE">PRIVATE</h5>
-		  [[/if]]
+		  </template>
 		</div>
 		<div class="r-encounter-player-image" style="position: relative;">
-		  <img alt="[[data.specialisations[profession][elite]]]" src="{% static 'raidar/img/48px/' %}/[[data.specialisations[profession][elite]]]_tango_icon_48px.png"/>
-		  <img class="r-encounter-player-archetype" alt="[[data.archetypes[archetype]]]" src="{% static 'raidar/img/arch/' %}[[data.archetypes[archetype]]].png"/>
+		  <img :alt="data.specialisations[profession][elite]" :src="'{% static 'raidar/img/48px/' %}/' + data.specialisations[profession][elite] + '_tango_icon_48px.png'"/>
+		  <img class="r-encounter-player-archetype" :alt="data.archetypes[archetype]" :src="'{% static 'raidar/img/arch/' %}' + data.archetypes[archetype] + '.png'"/>
 		</div>
 	      </div>
                 <div class="r-encounter-damage">
-                  <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase">[[#if page.dps_boss]]Boss DPS[[else]]Total DPS[[/if]]</h6>
-                  [[#with {
+                  <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase" x-text="page.dps_boss ? 'Boss DPS' : 'Total DPS'"></h6>
+                      <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+                           x-with="{
                     section: page.dps_boss ? {
                         name: 'Boss DPS',
                         name_total: 'Total DPS',
@@ -361,79 +350,73 @@
                         max_dps: performance.actual.dps_max,
                         percentiles_dps: pctl(performance.actual.dps_perc)
                       }
-                  }]]
-                    [[#with
-                      bsearch(section.dps, section.percentiles_dps) as pctl_dps,
-                      clamp(100 * section.dps / max_player_dps) as width
-                    ]]
-                      <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
+                  }"
+                           x-with:pctl="{
+                      pctl_dps: bsearch(section.dps, section.percentiles_dps),
+                      width: clamp(100 * section.dps / max_player_dps)
+                    }">
                         {# line #}
-                        <rect class="chart" x='0' y='36px' height='2px' width='[[clamp(100 * section.max_dps / max_player_dps)]]%' fill='#E7CCA9' />
+                        <rect class="chart" x='0' y='36px' height='2px' :width="clamp(100 * section.max_dps / max_player_dps) + '%'" fill='#E7CCA9' />
 
                         {# tick #}
-                        <rect class="chart" x='[[clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps)]]%' y='36px' height='6px' width='2px' fill='#E7CCA9' />
+                        <rect class="chart" :x="clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps) + '%'" y='36px' height='6px' width='2px' fill='#E7CCA9' />
 
-                        [[#if page.dps_boss]]
+                        <template x-if="page.dps_boss">
                           {# total DPS backdrop #}
-
-                          <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" on-click="@.set({'page.dps_boss': false, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_total]]</h5><strong>[[num(section.dps_total, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_total / max_player_dps)]]%' opacity='0.3' />
-                        [[/if]]
+                          <rect class="chart-hover" :class="'r-bg-' + pctl_dps + (page.dps_toggled ? '' : ' chart')" @click.prevent.stop="set({'page.dps_boss': false, 'page.dps_toggled': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name_total}</h5><strong>${num(section.dps_total, 0)}</strong> DPS.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps_total / max_player_dps) + '%'" opacity='0.3' />
+                        </template>
                         {# primary DPS graph #}
-                        <rect class-chart="!page.dps_toggled" class="chart-hover r-bg-[[pctl_dps]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.dps, 0)]]</strong> DPS.<br/><strong>Performance:</strong> [[th(pctl_dps)]] Percentile[[#if section.avg_dps]]<br/>This role's average [[section.name]] is <strong>[[num(section.avg_dps, 0)]][[/if]]</strong>." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps / max_player_dps)]]%' opacity='1' />
-                        [[#unless page.dps_boss]]
+                        <rect class="chart-hover" :class="'r-bg-' + pctl_dps + (page.dps_toggled ? '' : ' chart')" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name}</h5><strong>${num(section.dps, 0)}</strong> DPS.<br/><strong>Performance:</strong> ${th(pctl_dps)} Percentile${section.avg_dps ? `<br/>This role's average ${section.name} is <strong>${num(section.avg_dps, 0)}</strong>.` : ''}`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps / max_player_dps) + '%'" opacity='1' />
+                        <template x-if="!page.dps_boss">
                           {# boss DPS overlay #}
-                          <rect class-chart="!page.dps_toggled" class="chart-hover" on-click="@.set({'page.dps_boss': true, 'page.dps_toggled': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name_boss]]</h5><strong>[[num(section.dps_boss, 0)]]</strong> DPS.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[clamp(100 * section.dps_boss / max_player_dps)]]%' opacity='0.15' />
-                        [[/unless]]
+                          <rect class="chart-hover" :class="page.dps_toggled ? '' : 'chart'" @click.prevent.stop="set({'page.dps_boss': true, 'page.dps_toggled': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name_boss}</h5><strong>${num(section.dps_boss, 0)}</strong> DPS.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="clamp(100 * section.dps_boss / max_player_dps) + '%'" opacity='0.15' />
+                        </template>
 
                         {# text #}
-                        <text class="chart-sm-align" x='[[clamp(100 * section.dps / max_player_dps)]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[(clamp(100 * section.dps / max_player_dps)) < 25 ? 'begin' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14'>[[num(section.dps, 0)]]</text>
+                        <text class="chart-sm-align" :x="clamp(100 * section.dps / max_player_dps) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="(clamp(100 * section.dps / max_player_dps)) < 25 ? 'begin' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14' x-text="num(section.dps, 0)"></text>
                         {# tick #}
-                        <text class="chart-sm-align" x='[[clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps)]]%' y='44px' alignment-baseline="hanging" text-anchor="[[(clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps)) < 25 ? 'begin' : (clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps)) > 80 ? 'end' : 'middle']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'>[[num(section.percentiles_dps[settings.comparePerc], 0)]] <tspan fill="#958cbb" alignment-baseline="hanging">([[th(settings.comparePerc)]])</tspan></text>
+                        <text class="chart-sm-align" :x="clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps) + '%'" y='44px' alignment-baseline="hanging" :text-anchor="(clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps)) < 25 ? 'begin' : (clamp(100 * (section.percentiles_dps[settings.comparePerc] || 0) / max_player_dps)) > 80 ? 'end' : 'middle'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'><tspan x-text="num(section.percentiles_dps[settings.comparePerc], 0) + ' '"></tspan><tspan fill="#958cbb" alignment-baseline="hanging" x-text="'(' + th(settings.comparePerc) + ')'"></tspan></text>
                       </svg>
-                    [[/with]]
-                  [[/with]]
                 </div>
 
                 <div class="r-encounter-damage in uk-visible@m">
                   <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase">Damage Received</h6>
-                  <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-                    [[#with {
+                  <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+                       x-with="{
                       section: {
                           recv: received.total,
                           shield_recv: shielded.total,
                           avg_recv: performance.received.total_avg,
-                          {# TODO? performance.avg_total_shielded #}
                           max_recv: performance.received.total_max,
                           percentiles_recv: pctl(performance.received.total_perc)
                         }
-                    }]]
-                      [[#with
-                        bsearchLow(section.recv, section.percentiles_recv) as pctl_recv,
-                        clamp(100 * section.recv / max_player_recv) as width
-                      ]]
+                    }"
+                       x-with:pctl="{
+                        pctl_recv: bsearchLow(section.recv, section.percentiles_recv),
+                        width: clamp(100 * section.recv / max_player_recv)
+                      }">
+                        {# TODO? performance.avg_total_shielded #}
                         {# line #}
-                        <rect class="chart" x='0' y='36px' height='2px' width='[[clamp(100 * section.max_recv / max_player_recv)]]%' fill='#E7CCA9' />
+                        <rect class="chart" x='0' y='36px' height='2px' :width="clamp(100 * section.max_recv / max_player_recv) + '%'" fill='#E7CCA9' />
                         {# tick #}
-                        <rect class="chart" x='[[clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_player_recv)]]%' y='36px' height='6px' width='2px' fill='#E7CCA9' />
+                        <rect class="chart" :x="clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_player_recv) + '%'" y='36px' height='6px' width='2px' fill='#E7CCA9' />
 
                         {# graph #}
-                        <rect class="chart chart-hover r-bg-[[pctl_recv]]" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Damage Received</h5><strong>[[num(section.recv, 0)]]</strong> damage received.[[#if section.avg_recv]]<br />This role's average is <strong>[[num(section.avg_recv, 0)]]</strong>.[[/if]]<br/><strong>Performance:</strong>[[th(pctl_recv)]] Percentile" x='0%' y='16px' height='16px' width='[[width]]%' opacity='1'/>
+                        <rect class="chart chart-hover" :class="'r-bg-' + pctl_recv" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Damage Received</h5><strong>${num(section.recv, 0)}</strong> damage received.${section.avg_recv ? `<br />This role's average is <strong>${num(section.avg_recv, 0)}</strong>.` : ''}<br/><strong>Performance:</strong>${th(pctl_recv)} Percentile`" x='0%' y='16px' height='16px' :width="width + '%'" opacity='1'/>
                         {# barrier overlay #}
-                        <rect class="chart chart-hover" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Barrier</h5>Up to <strong>[[num(section.shield_recv, 0)]] ([[perc(100 * section.shield_recv / section.recv)]])</strong> damage absorbed by barrier" x='[[clamp(100 * (section.recv - section.shield_recv) / max_player_recv)]]%' y='16px' height='16px' width='[[clamp(100 * section.shield_recv / max_player_recv)]]%' opacity='0.6' fill='#FCF1E2'/>
+                        <rect class="chart chart-hover" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Barrier</h5>Up to <strong>${num(section.shield_recv, 0)} (${perc(100 * section.shield_recv / section.recv)})</strong> damage absorbed by barrier`" :x="clamp(100 * (section.recv - section.shield_recv) / max_player_recv) + '%'" y='16px' height='16px' :width="clamp(100 * section.shield_recv / max_player_recv) + '%'" opacity='0.6' fill='#FCF1E2'/>
 
                         {# text #}
-                        <text x='[[width < 35 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 35 ? 'start' : 'middle']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14'>[[num(section.recv, 0)]]</text>
+                        <text :x="(width < 35 ? 0 : width) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="width < 35 ? 'start' : 'middle'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='14' x-text="num(section.recv, 0)"></text>
                         {# tick text #}
-                        <text class="" x='[[clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_player_recv)]]%' y='44px' alignment-baseline="hanging" text-anchor="[[(clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_player_recv)) < 25 ? 'start' : 'middle']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'>[[num(section.percentiles_recv[100 - settings.comparePerc], 0)]] <tspan fill="#958cbb" alignment-baseline="hanging">([[th(settings.comparePerc)]])</tspan></text>
-                      [[/with]]
-                    [[/with]]
+                        <text class="" :x="clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_player_recv) + '%'" y='44px' alignment-baseline="hanging" :text-anchor="(clamp(100 * (section.percentiles_recv[100 - settings.comparePerc] || 0) / max_player_recv)) < 25 ? 'start' : 'middle'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'><tspan x-text="num(section.percentiles_recv[100 - settings.comparePerc], 0) + ' '"></tspan><tspan fill="#958cbb" alignment-baseline="hanging" x-text="'(' + th(settings.comparePerc) + ')'"></tspan></text>
                   </svg>
                 </div>
 
                 <div class="r-encounter-damage breakbar uk-visible@m">
-          <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase">[[#if page.breakbar_boss]]Boss Breakbar[[else]]Total Breakbar[[/if]]</h6>
-          <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%">
-            [[#with {
+          <h6 class="uk-font-family-secondary uk-hidden@l uk-margin-small-bottom uk-text-uppercase" x-text="page.breakbar_boss ? 'Boss Breakbar' : 'Total Breakbar'"></h6>
+          <svg xml:space="preserve" preserveAspectRatio="xMinYMax meet" class="chart" xmlns='http://www.w3.org/2000/svg' height="56px" width="100%"
+               x-with="{
               section: {
                   name: page.breakbar_boss ? 'Boss Breakbar Damage' : 'Total Breakbar Damage',
                   value: (page.breakbar_boss ? actual_boss.breakbar : actual.breakbar) || 0,
@@ -441,31 +424,30 @@
                   boss: actual_boss.breakbar || 0,
                   squad: (page.breakbar_boss ? squad.actual_boss.breakbar : squad.actual.breakbar) || 0
                 }
-            }]]
-              [[#with encounter.max_player_breakbar ? clamp(100 * section.value / encounter.max_player_breakbar) : 0 as width]]
-                [[#if page.breakbar_boss]]
+            }"
+               x-with:width="{width: encounter.max_player_breakbar ? clamp(100 * section.value / encounter.max_player_breakbar) : 0}">
+                <template x-if="page.breakbar_boss">
                   {# total breakbar backdrop #}
-                  <rect class="chart-hover r-bg-0" on-click="@.set({'page.breakbar_boss': false}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>[[num(section.total, 0)]]</strong> damage to all defiance bars.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[encounter.max_player_breakbar ? clamp(100 * section.total / encounter.max_player_breakbar) : 0]]%' opacity='0.3' />
-                [[/if]]
+                  <rect class="chart-hover r-bg-0" @click.prevent.stop="set({'page.breakbar_boss': false})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Total Breakbar Damage</h5><strong>${num(section.total, 0)}</strong> damage to all defiance bars.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="(encounter.max_player_breakbar ? clamp(100 * section.total / encounter.max_player_breakbar) : 0) + '%'" opacity='0.3' />
+                </template>
                 {# graph #}
-                <rect class="chart-hover r-bg-0" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[section.name]]</h5><strong>[[num(section.value, 0)]]</strong> damage to [[page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars']]." x='0%' y='16px' height='16px' width='[[width]]%' opacity='1' />
-                [[#unless page.breakbar_boss]]
+                <rect class="chart-hover r-bg-0" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${section.name}</h5><strong>${num(section.value, 0)}</strong> damage to ${page.breakbar_boss ? 'the defiance bars of the boss' : 'all defiance bars'}.`" x='0%' y='16px' height='16px' :width="width + '%'" opacity='1' />
+                <template x-if="!page.breakbar_boss">
                   {# boss breakbar overlay #}
-                  <rect class="chart-hover" on-click="@.set({'page.breakbar_boss': true}) && false" uk-tooltip="pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Boss Breakbar Damage</h5><strong>[[num(section.boss, 0)]]</strong> damage to the defiance bars of the boss.<br/>Click for more details." x='0%' y='16px' height='16px' width='[[encounter.max_player_breakbar ? clamp(100 * section.boss / encounter.max_player_breakbar) : 0]]%' opacity='0.15' />
-                [[/unless]]
+                  <rect class="chart-hover" @click.prevent.stop="set({'page.breakbar_boss': true})" :uk-tooltip="`pos: bottom-left; delay: 350; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Boss Breakbar Damage</h5><strong>${num(section.boss, 0)}</strong> damage to the defiance bars of the boss.<br/>Click for more details.`" x='0%' y='16px' height='16px' :width="(encounter.max_player_breakbar ? clamp(100 * section.boss / encounter.max_player_breakbar) : 0) + '%'" opacity='0.15' />
+                </template>
                 {# text #}
-                <text x='[[width < 35 ? 0 : width]]%' y='-1px' alignment-baseline="hanging" text-anchor="[[width < 35 ? 'start' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14'>[[num(section.value, 0)]]</text>
-              [[/with]]
-            [[/with]]
+                <text :x="(width < 35 ? 0 : width) + '%'" y='-1px' alignment-baseline="hanging" :text-anchor="width < 35 ? 'start' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2' font-size='14' x-text="num(section.value, 0)"></text>
           </svg>
         </div>
                 <div class="r-encounter-buff-container">
-                  [[#each data.buff_tabs[0].order as code]]
-                  [[#with
-                      performance.buffs_out && code + "_perc" in performance.buffs_out ? performance.buffs_out[code + "_perc"] : undefined as buffs_out_per,
-                      performance.buffs && code + "_perc" in performance.buffs ? performance.buffs[code + "_perc"] : undefined as buffs_per
-                  ]]
-                    [[#with {
+                  <template x-for="code in data.buff_tabs[0].order">
+                    <div class="r-encounter-buff r-tooltip-help"
+                         x-with="{
+                      buffs_out_per: performance.buffs_out && code + '_perc' in performance.buffs_out ? performance.buffs_out[code + '_perc'] : undefined,
+                      buffs_per: performance.buffs && code + '_perc' in performance.buffs ? performance.buffs[code + '_perc'] : undefined
+                  }"
+                         x-with:section="{
                       buff: data.buffs[code],
                       format: data.buffs[code].stacks ? num : perc,
                       section: page.boon_output ? {
@@ -477,21 +459,19 @@
                           value: buffs ? buffs[code] : 0,
                           percentiles: pctl(buffs_per)
                         }
-                    }]]
-                      [[#with bsearch(section.value, section.percentiles) as buff_pctl]]
-                        <div class="r-encounter-buff r-tooltip-help [[section.value > 0 ? ' ' : 'uk-invisible' ]]" uk-tooltip="pos:bottom-left; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>[[buff.name]] [[section.name]]</h5><strong>Performance:</strong> [[th(buff_pctl)]] Percentile">
-                          <img src="[[buff.icon]]" alt="[[buff.name]]"/>
-                          <span class="r-buff-number r-bg-[[buff_pctl]]">[[format(section.value, 1)]]</span>
-                          <span class="r-buff-number r-bg-[[settings.comparePerc]] compare">[[format(section.percentiles[settings.comparePerc], 1)]]</span>
-                        </div>
-                      [[/with]]
-                    [[/with]]
-                  [[/with]]
-                  [[/each]]
+                    }"
+                         x-with:pctl="{buff_pctl: bsearch(section.value, section.percentiles)}"
+                         :class="section.value > 0 ? ' ' : 'uk-invisible'"
+                         :uk-tooltip="`pos:bottom-left; title:<h5 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>${buff.name} ${section.name}</h5><strong>Performance:</strong> ${th(buff_pctl)} Percentile`">
+                          <img :src="buff.icon" :alt="buff.name"/>
+                          <span class="r-buff-number" :class="'r-bg-' + buff_pctl" x-text="format(section.value, 1)"></span>
+                          <span class="r-buff-number compare" :class="'r-bg-' + settings.comparePerc" x-text="format(section.percentiles[settings.comparePerc], 1)"></span>
+                    </div>
+                  </template>
                 </div>
 
-                <div class='r-encounter-misc uk-visible@l'>
-                  [[#with {
+                <div class='r-encounter-misc uk-visible@l'
+                     x-with="{
                     actual: {
                       crit: actual_boss.crit,
                       scholar: actual_boss.scholar,
@@ -508,26 +488,22 @@
                       percentiles_flanking: pctl(performance.actual_boss.flanking_perc),
                       percentiles_shielded: pctl(performance.shielded.total_perc)
                     }
-                  }]]
-                    [[#with {
+                  }"
+                     x-with:pctl="{
                       pctl_crit: performance ? bsearch(actual_boss.crit, section.percentiles_crit) : 0,
                       pctl_scholar: performance ? bsearch(actual_boss.scholar, section.percentiles_scholar) : 0,
                       pctl_flanking: performance ? bsearch(actual_boss.flanking, section.percentiles_flanking) : 0,
                       pctl_shielded: performance ? bsearch(shielded.total, section.percentiles_shielded) : 0
-                    }]]
-                      <div class="uk-badge r-bg-[[pctl_crit]]" uk-tooltip="pos: left; title:<strong>Critical:</strong> [[perc(100 * actual.crit)]][[#if performance]]<br/><strong>Average:</strong> [[perc(100 * section.avg_crit)]]<br/><strong>Performance:</strong> [[th(pctl_crit)]] Percentile[[/if]]">C</div>
-                      <div class="uk-badge r-bg-[[pctl_scholar]]" uk-tooltip="pos: left; title:<strong>Scholar Uptime:</strong> [[perc(100 * actual.scholar)]][[#if performance]]<br/><strong>Average:</strong> [[perc(100 * section.avg_scholar)]]<br/><strong>Performance:</strong> [[th(pctl_scholar)]] Percentile[[/if]]">S</div>
-                      <div class="uk-badge r-bg-[[pctl_flanking]]" uk-tooltip="pos: left; title:<strong>Flanking Uptime:</strong> [[perc(100 * actual.flanking)]][[#if performance]]<br/><strong>Average:</strong> [[perc(100 * section.avg_flanking)]]<br/><strong>Performance:</strong> [[th(pctl_flanking)]] Percentile[[/if]]">F</div>
-                      <div class="uk-badge r-bg-[[pctl_shielded]]" uk-tooltip="pos: left; title:<strong>Barrier:</strong> [[num(actual.shielded, 0)]][[#if performance]]<br/><strong>Average:</strong> [[num(section.avg_shielded, 0)]]<br/><strong>Performance:</strong> [[th(pctl_shielded)]] Percentile[[/if]]">B</div>
-                    [[/with]]
-                  [[/with]]
+                    }">
+                      <div class="uk-badge" :class="'r-bg-' + pctl_crit" :uk-tooltip="`pos: left; title:<strong>Critical:</strong> ${perc(100 * actual.crit)}${performance ? `<br/><strong>Average:</strong> ${perc(100 * section.avg_crit)}<br/><strong>Performance:</strong> ${th(pctl_crit)} Percentile` : ''}`">C</div>
+                      <div class="uk-badge" :class="'r-bg-' + pctl_scholar" :uk-tooltip="`pos: left; title:<strong>Scholar Uptime:</strong> ${perc(100 * actual.scholar)}${performance ? `<br/><strong>Average:</strong> ${perc(100 * section.avg_scholar)}<br/><strong>Performance:</strong> ${th(pctl_scholar)} Percentile` : ''}`">S</div>
+                      <div class="uk-badge" :class="'r-bg-' + pctl_flanking" :uk-tooltip="`pos: left; title:<strong>Flanking Uptime:</strong> ${perc(100 * actual.flanking)}${performance ? `<br/><strong>Average:</strong> ${perc(100 * section.avg_flanking)}<br/><strong>Performance:</strong> ${th(pctl_flanking)} Percentile` : ''}`">F</div>
+                      <div class="uk-badge" :class="'r-bg-' + pctl_shielded" :uk-tooltip="`pos: left; title:<strong>Barrier:</strong> ${num(actual.shielded, 0)}${performance ? `<br/><strong>Average:</strong> ${num(section.avg_shielded, 0)}<br/><strong>Performance:</strong> ${th(pctl_shielded)} Percentile` : ''}`">B</div>
                 </div>
 	    </div>
 	    {# MEMBER END #}
-	  [[/each]]
+	  </template>
 
 	</div>
-      [[/each]]
-    [[/with]]
-  [[/with]]
+      </template>
 </div>

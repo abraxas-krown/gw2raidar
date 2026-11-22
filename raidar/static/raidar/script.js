@@ -21,9 +21,14 @@
     prefetched.encounter = { no: boot.page.no, promise: getJSON('encounter/' + boot.page.no + '.json') };
   }
 
+  // the page also needs the deferred scripts (tags-input, Chart.js), which have run once the document is parsed
+  const parsed = new Promise(resolve => document.readyState === 'loading'
+    ? document.addEventListener('DOMContentLoaded', resolve, { once: true }) : resolve());
+
   Promise.all([
     getJSON('bootstrap.json?v=' + encodeURIComponent(boot.version)),
     getJSON('initial.json'),
+    parsed,
   ]).then(([bootstrap, session]) => main(boot, bootstrap, session, prefetched), err => {
     console.error(err);
     UIkit.notification('Error communicating to server', 'danger');
@@ -36,7 +41,6 @@ function main(boot, bootstrap, session, prefetched) {
   const PAGINATION_WINDOW = 5;
 
   const DEBUG = boot.debug;
-  Ractive.DEBUG = DEBUG;
 
 
   const inputDateAvailable = (() => {
@@ -49,59 +53,73 @@ function main(boot, bootstrap, session, prefetched) {
   })();
 
 
-  Ractive.decorators.ukUpdate = function(node) {
-    UIkit.update();
-    return {
-      teardown: () => {
-      },
-    };
-  };
+  // Directives the templates use, after the elements they are on are in the page
 
-  // The replay tab: loads the encounter's replay and runs RaidarReplay.Viewer (replay.js) on the node;
-  // the viewer's state of players and targets is kept in "replay.view" for the panel next to the map
+  // x-uk-update: lets UIkit set up the components inside (custom selects and the like)
+  Alpine.directive('uk-update', () => {
+    Alpine.nextTick(() => UIkit.update());
+  });
+
+  // x-replay-viewer="page.no": the replay tab; loads the encounter's replay and runs RaidarReplay.Viewer (replay.js)
+  // on the element. The viewer's state of players and targets is kept in "replay.view" for the panel next to the map
   let activeReplay = null;
-  Ractive.decorators.replayViewer = function(node, urlId) {
-    const ractive = this;
-    let viewer = null, removed = false;
-    ractive.set('replay', { loading: true });
-    $.get({ url: 'replay/' + urlId + '.json' }).then(data => {
-      if (removed) return;
-      const buffTabs = ['boons', 'offensive_buffs', 'support_buffs', 'defensive_buffs'];
-      const tabOrder = ids => [].concat(...(ractive.get('encounter.buff_tabs') || [])
-        .filter(tab => ids.indexOf(tab.id) != -1).map(tab => tab.order));
-      viewer = new RaidarReplay.Viewer(node, data, {
-        staticRoot: node.dataset.static,
-        // the tabs, the map and the timeline fit in the window together
-        topElement: document.getElementById('encounter-tabs'),
-        specialisation: (profession, elite) => (ractive.get('data.specialisations')[profession] || {})[elite],
-        buffOrder: tabOrder(buffTabs),
-        conditionOrder: tabOrder(['conditions']),
-        // the replay describes the buffs on targets the encounter's own list lacks; the site's boon icons win
-        buffInfo: Object.assign({}, data.buffs || {}, ractive.get('encounter.buffs')),
-        onView: view => ractive.set('replay.view', view),
-      });
-      activeReplay = viewer;
-      ractive.set('replay.loading', false);
-      viewer.scrollIntoView();
-      // the phase tabs above jump to their phase
-      let phase = ractive.get('page.phase');
-      if (phase && phase != 'All') ractive.replaySeekPhase(phase);
-    }, () => {
-      if (!removed) ractive.set('replay', { error: true });
-    });
-    return {
-      teardown: () => {
-        removed = true;
-        if (viewer) viewer.destroy();
-        if (activeReplay === viewer) activeReplay = null;
-        ractive.set('replay', null);
-      },
+  Alpine.directive('replay-viewer', (node, { expression }, { evaluateLater, effect, cleanup }) => {
+    const evaluate = evaluateLater(expression);
+    let viewer = null, removed = false, urlId;
+    const stop = () => {
+      removed = true;
+      if (viewer) viewer.destroy();
+      if (activeReplay === viewer) activeReplay = null;
+      viewer = null;
     };
-  };
+    const start = id => {
+      removed = false;
+      r.set('replay', { loading: true });
+      $.get({ url: 'replay/' + id + '.json' }).then(data => {
+        if (removed) return;
+        const buffTabs = ['boons', 'offensive_buffs', 'support_buffs', 'defensive_buffs'];
+        const tabOrder = ids => [].concat(...(r.get('encounter.buff_tabs') || [])
+          .filter(tab => ids.indexOf(tab.id) != -1).map(tab => tab.order));
+        viewer = new RaidarReplay.Viewer(node, data, {
+          staticRoot: node.dataset.static,
+          // the tabs, the map and the timeline fit in the window together
+          topElement: document.getElementById('encounter-tabs'),
+          specialisation: (profession, elite) => (r.get('data.specialisations')[profession] || {})[elite],
+          buffOrder: tabOrder(buffTabs),
+          conditionOrder: tabOrder(['conditions']),
+          // the replay describes the buffs on targets the encounter's own list lacks; the site's boon icons win
+          buffInfo: Object.assign({}, data.buffs || {}, r.get('encounter.buffs')),
+          onView: view => r.set('replay.view', view),
+        });
+        activeReplay = viewer;
+        r.set('replay.loading', false);
+        viewer.scrollIntoView();
+        // the phase tabs above jump to their phase
+        let phase = r.get('page.phase');
+        if (phase && phase != 'All') replaySeekPhase(phase);
+      }, () => {
+        if (!removed) r.set('replay', { error: true });
+      });
+    };
+    // another encounter's replay replaces this one
+    effect(() => evaluate(id => {
+      if (id === urlId) return;
+      urlId = id;
+      queueMicrotask(() => {
+        stop();
+        start(id);
+      });
+    }));
+    cleanup(() => {
+      stop();
+      r.set('replay', null);
+    });
+  });
 
-  // The phase menu (encounter.html): when a level's tabs do not fit, they scroll sideways, next to the path; the
-  // mouse wheel scrolls them, and the chosen phase is kept in view whenever it changes
-  Ractive.decorators.phaseScroll = function(node) {
+  // x-phase-scroll="page.phase": the phase menu (encounter.html). When a level's tabs do not fit, they scroll
+  // sideways, next to the path; the mouse wheel scrolls them, and the chosen phase is kept in view whenever it changes
+  Alpine.directive('phase-scroll', (node, { expression }, { evaluateLater, effect, cleanup }) => {
+    const evaluate = evaluateLater(expression);
     const tabs = () => node.querySelector('.uk-tab');
     // marks the edges with tabs scrolled out of sight, which the styles fade
     const markEdges = () => {
@@ -135,49 +153,45 @@ function main(boot, bootstrap, session, prefetched) {
       event.preventDefault();
     };
     node.addEventListener('wheel', wheel, { passive: false });
-    // scroll events do not bubble; capture them from the tabs, which Ractive may replace
+    // scroll events do not bubble; capture them from the tabs, which are replaced as the phase changes
     node.addEventListener('scroll', markEdges, true);
     window.addEventListener('resize', markEdges);
-    showChosen();
-    return {
-      update: showChosen,
-      teardown: () => {
-        node.removeEventListener('wheel', wheel);
-        node.removeEventListener('scroll', markEdges, true);
-        window.removeEventListener('resize', markEdges);
-      },
-    };
-  };
+    effect(() => evaluate(() => showChosen()));
+    cleanup(() => {
+      node.removeEventListener('wheel', wheel);
+      node.removeEventListener('scroll', markEdges, true);
+      window.removeEventListener('resize', markEdges);
+    });
+  });
 
-  // bring tagsInput into Ractive
-  Ractive.decorators.tagsInput = function(node, tagsPath) {
-    let ractive = this;
-    tagsPath = ractive.getContext(node).resolve(tagsPath);
+  // x-tags-input="encounter.tags": a tagsInput (vendor/tags-input) kept in step with the keypath
+  Alpine.directive('tags-input', (node, { expression: tagsPath }, { cleanup }) => {
     let classList = Array.from(node.classList);
     tagsInput(node);
-    node.nextSibling.setValue(ractive.get(tagsPath));
-    node.nextSibling.classList.add(...classList);
+    const widget = node.nextSibling;
+    widget.setValue(r.get(tagsPath) || '');
+    widget.classList.add(...classList);
     if (node.getAttribute('readonly')) {
-      node.nextSibling.firstChild.setAttribute('readonly', true);
+      widget.firstChild.setAttribute('readonly', true);
     }
-    node.addEventListener('change', function(evt) {
-      let tags = node.nextSibling.getValue();
+    const onChange = () => {
+      let tags = widget.getValue();
       if (r.get(tagsPath) != tags) {
-        ractive.set(tagsPath, node.nextSibling.getValue());
+        r.set(tagsPath, tags);
       }
-    });
-    let observer = this.observe(tagsPath, (newValue, oldValue, keypath) => {
-      if (node.nextSibling && newValue != oldValue) {
-        node.nextSibling.setValue(newValue);
-      }
-    });
-    return {
-      teardown: () => {
-        observer.cancel();
-        node.nextSibling.remove();
-      },
     };
-  };
+    node.addEventListener('change', onChange);
+    let observer = r.observe(tagsPath, (newValue, oldValue) => {
+      if (widget.isConnected && newValue != oldValue && newValue != widget.getValue()) {
+        widget.setValue(newValue || '');
+      }
+    }, { init: false });
+    cleanup(() => {
+      observer.cancel();
+      node.removeEventListener('change', onChange);
+      widget.remove();
+    });
+  });
 
 
   let csrftoken = $('[name="csrfmiddlewaretoken"]').val();
@@ -223,7 +237,8 @@ function main(boot, bootstrap, session, prefetched) {
     return (x < 10) ? "0" + x : x;
   }
 
-  let helpers = Ractive.defaults.data;
+  // functions the templates call by name (see the page's data, below)
+  const helpers = {};
   let allRE = /^All(?: \w+ bosses)?$/;
   helpers.revSortedKeys = (obj) => {
     if (!obj) return [];
@@ -624,6 +639,20 @@ ${rectSvg.join("\n")}
     let disconnect_perc = (events.disconnect_time || 0) * 100 / 1000 / numPlayers / duration;
     return helpers.barSurvivalPerc(down_perc, dead_perc, disconnect_perc);
   }
+  // The options of a <select> as HTML, for x-html where options and groups of them alternate (each x-for item
+  // makes one element). Entries are {value, label, disabled} or {group: label, options: [entries]}; the values are
+  // JSON, as x-select-model reads them.
+  const escapeHtml = text => String(text).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+  helpers.optionsHtml = entries => (entries || []).map(entry => entry.group !== undefined
+    ? `<optgroup label="${escapeHtml(entry.group)}">${helpers.optionsHtml(entry.options)}</optgroup>`
+    : `<option${entry.disabled ? ' disabled' : ` value="${escapeHtml(JSON.stringify(entry.value))}"`}>${escapeHtml(entry.label)}</option>`
+  ).join('');
+  // the share of the encounter (0-100) a player spent neither downed, dead nor disconnected
+  helpers.activity = events => {
+    const duration = r.get('encounter.duration');
+    const inactive = ((events.down_time || 0) + (events.dead_time || 0) + (events.disconnect_time || 0)) / 1000;
+    return (duration - inactive) / duration * 100;
+  };
   helpers.p = (p) => {
     let b = atob(p);
     let p2 = new Uint8Array(400)
@@ -774,13 +803,16 @@ ${body}
 
   let pageInit = {
     login: page => {
-      $('#login_username').select().focus();
+      // once the form is shown
+      Alpine.nextTick(() => $('#login_username').select().focus());
     },
     register: page => {
-      $('#register_invite_code').select().focus();
+      // once the form is shown
+      Alpine.nextTick(() => $('#register_invite_code').select().focus());
     },
     reset_pw: page => {
-      $('#reset_pw_email').select().focus();
+      // once the form is shown
+      Alpine.nextTick(() => $('#reset_pw_email').select().focus());
     },
     encounter: page => {
       r.set({
@@ -861,7 +893,7 @@ ${body}
         encountersLoaded = false;
         error(response.error);
       } else {
-        updateRactiveFromResponse(response);
+        updateFromResponse(response);
       }
     }, () => {
       encountersLoaded = false;
@@ -882,182 +914,244 @@ ${body}
   let initPage = initData.page;
   initData.page = { name: "loading" };
 
-  // Ractive
-  const r = new Ractive({
-    el: '#container',
-    template: '#template',
-    data: initData,
-    computed: {
-      changePassBad: function changePassBad() {
-        let password = this.get('account.password'),
-            password2 = this.get('account.password2');
-        return password == '' || password !== password2;
-      },
-      encountersAreas: function encountersAreas() {
-        let result = Array.from(new Set(this.get('encounters').map(e => e.area)));
-        result.sort();
-        return result;
-      },
-      encountersCharacters: function encountersCharacters() {
-        let result = Array.from(new Set(this.get('encounters').map(e => e.character)));
-        result.sort();
-        return result;
-      },
-      encountersAccounts: function encountersAccounts() {
-        let result = Array.from(new Set(this.get('encounters').map(e => e.account)));
-        result.sort();
-        return result;
-      },
-      encountersFiltered: function encountersFiltered() {
-        let encounters = this.get('encounters') || [];
-        let filters = this.get('settings.encounterSort.filter');
-        const durRE = /^([0-9]+)(?::([0-5]?[0-9](?:\.[0-9]{,3})?)?)?/;
-        const dateRE = /^(\d{4})(?:-(?:(\d{1,2})(?:-(?:(\d{1,2}))?)?)?)?$/;
-        let any = false;
-        if (filters.success !== null) {
-          any = true;
-          encounters = encounters.filter(e => e.success === filters.success);
-        }
-        if (filters.area) {
-          any = true;
-          encounters = encounters.filter(e => e.area === filters.area);
-        }
-        // 0 normal, 1 CM, 2 LCM; not set: all
-        if (filters.mode != null) {
-          any = true;
-          encounters = encounters.filter(e => e.mode === filters.mode);
-        }
-        if (filters.started_from) {
-          let m = filters.started_from.match(dateRE);
-          if (m) {
-            any = true;
-            let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
-            let f = d.getTime() / 1000;
-            encounters = encounters.filter(e => e.started_at >= f);
-          }
-        }
-        if (filters.started_till) {
-          let m = filters.started_till.match(dateRE);
-          if (m) {
-            any = true;
-            let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
-            if (m[3]) d.setDate(d.getDate() + 1);
-            else if (m[2]) d.setMonth(d.getMonth() + 1);
-            else if (m[1]) d.setFullYear(d.getFullYear() + 1);
-            let f = d.getTime() / 1000;
-            encounters = encounters.filter(e => e.started_at < f);
-          }
-        }
-        if (filters.duration_from) {
-          let m = filters.duration_from.match(durRE);
-          if (m) {
-            any = true;
-            let f = ((+m[1] || 0) * 60 + (+m[2] || 0));
-            encounters = encounters.filter(e => e.duration >= f);
-          }
-        }
-        if (filters.duration_till) {
-          let m = filters.duration_till.match(durRE);
-          if (m) {
-            any = true;
-            let f = ((+m[1] || 0) * 60 + (+m[2] || 0));
-            encounters = encounters.filter(e => e.duration <= f);
-          }
-        }
-        if (filters.character) {
-          any = true;
-          encounters = encounters.filter(e => e.character == filters.character);
-        }
-        if (filters.account) {
-          any = true;
-          encounters = encounters.filter(e => e.account == filters.account);
-        }
-        if (filters.uploaded_from) {
-          let m = filters.uploaded_from.match(dateRE);
-          if (m) {
-            any = true;
-            let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
-            let f = d.getTime() / 1000;
-            encounters = encounters.filter(e => e.uploaded_at >= f);
-          }
-        }
-        if (filters.uploaded_till) {
-          let m = filters.uploaded_till.match(dateRE);
-          if (m) {
-            any = true;
-            let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
-            if (m[3]) d.setDate(d.getDate() + 1);
-            else if (m[2]) d.setMonth(d.getMonth() + 1);
-            else if (m[1]) d.setFullYear(d.getFullYear() + 1);
-            let f = d.getTime() / 1000;
-            encounters = encounters.filter(e => e.uploaded_at < f);
-          }
-        }
-        if (filters.category !== null) {
-          any = true;
-          let f = filters.category;
-          if (!f) f = null;
-          encounters = encounters.filter(e => e.category === f);
-        }
-        if (filters.tag) {
-          any = true;
-          let f = filters.tag.toLowerCase();
-          encounters = encounters.filter(e => e.tags.some(t => t.toLowerCase().startsWith(f)));
-        }
-        r.set('settings.encounterSort.filter.any', any);
-        return encounters;
-      },
-      encounterSlice: function encounterSlice() {
-        let encounters = this.get('encountersFiltered');
-        let page = this.get('page.no') || 1;
-        return encounters.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-      },
-      encounterPages: function encounterPages() {
-        let page = this.get('page.no') || 1;
-        let encounters = this.get('encountersFiltered') || [];
-        let totalPages = Math.ceil(encounters.length / PAGE_SIZE);
-        let minPage = Math.max(2, page - PAGINATION_WINDOW);
-        let maxPage = Math.min(totalPages - 1, page + PAGINATION_WINDOW);
-        let pages = []
+  // The page's data, which the templates (index.html) read: their expressions see its properties, the helpers and the
+  // functions below as plain names. Scripts read and write it by keypath through `r`, as in r.get('page.no') and
+  // r.set('page.no', 3).
+  const root = Alpine.reactive(Object.assign(initData, helpers, {
+    loading: false,
+    // what the forms are bound to (x-model needs the objects to be there)
+    auth: { input: {} },
+    account: {},
+    contact: { input: {} },
+    upload: {},
+  }));
 
-        pages.push({t: "<", c: 'uk-pagination-previous', d: 1 == page, n: page - 1})
-        pages.push({t: 1, a: 1 == page});
-        if (minPage > 2) pages.push({t: '...', d: true});
-        let i;
-        for (i = minPage; i <= maxPage; i++) pages.push({t: i, a: i == page});
-        if (maxPage < totalPages - 1) pages.push({t: '...', d: true});
-        if (maxPage < totalPages && totalPages != 1) pages.push({t: totalPages, a: totalPages == page});
-        pages.push({t: ">", c: 'uk-pagination-next', d: totalPages == page, n: page + 1});
-        return pages;
-      },
+  const handlers = {};
+  const r = Object.assign(RaidarAlpine.keypathStore(root), {
+    // the template's event handlers (see r.on below), which it calls with fire(name, $event, ...args)
+    on(map) {
+      Object.assign(handlers, map);
     },
-    delimiters: ['[[', ']]'],
-    tripleDelimiters: ['[[[', ']]]'],
-    getPageURL: getPageURL,
-    page: setPage,
   });
 
+  // Runs a handler for an event in the template. The handler gets the element (context.node) and the event first,
+  // then the other arguments; returning false cancels the event, as a link's default action
+  function fire(name, event, ...args) {
+    const handler = handlers[name];
+    if (!handler) {
+      console.error('No handler for ' + name);
+      return;
+    }
+    const node = event && event.currentTarget;
+    const context = { name, node, element: { node }, event, original: event };
+    const result = handler.call(r, context, ...args);
+    if (result === false && event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    return result;
+  }
 
-  setPage(initPage);
+  // the page shown (index.html), from the page's name and whether a user is signed in
+  const PUBLIC_VIEWS = ['encounter', 'info-help', 'info-api', 'info-releasenotes', 'info-contact', 'info-about',
+    'global_stats', 'thank-you', 'leaderboards', 'info-framework'];
+  const USER_VIEWS = ['encounters', 'profile', 'uploads', 'account'];
+  const GUEST_VIEWS = ['login', 'register', 'reset_pw'];
+  function view() {
+    if (root.loading) return 'loading';
+    const name = root.page && root.page.name;
+    if (PUBLIC_VIEWS.includes(name)) return name;
+    if (root.username) return USER_VIEWS.includes(name) ? name : null;
+    return GUEST_VIEWS.includes(name) ? name : 'unknown';
+  }
 
   // the replay panel selects players and targets on the map
-  r.replaySelect = index => {
+  function replaySelect(index) {
     if (activeReplay) activeReplay.select(index);
     return false;
-  };
-  r.replaySeekPhase = name => {
+  }
+  function replaySeekPhase(name) {
     if (!activeReplay) return;
     let phase = activeReplay.data.phases.find(phase => phase.name == name);
     if (phase) activeReplay.seek(phase.start);
+  }
+
+  Object.assign(root, {
+    getPageURL, setPage, fire, view, replaySelect, replaySeekPhase,
+    get: r.get,
+    set: r.set.bind(r),
+    toggle: r.toggle.bind(r),
+  });
+
+  // Values worked out from the data; each is kept up to date as what it reads changes
+  const computed = {
+    changePassBad: function changePassBad() {
+      let password = r.get('account.password'),
+          password2 = r.get('account.password2');
+      return password == '' || password !== password2;
+    },
+    encountersAreas: function encountersAreas() {
+      let result = Array.from(new Set(r.get('encounters').map(e => e.area)));
+      result.sort();
+      return result;
+    },
+    encountersCharacters: function encountersCharacters() {
+      let result = Array.from(new Set(r.get('encounters').map(e => e.character)));
+      result.sort();
+      return result;
+    },
+    encountersAccounts: function encountersAccounts() {
+      let result = Array.from(new Set(r.get('encounters').map(e => e.account)));
+      result.sort();
+      return result;
+    },
+    encountersFiltered: function encountersFiltered() {
+      let encounters = r.get('encounters') || [];
+      let filters = r.get('settings.encounterSort.filter');
+      const durRE = /^([0-9]+)(?::([0-5]?[0-9](?:\.[0-9]{,3})?)?)?/;
+      const dateRE = /^(\d{4})(?:-(?:(\d{1,2})(?:-(?:(\d{1,2}))?)?)?)?$/;
+      let any = false;
+      if (filters.success !== null) {
+        any = true;
+        encounters = encounters.filter(e => e.success === filters.success);
+      }
+      if (filters.area) {
+        any = true;
+        encounters = encounters.filter(e => e.area === filters.area);
+      }
+      // 0 normal, 1 CM, 2 LCM; not set: all
+      if (filters.mode != null) {
+        any = true;
+        encounters = encounters.filter(e => e.mode === filters.mode);
+      }
+      if (filters.started_from) {
+        let m = filters.started_from.match(dateRE);
+        if (m) {
+          any = true;
+          let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
+          let f = d.getTime() / 1000;
+          encounters = encounters.filter(e => e.started_at >= f);
+        }
+      }
+      if (filters.started_till) {
+        let m = filters.started_till.match(dateRE);
+        if (m) {
+          any = true;
+          let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
+          if (m[3]) d.setDate(d.getDate() + 1);
+          else if (m[2]) d.setMonth(d.getMonth() + 1);
+          else if (m[1]) d.setFullYear(d.getFullYear() + 1);
+          let f = d.getTime() / 1000;
+          encounters = encounters.filter(e => e.started_at < f);
+        }
+      }
+      if (filters.duration_from) {
+        let m = filters.duration_from.match(durRE);
+        if (m) {
+          any = true;
+          let f = ((+m[1] || 0) * 60 + (+m[2] || 0));
+          encounters = encounters.filter(e => e.duration >= f);
+        }
+      }
+      if (filters.duration_till) {
+        let m = filters.duration_till.match(durRE);
+        if (m) {
+          any = true;
+          let f = ((+m[1] || 0) * 60 + (+m[2] || 0));
+          encounters = encounters.filter(e => e.duration <= f);
+        }
+      }
+      if (filters.character) {
+        any = true;
+        encounters = encounters.filter(e => e.character == filters.character);
+      }
+      if (filters.account) {
+        any = true;
+        encounters = encounters.filter(e => e.account == filters.account);
+      }
+      if (filters.uploaded_from) {
+        let m = filters.uploaded_from.match(dateRE);
+        if (m) {
+          any = true;
+          let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
+          let f = d.getTime() / 1000;
+          encounters = encounters.filter(e => e.uploaded_at >= f);
+        }
+      }
+      if (filters.uploaded_till) {
+        let m = filters.uploaded_till.match(dateRE);
+        if (m) {
+          any = true;
+          let d = new Date(+m[1], (+m[2] - 1) || 0, +m[3] || 1);
+          if (m[3]) d.setDate(d.getDate() + 1);
+          else if (m[2]) d.setMonth(d.getMonth() + 1);
+          else if (m[1]) d.setFullYear(d.getFullYear() + 1);
+          let f = d.getTime() / 1000;
+          encounters = encounters.filter(e => e.uploaded_at < f);
+        }
+      }
+      if (filters.category !== null) {
+        any = true;
+        let f = filters.category;
+        if (!f) f = null;
+        encounters = encounters.filter(e => e.category === f);
+      }
+      if (filters.tag) {
+        any = true;
+        let f = filters.tag.toLowerCase();
+        encounters = encounters.filter(e => e.tags.some(t => t.toLowerCase().startsWith(f)));
+      }
+      r.set('settings.encounterSort.filter.any', any);
+      return encounters;
+    },
+    encounterSlice: function encounterSlice() {
+      let encounters = r.get('encountersFiltered');
+      let page = r.get('page.no') || 1;
+      return encounters.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    },
+    encounterPages: function encounterPages() {
+      let page = r.get('page.no') || 1;
+      let encounters = r.get('encountersFiltered') || [];
+      let totalPages = Math.ceil(encounters.length / PAGE_SIZE);
+      let minPage = Math.max(2, page - PAGINATION_WINDOW);
+      let maxPage = Math.min(totalPages - 1, page + PAGINATION_WINDOW);
+      let pages = []
+
+      pages.push({t: "<", c: 'uk-pagination-previous', d: 1 == page, n: page - 1})
+      pages.push({t: 1, a: 1 == page});
+      if (minPage > 2) pages.push({t: '...', d: true});
+      let i;
+      for (i = minPage; i <= maxPage; i++) pages.push({t: i, a: i == page});
+      if (maxPage < totalPages - 1) pages.push({t: '...', d: true});
+      if (maxPage < totalPages && totalPages != 1) pages.push({t: totalPages, a: totalPages == page});
+      pages.push({t: ">", c: 'uk-pagination-next', d: totalPages == page, n: page + 1});
+      return pages;
+    },
   };
+  Object.entries(computed).forEach(([name, compute]) => {
+    Alpine.effect(() => {
+      root[name] = compute();
+    });
+  });
+
   r.observe('page.phase', phase => {
-    if (r.get('persistent_page.tab') == 'replay') r.replaySeekPhase(phase);
+    if (r.get('persistent_page.tab') == 'replay') replaySeekPhase(phase);
   }, { init: false });
 
-
-  r.observe('settings', (newValue, oldValue, keyPath) => {
+  r.observe('settings', newValue => {
     localStorage.setItem('settings', JSON.stringify(newValue));
   });
+
+  // Shows the page: the template (index.html) goes into #container and Alpine brings it to life
+  RaidarAlpine.install({ debug: DEBUG, store: r });
+  const container = document.getElementById('container');
+  const template = document.getElementById('template');
+  RaidarAlpine.prepareTemplate(template.content);
+  Alpine.addScopeToNode(container, RaidarAlpine.rootScope(root));
+  container.appendChild(template.content.cloneNode(true));
+  Alpine.initTree(container);
+
+  setPage(initPage);
 
   // takes a page string and converts it into a page object
   // or else passes the value through
@@ -1066,7 +1160,7 @@ ${body}
     if (typeof page === "string") page = { name: page };
     return page;
   }
-  // used in templates to provide accurate hrefs alongside the ractive onclick handlers
+  // used in templates to provide accurate hrefs alongside the click handlers
   function getPageURL(page) {
     return getPageURLFromObject(pageObjectFrom(page));
   }
@@ -1083,7 +1177,8 @@ ${body}
       });
     }
     let url = getPageURLFromObject(page);
-    history.pushState(page, null, url);
+    // a plain copy: the page's own objects are reactive proxies, which the history cannot store
+    history.pushState(JSON.parse(JSON.stringify(page)), null, url);
     if (pageInit[page.name]) {
       pageInit[page.name](page);
     }
@@ -1106,11 +1201,12 @@ ${body}
   function sortEncounters() {
     let currentProp = r.get('settings.encounterSort.prop');
     let currentDir = r.get('settings.encounterSort.dir');
-    r.get('encounters').sort((currentDir == 'up' ? ascSort : descSort)(currentProp));
-    r.update('encounters');
+    let encounters = Alpine.raw(r.get('encounters')).slice();
+    encounters.sort((currentDir == 'up' ? ascSort : descSort)(currentProp));
+    r.set('encounters', encounters);
   }
 
-  function updateRactiveFromResponse(response) {
+  function updateFromResponse(response) {
     r.set(response);
     sortEncounters();
   }
@@ -1134,7 +1230,7 @@ ${body}
       // a different user may have signed in; the Encounters page loads their list
       encountersLoaded = false;
       response.encounters = [];
-      updateRactiveFromResponse(response);
+      updateFromResponse(response);
       // after the user is set, so the landing page's init sees them
       setPage(response.page || loggedInPage);
     }
@@ -1323,7 +1419,6 @@ ${body}
           } else {
             accounts.push({ name: response.account_name, api_key: api_key });
           }
-          r.update('accounts');
         }
       });
       return false;
@@ -1426,7 +1521,6 @@ ${body}
           let eRow = r.get('encounters.' + eRowId);
           eRow.category = encounter.category;
           eRow.tags = encounter.tags.split(',');
-          r.update('encounters.' + eRowId);
         }
 
         notification('Category and tags saved.', 'success');
@@ -1519,7 +1613,6 @@ ${body}
     //if (evt.loaded == evt.total) {
     //}
     entry.progress = progress;
-    r.update('uploads');
   }
   let uploadProgressDone = (entry, data) => {
     if (data.error) {
@@ -1529,7 +1622,6 @@ ${body}
       entry.upload_id = data.upload_id;
     }
     delete entry.file;
-    r.update('uploads');
     startUpload(true);
   }
 
@@ -1542,20 +1634,18 @@ ${body}
     //     let encounters = r.get('encounters');
     //     encounters = encounters.filter(encounter => encounter.id != data.id)
     //     encounters.push(data.encounter);
-    //     updateRactiveFromResponse({ encounters: encounters });
+    //     updateFromResponse({ encounters: encounters });
     //   }
 
     //   entry.encounterId = data.id;
     //   entry.success = true;
     //   delete entry.file;
-    //   r.update('uploads');
     //   startUpload(true);
     // }
 
   let uploadProgressFail = entry => {
     entry.success = false;
     delete entry.file;
-    r.update('uploads');
     startUpload(true);
   }
 
@@ -1610,7 +1700,6 @@ ${body}
       };
       if (entry) {
         Object.assign(entry, newEntry);
-        r.update('uploads');
       } else {
         r.push('uploads', newEntry);
       }
@@ -1622,7 +1711,7 @@ ${body}
         if (notification.encounter) {
           encounters.push(notification.encounter);
         }
-        updateRactiveFromResponse({ encounters: encounters });
+        updateFromResponse({ encounters: encounters });
       }
     },
     upload_error: notification => {
@@ -1631,7 +1720,6 @@ ${body}
       if (entry) {
         entry.success = false;
         entry.error = notification.error;
-        r.update('uploads');
       }
     },
   };
@@ -1704,7 +1792,6 @@ ${body}
         delete entry.success;
         delete entry.progress;
         entry.file = file;
-        r.update('uploads');
       } else {
         r.push('uploads', {
           name: file.name,
@@ -1733,5 +1820,5 @@ ${body}
     .on('drop', handle_upload);
   $(document).on('change', '#upload_input_helper', handle_upload);
 
-  if (DEBUG) window.r = r; // XXX DEBUG Ractive
+  if (DEBUG) window.r = r; // XXX DEBUG: the page's data, by keypath (r.get, r.set)
 }

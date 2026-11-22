@@ -1,66 +1,54 @@
 {% load static %}
-[[#with profile]]
-  [[#with era]]
-    [[#with era.stats as encounter]]
+{# the player's stats in an era (profile.era), by encounter (page.area), archetype and specialisation #}
+<template x-if="profile">
+  <div x-with="profile" x-with:era="era" x-with:encounter="{encounter: era.stats}">
       <div class="uk-button-group uk-width-1-1 boundary uk-margin-bottom uk-margin-top uk-visible@s">
-        [[#each data.boss_locations]]
-            [[#with (all && page.area == all) || page.area in bosses as active]]
-              <button class="uk-button uk-inline" class-uk-button-primary="active">[[#if active]][[page.area in data.areas ? areaLabel(page.area) : page.area]] &mdash;&nbsp;[[/if]][[name]] <i class="material-icons">expand_more</i></button>
-            [[/with]]
-            <div uk-dropdown="mode: click; boundary: .boundary; boundary-align: true; pos: bottom-justify;">
+        {# a button for each kind of boss, then the dropdowns they open (UIkit's toggle option), so that the group's first and last buttons stay the first and last of their kind #}
+        <template x-for="(loc, locIndex) in data.boss_locations">
+              <button class="uk-button uk-inline" :id="'profile-kind-' + locIndex" :class="{'uk-button-primary': (loc.all && page.area == loc.all) || page.area in loc.bosses}"><span x-visible="(loc.all && page.area == loc.all) || page.area in loc.bosses" x-text="(page.area in data.areas ? areaLabel(page.area) : page.area) + ' &mdash;&nbsp;'"></span><span x-text="loc.name"></span> <i class="material-icons">expand_more</i></button>
+        </template>
+        <template x-for="(loc, locIndex) in data.boss_locations">
+            <div :uk-dropdown="'mode: click; boundary: .boundary; boundary-align: true; pos: bottom-justify; toggle: #profile-kind-' + locIndex">
               <div class="uk-width-1 uk-grid">
-              [[#if all]]
+              <template x-if="loc.all">
                 <div class="uk-width-1">
                   <ul class="uk-nav uk-dropdown-nav">
-                    <li on-click="@.set({'page.area': all})" class-uk-active="page.area === all">
-                      <a href="#">[[all]] ([[all in encounter ? encounter[all].All.All.All.count : 0]])</a>
+                    <li @click="set({'page.area': loc.all})" :class="{'uk-active': page.area === loc.all}">
+                      <a href="#" x-text="loc.all + ' (' + (loc.all in encounter ? encounter[loc.all].All.All.All.count : 0) + ')'"></a>
                     </li>
                   </ul>
                 </div>
-              [[/if]]
+              </template>
 
-                [[#each wings]]
-                  <div class="uk-width-1-[[columns]]@m uk-width-1">
+                <template x-for="wing in loc.wings">
+                  <div class="uk-width-1" :class="'uk-width-1-' + loc.columns + '@m'">
                     <ul class="uk-nav uk-dropdown-nav">
-                      <li class="uk-nav-header uk-margin-top">[[name]]</li>
-                      [[#each bosses as boss_id]]
-                        [[#if boss_id in encounter]]
-                          <li on-click="@.set({'page.area': boss_id})" class-uk-active="page.area == boss_id"><a href="#">[[areaLabel(boss_id)]] ([[encounter[boss_id].count]])</a></li>
-                        [[else]]
+                      <li class="uk-nav-header uk-margin-top" x-text="wing.name"></li>
+                      <template x-for="boss_id in wing.bosses">
+                        <li @click="boss_id in encounter && set({'page.area': boss_id})" :class="{'uk-active': boss_id in encounter && page.area == boss_id}">
                           {# TODO make visually distinct the dead links #}
-                          <li><a href="#" on-click="false">[[areaLabel(boss_id)]] (0)</a></li>
-                        [[/if]]
-                      [[/each]]
+                          <a href="#" @click="boss_id in encounter || ($event.preventDefault(), $event.stopPropagation())" x-text="areaLabel(boss_id) + ' (' + (boss_id in encounter ? encounter[boss_id].count : 0) + ')'"></a>
+                        </li>
+                      </template>
                     </ul>
                   </div>
-                [[/each]]
+                </template>
               </div>
             </div>
-        [[/each]]
+        </template>
       </div>
 
       {# Mobile navigation/filtering #}
       <h6 class="uk-font-family-secondary uk-hidden@s uk-margin-top">Encounter</h6>
-      <select class="uk-select uk-hidden@s uk-margin-bottom" name="encounter" value="[[page.area]]">
-        [[#each data.boss_locations]]
-          [[#if all && encounter[all]]]
-            <option value="[[all]]">[[all]] ([[all in encounter ? encounter[all].All.All.All.count : 0]])</option>
-          [[else]]
-            <option disabled>[[all]] (0)</option>
-          [[/if]]
-          [[#each wings]]
-            <optgroup label="[[name]]">
-              [[#each bosses as boss_id]]
-                [[#if boss_id in encounter]]
-                  <option value="[[boss_id]]">[[areaLabel(boss_id)]] ([[encounter[boss_id].count]])</option>
-                [[else]]
-                  {# TODO make visually distinct the dead links #}
-                  <option disabled>[[areaLabel(boss_id)]] (0)</option>
-                [[/if]]
-              [[/each]]
-            </optgroup>
-          [[/each]]
-        [[/each]]
+      <select class="uk-select uk-hidden@s uk-margin-bottom" name="encounter" x-select-model="page.area"
+              x-html="optionsHtml(data.boss_locations.flatMap(loc => [].concat(
+                loc.all && encounter[loc.all]
+                  ? [{value: loc.all, label: loc.all + ' (' + (loc.all in encounter ? encounter[loc.all].All.All.All.count : 0) + ')'}]
+                  : [{disabled: true, label: (loc.all || '') + ' (0)'}],
+                loc.wings.map(wing => ({group: wing.name, options: wing.bosses.map(boss_id => boss_id in encounter
+                  ? {value: boss_id, label: areaLabel(boss_id) + ' (' + encounter[boss_id].count + ')'}
+                  : {disabled: true, label: areaLabel(boss_id) + ' (0)'})}))
+              )))">
       </select>
 
       {% comment %}
@@ -83,132 +71,117 @@
 
       <div>
         <h6 class="uk-font-family-secondary uk-text-uppercase">Time Frame</h6>
-        <button class="uk-button uk-width-auto@l uk-width-1-1 uk-margin-right@l" type="button">[[name]] <i class="material-icons">expand_more</i></button>
+        <button class="uk-button uk-width-auto@l uk-width-1-1 uk-margin-right@l" type="button"><span x-text="name"></span> <i class="material-icons">expand_more</i></button>
         <div uk-dropdown="mode: click">
           <ul class="uk-nav uk-dropdown-nav">
-            [[#each eras_for_dropdown]]
-              <li><a on-click="@this.fire('global_stats_nav', 'page.no', id)">[[name]]</a></li>
-            [[/each]]
+            <template x-for="dropdown_era in eras_for_dropdown">
+              <li><a @click="fire('global_stats_nav', $event, 'page.no', dropdown_era.id)" x-text="dropdown_era.name"></a></li>
+            </template>
           </ul>
         </div>
       </div>
 
-      [[#with encounter[page.area] as enc]]
-        [[#with @context.get("enc.0.0.0") || {} as allstat]]
-          [[#if typeof page.area == "string"]]
+      <div x-with="{enc: encounter[page.area]}" x-with:allstat="{allstat: enc[0][0][0] || {}}">
+          <template x-if="typeof page.area == 'string'">
             {# All ... bosses #}
-            <h2>[[page.area]]</h2>
-            <span class="uk-badge uk-text-bold uk-label-success uk-margin-small-right">
-              Alive [[perc(100 - allstat.avg_down_percentage - allstat.avg_dead_percentage)]]
-            </span>
-            <span class="uk-badge uk-text-bold uk-label-warning uk-margin-small-right">
-              Downed [[perc(allstat.avg_down_percentage)]]
-            </span>
-            <span class="uk-badge uk-text-bold uk-label-error">
-              Dead [[perc(allstat.avg_dead_percentage)]]
-            </span>
-          [[else]]
+            <div>
+              <h2 x-text="page.area"></h2>
+              <span class="uk-badge uk-text-bold uk-label-success uk-margin-small-right" x-text="'Alive ' + perc(100 - allstat.avg_down_percentage - allstat.avg_dead_percentage)">
+              </span>
+              <span class="uk-badge uk-text-bold uk-label-warning uk-margin-small-right" x-text="'Downed ' + perc(allstat.avg_down_percentage)">
+              </span>
+              <span class="uk-badge uk-text-bold uk-label-error" x-text="'Dead ' + perc(allstat.avg_dead_percentage)">
+              </span>
+            </div>
+          </template>
+          <template x-if="typeof page.area != 'string'">
             {# specific boss ID #}
             <div class="r-media uk-margin-medium-top">
-              <img width="70px" src="/static/raidar/img/icon/[[data.areas[page.area].icon]].png" alt="[[data.areas[page.area].name]]" onerror="this.style.visibility='hidden'">
+              <img width="70px" :src="'/static/raidar/img/icon/' + data.areas[page.area].icon + '.png'" :alt="data.areas[page.area].name" onerror="this.style.visibility='hidden'">
               <div class="r-body">
-                <h2 style="line-height:1;" class="uk-margin-small-bottom">[[data.areas[page.area].name]][[#if data.areas[page.area].tag]] <span class="uk-label r-mode-[[data.areas[page.area].tag]]">[[data.areas[page.area].tag]]</span>[[/if]]</h2>
-                <span class="uk-badge uk-text-bold uk-label-success uk-margin-small-right">
-                  Alive [[perc(100 * (allstat.events.combat_time_avg - allstat.events.down_time_avg - allstat.events.dead_time_avg) / allstat.events.combat_time_avg)]]
+                <h2 style="line-height:1;" class="uk-margin-small-bottom"><span x-text="data.areas[page.area].name"></span> <span x-visible="data.areas[page.area].tag" class="uk-label" :class="'r-mode-' + data.areas[page.area].tag" x-text="data.areas[page.area].tag"></span></h2>
+                <span class="uk-badge uk-text-bold uk-label-success uk-margin-small-right" x-text="'Alive ' + perc(100 * (allstat.events.combat_time_avg - allstat.events.down_time_avg - allstat.events.dead_time_avg) / allstat.events.combat_time_avg)">
                 </span>
-                <span class="uk-badge uk-text-bold uk-label-warning uk-margin-small-right">
-                  Downed [[perc(100 * allstat.events.down_time_avg / allstat.events.combat_time_avg)]]
+                <span class="uk-badge uk-text-bold uk-label-warning uk-margin-small-right" x-text="'Downed ' + perc(100 * allstat.events.down_time_avg / allstat.events.combat_time_avg)">
                 </span>
-                <span class="uk-badge uk-text-bold uk-label-error">
-                  Dead [[perc(100 * allstat.events.dead_time_avg / allstat.events.combat_time_avg)]]
+                <span class="uk-badge uk-text-bold uk-label-error" x-text="'Dead ' + perc(100 * allstat.events.dead_time_avg / allstat.events.combat_time_avg)">
                 </span>
               </div>
             </div>
-          [[/if]]
+          </template>
 
-          [[#each enc as archetype]]
-            [[#with @key as archetypeId]]
-              [[#unless archetypeId == 0 || isNaN(archetypeId)]]
+          <template x-for="(archetype, archetypeId) in enc">
+              <template x-if="!(archetypeId == 0 || isNaN(archetypeId))">
+              <div>
                 <h2 class="uk-heading-line">
                   <span>
-                    <img alt="[[data.archetypes[archetypeId]]]" src="{% static 'raidar/img/arch/' %}/[[data.archetypes[archetypeId]]].png"/>
-                    [[data.archetypes[archetypeId]]]
+                    <img :alt="data.archetypes[archetypeId]" :src="'{% static 'raidar/img/arch/' %}/' + data.archetypes[archetypeId] + '.png'"/>
+                    <span x-text="data.archetypes[archetypeId]"></span>
                   </span>
                 </h2>
 
-                <h6 class="uk-font-family-secondary uk-text-uppercase uk-text-regular uk-margin-remove-top">
-                  Archetype played [[perc(archetype ? 100 * archetype.count / enc.count : 0)]] of encounters.
+                <h6 class="uk-font-family-secondary uk-text-uppercase uk-text-regular uk-margin-remove-top" x-text="'Archetype played ' + perc(archetype ? 100 * archetype.count / enc.count : 0) + ' of encounters.'">
                 </h6>
 
                 <div class="uk-grid">
-                  [[#each keysWithAllLast(archetype) as professionId]]
-                    [[#with archetype[professionId] as profession]]
-                      [[#each keysWithAllLast(profession) as eliteId]]
-                        [[#with profession[eliteId] as elite]]
-                          [[#with elite]]
-                            [[#unless eliteId == 'All']]
-                              [[#with pctl(actual.dps_perc) as percentiles_dps,
-                                      pctl(actual_boss.dps_perc) as percentiles_dps_boss,
-                                      pctl(actual.dps_perc)[99] as overall_max
-                              ]]
-                                <div class="uk-width-1-4@xl uk-width-1-3@m uk-width-1-2@s uk-width-1-1">
+                  {# each specialisation of each profession, in one list: an x-for directly inside another would put them out of order #}
+                  <template x-for="build in keysWithAllLast(archetype).flatMap(professionId => keysWithAllLast(archetype[professionId]).map(eliteId => ({professionId, eliteId})))">
+                            <template x-if="build.eliteId != 'All'">
+                                <div class="uk-width-1-4@xl uk-width-1-3@m uk-width-1-2@s uk-width-1-1"
+                                     x-with="build"
+                                     x-with:elite="{profession: archetype[professionId], elite: archetype[professionId][eliteId]}"
+                                     x-with:context="elite"
+                                     x-with:percentiles="{
+                                       percentiles_dps: pctl(actual.dps_perc),
+                                       percentiles_dps_boss: pctl(actual_boss.dps_perc),
+                                       overall_max: pctl(actual.dps_perc)[99]
+                                     }">
                                   <div class="r-profile-stats">
                                     <div class="r-profile-profession">
-                                      <img alt="[[data.specialisations[professionId][eliteId]]]" src="{% static 'raidar/img/48px/' %}/[[data.specialisations[professionId][eliteId]]]_tango_icon_48px.png"/>
+                                      <img :alt="data.specialisations[professionId][eliteId]" :src="'{% static 'raidar/img/48px/' %}/' + data.specialisations[professionId][eliteId] + '_tango_icon_48px.png'"/>
                                       <div>
-                                        <h4 class="uk-margin-remove">[[data.specialisations[professionId][eliteId]]]</h4>
-                                        <h6 class="uk-font-family-secondary uk-text-uppercase uk-text-regular uk-margin-remove">Encounters: [[num(count, 0)]]</h6>
+                                        <h4 class="uk-margin-remove" x-text="data.specialisations[professionId][eliteId]"></h4>
+                                        <h6 class="uk-font-family-secondary uk-text-uppercase uk-text-regular uk-margin-remove" x-text="'Encounters: ' + num(count, 0)"></h6>
                                       </div>
                                     </div>
 
                                     <div class="r-profile-activity">
-                                      <div class="r-tooltip-help" title="<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Downstate</h6>Spent an average of [[perc(avg_down_percentage)]] of encounter time in down state." uk-tooltip="pos:bottom-left;">
+                                      <div class="r-tooltip-help" :title="`<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Downstate</h6>Spent an average of ${perc(avg_down_percentage)} of encounter time in down state.`" uk-tooltip="pos:bottom-left;">
                                         <img width="18px" src="/static/raidar/img/icon/Downed_ally.png" alt="Time spent in downed state">
-                                        <span class="uk-badge uk-background-default">[[perc(100 * events.down_time_avg / events.combat_time_avg)]]</span>
+                                        <span class="uk-badge uk-background-default" x-text="perc(100 * events.down_time_avg / events.combat_time_avg)"></span>
                                       </div>
 
-                                      <div class="r-tooltip-help" title="<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Dead</h6>Spent an average of [[perc(avg_dead_percentage)]] of encounter time dead." uk-tooltip="pos:bottom-left;">
+                                      <div class="r-tooltip-help" :title="`<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Dead</h6>Spent an average of ${perc(avg_dead_percentage)} of encounter time dead.`" uk-tooltip="pos:bottom-left;">
                                         <img width="18px" src="/static/raidar/img/icon/Downed_enemy.png" alt="Time spent dead">
-                                        <span class="uk-badge uk-background-default">[[perc(100 * events.dead_time_avg / events.combat_time_avg)]]</span>
+                                        <span class="uk-badge uk-background-default" x-text="perc(100 * events.dead_time_avg / events.combat_time_avg)"></span>
                                       </div>
                                     </div>
 
                                     <div class="r-profile-damage">
                                       <h6 class="uk-font-family-secondary uk-text-uppercase uk-text-regular uk-margin-small-bottom">Total DPS (Average) Max</h6>
                                       <svg class="chart" xmlns='http://www.w3.org/2000/svg' height="24px" width="100%">
-                                        <rect class="chart chart-hover r-bg-[[bsearch(actual.dps_avg, percentiles_dps)]]" uk-tooltip="pos: bottom-left; delay: 350" title="<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Max DPS</h6>[[num(actual.dps_max, 0)]] Damage Per Second. <br /> Click for detailed graph." x='0%' y='0' height='8px' width='[[100 * actual.dps_max / overall_max]]%' on-click="@this.fire('chart', event, archetypeId, professionId, eliteId, 'dps', 'DPS')"/>
-                                        <rect class="chart chart-hover" uk-tooltip="pos: bottom-left; delay: 350" title="<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Average DPS</h6>[[num(avg_dps, 0)]] Damage Per Second.<br/><strong>Performance: </strong>[[th(bsearch(avg_dps, percentiles_dps))]] Percentile<br/>Click for detailed graph." x='0%' y='0' height='8px' width='[[100 * avg_dps / overall_max]]%' opacity='0.15' on-click="@this.fire('chart', event, archetypeId, professionId, eliteId, 'dps', 'DPS')" />
-                                        <!--
-                                        Text with some custom adjustments to deal with alignment issues.
-                                        -->
-                                        <text x='[[100 * actual.dps_max / overall_max]]%' y='12px' alignment-baseline="hanging" text-anchor="[[(100 * actual.dps_max / overall_max) < 25 ? 'begin' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2' font-size='11'>([[num(actual.dps_avg, 0)]]) [[num(actual.dps_max, 0)]]</text>
+                                        <rect class="chart chart-hover" :class="'r-bg-' + bsearch(actual.dps_avg, percentiles_dps)" uk-tooltip="pos: bottom-left; delay: 350" :title="`<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Max DPS</h6>${num(actual.dps_max, 0)} Damage Per Second. <br /> Click for detailed graph.`" x='0%' y='0' height='8px' :width="(100 * actual.dps_max / overall_max) + '%'" @click="fire('chart', $event, archetypeId, professionId, eliteId, 'dps', 'DPS')"/>
+                                        <rect class="chart chart-hover" uk-tooltip="pos: bottom-left; delay: 350" :title="`<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Average DPS</h6>${num(avg_dps, 0)} Damage Per Second.<br/><strong>Performance: </strong>${th(bsearch(avg_dps, percentiles_dps))} Percentile<br/>Click for detailed graph.`" x='0%' y='0' height='8px' :width="(100 * avg_dps / overall_max) + '%'" opacity='0.15' @click="fire('chart', $event, archetypeId, professionId, eliteId, 'dps', 'DPS')" />
+                                        {# Text with some custom adjustments to deal with alignment issues. #}
+                                        <text :x="(100 * actual.dps_max / overall_max) + '%'" y='12px' alignment-baseline="hanging" :text-anchor="(100 * actual.dps_max / overall_max) < 25 ? 'begin' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2' font-size='11' x-text="'(' + num(actual.dps_avg, 0) + ') ' + num(actual.dps_max, 0)"></text>
 
                                       </svg>
                                       <h6 class="uk-font-family-secondary uk-text-uppercase uk-text-regular uk-margin-small-top uk-margin-small-bottom">Boss DPS (Average) Max</h6>
                                       <svg class="chart" xmlns='http://www.w3.org/2000/svg' height="24px" width="100%">
-                                        <rect class="chart chart-hover r-bg-[[bsearch(actual_boss.dps_avg, percentiles_dps_boss)]]" uk-tooltip="pos: bottom-left; delay: 350" title="<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Max Boss DPS</h6>[[num(actual_boss.dps_max, 0)]] Damage Per Second. <br /> Click for detailed graph." x='0%' y='0' height='8px' width='[[100 * actual_boss.dps_max / overall_max]]%' on-click="@this.fire('chart', event, archetypeId, professionId, eliteId, 'dps_boss', 'Boss DPS')"/>
-                                        <rect class="chart chart-hover" uk-tooltip="pos: bottom-left; delay: 350" title="<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Average Boss DPS</h6>[[num(actual_boss.dps_avg, 0)]] Damage Per Second.<br/><strong>Performance: </strong>[[th(bsearch(actual_boss.dps_avg, percentiles_dps_boss))]] Percentile<br/>Click for detailed graph." x='0%' y='0' height='8px' width='[[100 * actual_boss.dps_avg / overall_max]]%' opacity='0.15' on-click="@this.fire('chart', event, archetypeId, professionId, eliteId, 'dps_boss', 'Boss DPS')" />
-                                        <!--
-                                        Text with some custom adjustments to deal with alignment issues.
-                                        -->
-                                        <text x='[[100 * actual_boss.dps_max / overall_max]]%' y='12px' alignment-baseline="hanging" text-anchor="[[(100 * actual_boss.dps_max / overall_max) < 25 ? 'begin' : 'end']]" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11'>([[num(actual_boss.dps_avg, 0)]]) [[num(actual_boss.dps_max, 0)]]</text>
+                                        <rect class="chart chart-hover" :class="'r-bg-' + bsearch(actual_boss.dps_avg, percentiles_dps_boss)" uk-tooltip="pos: bottom-left; delay: 350" :title="`<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Max Boss DPS</h6>${num(actual_boss.dps_max, 0)} Damage Per Second. <br /> Click for detailed graph.`" x='0%' y='0' height='8px' :width="(100 * actual_boss.dps_max / overall_max) + '%'" @click="fire('chart', $event, archetypeId, professionId, eliteId, 'dps_boss', 'Boss DPS')"/>
+                                        <rect class="chart chart-hover" uk-tooltip="pos: bottom-left; delay: 350" :title="`<h6 class='uk-font-family-secondary uk-text-uppercase uk-margin-remove-bottom'>Average Boss DPS</h6>${num(actual_boss.dps_avg, 0)} Damage Per Second.<br/><strong>Performance: </strong>${th(bsearch(actual_boss.dps_avg, percentiles_dps_boss))} Percentile<br/>Click for detailed graph.`" x='0%' y='0' height='8px' :width="(100 * actual_boss.dps_avg / overall_max) + '%'" opacity='0.15' @click="fire('chart', $event, archetypeId, professionId, eliteId, 'dps_boss', 'Boss DPS')" />
+                                        {# Text with some custom adjustments to deal with alignment issues. #}
+                                        <text :x="(100 * actual_boss.dps_max / overall_max) + '%'" y='12px' alignment-baseline="hanging" :text-anchor="(100 * actual_boss.dps_max / overall_max) < 25 ? 'begin' : 'end'" font-family='Source Sans Pro' fill='#FCF1E2'  font-size='11' x-text="'(' + num(actual_boss.dps_avg, 0) + ') ' + num(actual_boss.dps_max, 0)"></text>
                                       </svg>
                                     </div>
                                   </div>
                                 </div>
-                              [[/with]]
-                            [[/unless]]
-                          [[/with]]
-                        [[/with]]
-                      [[/each]]
-                    [[/with]]
-                  [[/each]]
+                            </template>
+                  </template>
                 </div>
-              [[/unless]]
-            [[/with]]
-          [[/each]]
-        [[/with]]
-      [[/with]]
-    [[/with]]
-  [[/with]]
-[[/with]]
+              </div>
+              </template>
+          </template>
+      </div>
+  </div>
+</template>
