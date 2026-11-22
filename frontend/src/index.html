@@ -218,7 +218,6 @@
                 [[elseif page.name == "encounter"]]
 
                   <!--# include encounter.html -->
-                  <!--# include donation_cta.html -->
 
                 [[elseif page.name == "info-help"]]
 
@@ -243,15 +242,9 @@
                 [[elseif page.name == "global_stats"]]
 
                   <!--# include global_stats.html -->
-                  <!--# include donation_cta.html -->
-                [[elseif page.name == "thank-you"]]
-
-                  <!--# include thank-you.html -->
-
               [[elseif page.name == "leaderboards"]]
 
                 <!--# include leaderboards.html -->
-                <!--# include donation_cta.html -->
               [[elseif page.name == "info-framework"]]
 
                   <!--# include info_framework.html -->
@@ -262,7 +255,6 @@
 
                     [[#if encounters.length]]
                       <!--# include encounters.html -->
-                      <!--# include donation_cta.html -->
                     [[else]]
                       <p>
                         Drag and drop evtc files to this window to upload.
@@ -276,7 +268,6 @@
                   [[elseif page.name == "uploads"]]
 
                     <!--# include uploads.html -->
-                    <!--# include donation_cta.html -->
 
                   [[elseif page.name == "account"]]
 
@@ -380,11 +371,6 @@
                       </div>
                       <p class="uk-text-small uk-text-muted uk-text-center"><a href="[[@this.getPageURL('login')]]" on-click="@this.page('login')">Back to log in</a></p>
                     </form>
-
-                  [[else]]
-
-                    TODO
-                    {# include intro.html (not used yet) #}
 
                   [[/if]]
 

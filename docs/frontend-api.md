@@ -20,7 +20,7 @@ it, not Django: in Compose, that's the `frontend` nginx, which also serves `/ass
 | Page URL | Page |
 | --- | --- |
 | `/` | the default page (Help for guests, Release notes for users) |
-| `/<name>[/<no>]` | `encounters`, `leaderboards`, `profile`, `uploads`, `account`, `register`, `login`, `index`, `reset_pw`, `thank-you`, `info-help`, `info-releasenotes`, `info-contact`, `info-about`, `info-framework`, `info-api` |
+| `/<name>[/<no>]` | `encounters`, `leaderboards`, `profile`, `uploads`, `account`, `register`, `login`, `reset_pw`, `info-help`, `info-releasenotes`, `info-contact`, `info-about`, `info-framework`, `info-api` |
 | `/encounter/<url_id>` | one encounter |
 | `/global_stats[/<era_id>][/area-<area_id> \| /<kind name>]` | global stats (also under `/api/global_stats…`) |
 
