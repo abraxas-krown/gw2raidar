@@ -1,4 +1,4 @@
-"""Gunicorn settings for the container: quieter, more useful logs behind Traefik."""
+"""Gunicorn settings for the container: quieter, more useful logs behind Traefik and the frontend's nginx."""
 from gunicorn import glogging
 
 bind = "0.0.0.0:8000"
@@ -17,7 +17,7 @@ class Logger(glogging.Logger):
 
     def atoms(self, resp, req, environ, request_time):
         atoms = super().atoms(resp, req, environ, request_time)
-        # Behind Traefik, REMOTE_ADDR is always the proxy; the client is the first X-Forwarded-For entry.
+        # Behind Traefik and nginx, REMOTE_ADDR is always a proxy; the client is the first X-Forwarded-For entry.
         forwarded = environ.get("HTTP_X_FORWARDED_FOR", "")
         if forwarded:
             atoms["h"] = forwarded.split(",")[0].strip() or atoms["h"]
@@ -26,9 +26,6 @@ class Logger(glogging.Logger):
     def access(self, resp, req, environ, request_time):
         # the compose healthcheck identifies itself with this User-Agent
         if environ.get("HTTP_USER_AGENT") == "healthcheck":
-            return
-        # successful static file requests (CSS/JS/images) are just noise; errors are still logged
-        if environ.get("PATH_INFO", "").startswith("/static/") and getattr(resp, "status_code", 500) < 400:
             return
         super().access(resp, req, environ, request_time)
 

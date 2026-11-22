@@ -29,8 +29,10 @@
 /credentials
 
 
-config.codekit3
 *.map
 .DS_Store
 pyraidar
 *.iml
+
+# the built frontend (`python frontend/build.py`)
+/frontend/dist

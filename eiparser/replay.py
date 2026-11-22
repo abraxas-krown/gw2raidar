@@ -1,7 +1,7 @@
 """Converts the combat replay data of an Elite Insights JSON log into raidar's own replay format.
 
 The replay is stored with the encounter (``Encounter.replay_diskname()``) and shown on the encounter page's
-Replay tab (``views.replay``, ``raidar/static/raidar/replay.js``). It is a
+Replay tab (``views.replay``, ``frontend/assets/replay.js``). It is a
 snapshot in the site's own terms, so that a stored replay keeps its meaning whatever later versions of EI
 write: this module is the only place that reads EI's replay fields. Like ``adapter``, it has no Django imports.
 
@@ -46,7 +46,7 @@ were added have no "conditions", no target "buffs" and no top level "buffs"; rea
 
 Positions are game world coordinates, so they are independent of EI's map images and pixel sizes. The map of
 each boss is the site's own: ``replay_maps.json`` in this package lists, per boss, the image (a file in
-``raidar/static/raidar/img/replay``, or null for a boss without one), the world rectangle it shows
+``frontend/assets/img/replay``, or null for a boss without one), the world rectangle it shows
 (``world``: minX, minY, maxX, maxY) and the image's size; the replay only names its boss.
 """
 import json
@@ -62,9 +62,9 @@ FORMAT = "raidar.replay"
 FORMAT_VERSION = 1
 
 MAPS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "replay_maps.json")
-# Where the images named in replay_maps.json are (served as static files under raidar/img/replay/)
+# Where the images named in replay_maps.json are (the frontend serves them under img/replay/)
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                          "raidar", "static", "raidar", "img", "replay")
+                          "frontend", "assets", "img", "replay")
 
 # EI draws every map with its longer side this many pixels long (CombatReplayMap.GetPixelMapSize)
 EI_MAP_PIXELS = 750

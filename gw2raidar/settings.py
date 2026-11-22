@@ -166,7 +166,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 STATIC_ROOT = '/static/'
 STATIC_URL = '/static/'
-# collectstatic writes hashed file names plus .gz/.br copies, which WhiteNoise (or the web server) serves
+# Where the frontend serves its assets (frontend/assets/); the API names some of its images, by URL
+# (raidar/assets.py: boon icons, replay maps)
+ASSETS_URL = os.environ.get('ASSETS_URL', '/assets/')
+# Django's own static files: the admin's. The frontend's assets are not Django's (see ASSETS_URL).
+# collectstatic writes hashed file names plus .gz/.br copies, which WhiteNoise serves (below)
 STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
     'staticfiles': {'BACKEND': 'gw2raidar.storage.StaticFilesStorage'},
@@ -174,8 +178,9 @@ STORAGES = {
 
 # Other
 
-LOGIN_URL = 'index'
-LOGOUT_REDIRECT_URL = 'index'
+# the site root (a path: the page URLs are served by the frontend, not Django)
+LOGIN_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 CORS_ORIGIN_ALLOW_ALL = True

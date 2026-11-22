@@ -1,3 +1,9 @@
+# Two images from one build (docker-compose.yml picks them with `target`):
+#   app       Django/gunicorn (the `web` and `worker` services): the JSON API and upload processing
+#   frontend  nginx (the `frontend` service): the frontend built from frontend/, proxying the rest to `web`
+# The two share nothing: the frontend stages use only frontend/ and docker/nginx.conf.
+# `frontend` is the last stage, so a plain `docker build .` makes the nginx image; use `--target app` for Django.
+
 # ---- .NET runtime, needed to run the Elite Insights CLI (the log parser); only its files are copied ----
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS dotnet
 
@@ -19,8 +25,8 @@ RUN curl -fsSL -o /tmp/GW2EICLI.zip \
     && python -m zipfile -e /tmp/GW2EICLI.zip /opt/gw2ei \
     && rm /tmp/GW2EICLI.zip
 
-# ---- runtime stage: slim image, only the virtualenv is carried over (no apt-get needed) ----
-FROM python:3.13-slim-trixie
+# ---- app: the Django runtime, a slim image; only the virtualenv is carried over (no apt-get needed) ----
+FROM python:3.13-slim-trixie AS app
 # GW2EI_CLI is read by gw2raidar/settings.py; a .dll is run through `dotnet`.
 # The image has no ICU libraries, so .NET runs in invariant-culture mode; EI asks for the "en-US"
 # culture, which then needs predefined-only switched off.
@@ -37,7 +43,7 @@ COPY --from=dotnet /usr/share/dotnet /usr/share/dotnet
 COPY --from=builder /opt/gw2ei /opt/gw2ei
 WORKDIR /app
 COPY . /app
-# Bake the static files into the image (served by WhiteNoise); no database needed for this step.
+# Collect Django's own static files (the admin's), which WhiteNoise serves; no database is needed for this.
 # /app/log, /data/uploads and /data/reports are the only places the app writes to.
 RUN python manage.py collectstatic --noinput \
     && (python -m compileall -q raidar analyser eiparser gw2api gw2raidar || true) \
@@ -49,3 +55,13 @@ EXPOSE 8000
 # The entrypoint starts as root only to fix volume ownership, then drops to the "app" user.
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["web"]
+
+# ---- frontend: build frontend/ (frontend/build.py, standard library only) and serve it with nginx ----
+FROM python:3.13-alpine AS frontend-build
+COPY frontend/ /src/
+RUN python /src/build.py --out /dist
+
+FROM nginx:1.27-alpine AS frontend
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=frontend-build /dist /usr/share/nginx/html
+EXPOSE 80

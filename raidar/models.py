@@ -15,7 +15,7 @@ from json import loads as json_loads, dumps as json_dumps
 
 import numpy
 from django.db import connections, models
-from django.templatetags.static import static
+from .assets import asset_url
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db.models import UniqueConstraint as Unique, Sum, Avg
@@ -636,7 +636,7 @@ class Encounter(models.Model):
         boon_order = BOON_ORDER if found else LEGACY_BOON_ORDER
         buffs = {}
         for code in boon_order:
-            buffs[code] = {"name": boons[code].name, "icon": static("raidar/img/buff/%s.png" % code)}
+            buffs[code] = {"name": boons[code].name, "icon": asset_url("img/buff/%s.png" % code)}
             if boons[code].stacking == StackType.INTENSITY:
                 buffs[code]["stacks"] = boons[code].capacity
         tabs = []
