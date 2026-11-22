@@ -105,11 +105,6 @@ def _html_response(request, page, data=None):
         data = {}
     response = _userprops(request)
     response.update(data)
-    try:
-        response['ga_property_id'] = settings.GA_PROPERTY_ID
-    except:
-        # No Google Analytics, it's fine
-        pass
     response['archetypes'] = {k: v for k, v in ARCHETYPE_CHOICES}
     response['areas'] = {id: {
             "name": boss.base_name,

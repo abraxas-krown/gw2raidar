@@ -184,9 +184,6 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/api/.*$'
 
 
-# Google Analytics
-GA_PROPERTY_ID = None
-
 RESTAT_PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'log', 'restat.pid')
 
 # Elite Insights command line parser, used by process_uploads to parse uploaded logs.
@@ -234,8 +231,6 @@ if os.environ.get('UPLOAD_DIR'):
     UPLOAD_DIR = os.environ['UPLOAD_DIR']
 if os.environ.get('REPORT_DIR'):
     REPORT_DIR = os.environ['REPORT_DIR']
-if os.environ.get('GA_PROPERTY_ID'):
-    GA_PROPERTY_ID = os.environ['GA_PROPERTY_ID']
 if os.environ.get('GW2EI_CLI'):
     GW2EI_CLI = os.environ['GW2EI_CLI']
 if os.environ.get('GW2EI_TIMEOUT'):

@@ -1051,10 +1051,6 @@ ${body}
     if (pageInit[page.name]) {
       pageInit[page.name](page);
     }
-    if (window.ga) {
-      window.ga('set', 'page', url);
-      window.ga('send', 'pageview');
-    }
     return false;
   }
 
