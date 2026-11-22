@@ -13,7 +13,7 @@
 window.RaidarRouter = (function () {
   const baseMeta = document.querySelector('meta[name="raidar-base"]');
   const baseURL = baseMeta ? baseMeta.content : (window.baseURL || '/');
-  const NAMED = /^(encounters|leaderboards|profile|uploads|account|register|login|index|reset_pw|thank-you|info-(?:help|releasenotes|contact|about|framework))(?:\/(\w+))?$/;
+  const NAMED = /^(encounters|leaderboards|profile|uploads|account|register|login|index|reset_pw|thank-you|info-(?:help|releasenotes|contact|about|framework|api))(?:\/(\w+))?$/;
   const ENCOUNTER = /^encounter\/(\w+)$/;
   const GLOBAL_STATS = /^(?:api\/)?global_stats(?:\/([0-9]+))?(?:\/(?:area-)?([0-9]+|[A-Za-z ]+))?$/;
   const DEFAULT_STATS_PAGE = 'All raid bosses';

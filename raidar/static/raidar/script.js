@@ -641,7 +641,7 @@ ${body}
 
   let loggedInPage = Object.assign({}, page);
   let initialPage = loggedInPage;
-  const PERMITTED_PAGES = ['encounter', 'index', 'login', 'register', 'reset_pw', 'info-about', 'info-help', 'info-releasenotes', 'info-contact', 'global_stats', 'thank-you'];
+  const PERMITTED_PAGES = ['encounter', 'index', 'login', 'register', 'reset_pw', 'info-about', 'info-help', 'info-releasenotes', 'info-contact', 'info-api', 'global_stats', 'thank-you'];
   if (!session.username) {
     if (!initialPage.name) {
       loggedInPage = { name: 'info-releasenotes' };
