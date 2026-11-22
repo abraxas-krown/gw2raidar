@@ -12,7 +12,7 @@
         <li class="[[page.name=='encounters' ? 'uk-active' : '']]"><a href="#" on-click="@this.page({name: 'encounters', no: 1})">Encounters</a></li>
 
       [[#if is_staff]]
-        <li class="uk-hidden@m "><a href="{% url 'admin:index' %}[[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
+        <li class="uk-hidden@m "><a href="[[~/data.urls.admin]][[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
       [[/if]]
         <li class="uk-hidden@m [[page.name=='account' ? 'uk-active' : '']]"><a class=" uk-text-small uk-text-white" href="#" on-click="@this.page('account')" title="Account: [[username]]" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">perm_identity</i></a></li>
         <li class="uk-hidden@m"><a class=" uk-text-small uk-text-white" href="#" on-click="auth_logout" title="Logout" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">exit_to_app</i> </a></li>

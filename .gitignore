@@ -34,3 +34,6 @@ config.codekit3
 .DS_Store
 pyraidar
 *.iml
+
+# the built page shell (`python manage.py build_frontend`)
+/frontend_dist

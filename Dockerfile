@@ -1,3 +1,8 @@
+# Two images from one build (docker-compose.yml picks them with `target`):
+#   app       Django/gunicorn (the `web` and `worker` services): the JSON API and upload processing
+#   frontend  nginx (the `frontend` service): the page shell and the static files, proxying the rest to `web`
+# `frontend` is the last stage, so a plain `docker build .` makes the nginx image; use `--target app` for Django.
+
 # ---- .NET runtime, needed to run the Elite Insights CLI (the log parser); only its files are copied ----
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS dotnet
 
@@ -19,8 +24,8 @@ RUN curl -fsSL -o /tmp/GW2EICLI.zip \
     && python -m zipfile -e /tmp/GW2EICLI.zip /opt/gw2ei \
     && rm /tmp/GW2EICLI.zip
 
-# ---- runtime stage: slim image, only the virtualenv is carried over (no apt-get needed) ----
-FROM python:3.13-slim-trixie
+# ---- app: the Django runtime, a slim image; only the virtualenv is carried over (no apt-get needed) ----
+FROM python:3.13-slim-trixie AS app
 # GW2EI_CLI is read by gw2raidar/settings.py; a .dll is run through `dotnet`.
 # The image has no ICU libraries, so .NET runs in invariant-culture mode; EI asks for the "en-US"
 # culture, which then needs predefined-only switched off.
@@ -37,9 +42,11 @@ COPY --from=dotnet /usr/share/dotnet /usr/share/dotnet
 COPY --from=builder /opt/gw2ei /opt/gw2ei
 WORKDIR /app
 COPY . /app
-# Bake the static files into the image (served by WhiteNoise); no database needed for this step.
+# Collect the static files, then build the page shell, which names their hashed copies (raidar/frontend.py);
+# the frontend stage below serves both. No database is needed for these steps.
 # /app/log, /data/uploads and /data/reports are the only places the app writes to.
 RUN python manage.py collectstatic --noinput \
+    && DJANGO_DEBUG=false python manage.py build_frontend \
     && (python -m compileall -q raidar analyser eiparser gw2api gw2raidar || true) \
     && mkdir -p /app/log /data/uploads /data/reports \
     && chown app:app /app/log /data/uploads /data/reports
@@ -49,3 +56,10 @@ EXPOSE 8000
 # The entrypoint starts as root only to fix volume ownership, then drops to the "app" user.
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["web"]
+
+# ---- frontend: nginx with the page shell and the static files from the app stage (docker/nginx.conf) ----
+FROM nginx:1.27-alpine AS frontend
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=app /app/frontend_dist/index.html /usr/share/nginx/html/index.html
+COPY --from=app /app/staticfiles /usr/share/nginx/static
+EXPOSE 80

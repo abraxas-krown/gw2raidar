@@ -166,7 +166,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 STATIC_ROOT = '/static/'
 STATIC_URL = '/static/'
-# collectstatic writes hashed file names plus .gz/.br copies, which WhiteNoise (or the web server) serves
+# the frontend's page shell, as `manage.py build_frontend` writes it (raidar/frontend.py)
+FRONTEND_INDEX = os.path.join(BASE_DIR, 'frontend_dist', 'index.html')
+# collectstatic writes hashed file names plus .gz/.br copies, which the frontend's nginx serves (docker/nginx.conf)
 STORAGES = {
     'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
     'staticfiles': {'BACKEND': 'gw2raidar.storage.StaticFilesStorage'},
@@ -174,8 +176,9 @@ STORAGES = {
 
 # Other
 
-LOGIN_URL = 'index'
-LOGOUT_REDIRECT_URL = 'index'
+# the site root (a path: the page URLs are served by the frontend, not Django)
+LOGIN_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -273,10 +276,6 @@ try:
     from .settings_local import *
 except ImportError:
     pass
-
-if not DEBUG and importlib.util.find_spec("whitenoise"):
-    # Serve the collected static files (STATIC_ROOT) from the app itself, right after SecurityMiddleware
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 if DEBUG:
     if importlib.util.find_spec("debug_toolbar"):

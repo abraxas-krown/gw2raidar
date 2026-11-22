@@ -11,7 +11,7 @@
             [[#if evtc_url]]
               <a href="[[evtc_url]]" [[#with evtc_version]]uk-tooltip title=""[[/with]]>[[filename]]</a>
             [[elseif downloadable]]
-              <a href="{% url 'download' %}[[page.no]]" [[#with evtc_version]]uk-tooltip title="arcdps v[[encounter.evtc_version]]"[[/with]]>[[filename]]</a>
+              <a href="[[~/data.urls.download]][[page.no]]" [[#with evtc_version]]uk-tooltip title="arcdps v[[encounter.evtc_version]]"[[/with]]>[[filename]]</a>
             [[else]]
               <span [[#with evtc_version]]uk-tooltip title="arcdps v[[encounter.evtc_version]]"[[/with]]>[[filename]]</span>
             [[/if]]
@@ -26,7 +26,7 @@
             [[formatDate(started_at)]]
           </span>
           [[#if has_report]]
-            <a href="{% url 'report' %}[[page.no]]" target="_blank" rel="noopener" class="uk-badge uk-text-bold" uk-tooltip title="Open the Elite Insights report of this log, with the combat replay, in a new tab">Elite Insights</a>
+            <a href="[[~/data.urls.report]][[page.no]]" target="_blank" rel="noopener" class="uk-badge uk-text-bold" uk-tooltip title="Open the Elite Insights report of this log, with the combat replay, in a new tab">Elite Insights</a>
           [[/if]]
 
           [[#if encounter.participated]]
@@ -126,5 +126,5 @@
 
 <p>
   Found an error?
-  <a href="{% url 'named' name='info-contact' %}" on-click="encounter_bug">Contact us</a>!
+  <a href="[[@this.getPageURL('info-contact')]]" on-click="encounter_bug">Contact us</a>!
 </p>

@@ -1,41 +1,33 @@
 "use strict";
 
 
-// The page shell carries only `window.raidar_boot` ({page, debug, version}); the reference data
-// (bootstrap.json), the signed-in user (initial.json) and, on an encounter page, the encounter itself are
-// fetched in parallel, and the app starts once the first two arrive.
+// The Ractive frontend. The page shell is static (the same for every URL and user): the page comes from the
+// URL (router.js), and everything else from the JSON API (api.js): the reference data (bootstrap.json), the
+// signed-in user (initial.json) and, on an encounter page, the encounter itself are fetched in parallel, and
+// the app starts once the first two arrive.
 (function loadAndStart() {
-  const boot = window.raidar_boot;
-  delete window.raidar_boot;
+  RaidarAPI.onError = message => UIkit.notification(message, 'danger');
 
-  function getJSON(url) {
-    return fetch(baseURL + url, { credentials: 'same-origin' }).then(response => {
-      if (!response.ok) throw new Error(url + ': ' + response.status);
-      return response.json();
-    });
-  }
+  const page = RaidarRouter.pageFromURL(location.pathname);
 
   // started now so it overlaps the other two; the encounter page picks it up
   let prefetched = {};
-  if (boot.page && boot.page.name == 'encounter' && boot.page.no) {
-    prefetched.encounter = { no: boot.page.no, promise: getJSON('encounter/' + boot.page.no + '.json') };
+  if (page && page.name == 'encounter' && page.no) {
+    prefetched.encounter = { no: page.no, request: RaidarAPI.encounter(page.no) };
   }
 
+  // a failure has been reported by RaidarAPI.onError
   Promise.all([
-    getJSON('bootstrap.json?v=' + encodeURIComponent(boot.version)),
-    getJSON('initial.json'),
-  ]).then(([bootstrap, session]) => main(boot, bootstrap, session, prefetched), err => {
-    console.error(err);
-    UIkit.notification('Error communicating to server', 'danger');
-  });
+    RaidarAPI.bootstrap(),
+    RaidarAPI.initial(),
+  ]).then(([bootstrap, session]) => main(page, bootstrap, session, prefetched), err => console.error(err));
 })();
 
-// Acquire Django CSRF token for AJAX, and prefix the base URL
-function main(boot, bootstrap, session, prefetched) {
+function main(page, bootstrap, session, prefetched) {
   const PAGE_SIZE = 10;
   const PAGINATION_WINDOW = 5;
 
-  const DEBUG = boot.debug;
+  const DEBUG = bootstrap.debug;
   Ractive.DEBUG = DEBUG;
 
 
@@ -64,7 +56,7 @@ function main(boot, bootstrap, session, prefetched) {
     const ractive = this;
     let viewer = null, removed = false;
     ractive.set('replay', { loading: true });
-    $.get({ url: 'replay/' + urlId + '.json' }).then(data => {
+    RaidarAPI.replay(urlId).then(data => {
       if (removed) return;
       const buffTabs = ['boons', 'offensive_buffs', 'support_buffs', 'defensive_buffs'];
       const tabOrder = ids => [].concat(...(ractive.get('encounter.buff_tabs') || [])
@@ -179,25 +171,6 @@ function main(boot, bootstrap, session, prefetched) {
     };
   };
 
-
-  let csrftoken = $('[name="csrfmiddlewaretoken"]').val();
-
-  function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-  }
-  $.ajaxSetup({
-    beforeSend: function beforeSend(xhr, settings) {
-      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-        xhr.setRequestHeader("X-CSRFToken", csrftoken);
-      }
-      settings.url = baseURL + settings.url
-    }
-  });
-  $(document).ajaxError((evt, xhr, settings, err) => {
-    console.error(err);
-    error("Error communicating to server");
-  })
 
   // adapted from https://gist.github.com/Yaffle/4654250
   const EPSILON = Math.pow(2, -52);
@@ -666,7 +639,7 @@ ${body}
     return `background: url("data:image/svg+xml;utf8,${svg}")`
   }
 
-  let loggedInPage = Object.assign({}, boot.page);
+  let loggedInPage = Object.assign({}, page);
   let initialPage = loggedInPage;
   const PERMITTED_PAGES = ['encounter', 'index', 'login', 'register', 'reset_pw', 'info-about', 'info-help', 'info-releasenotes', 'info-contact', 'global_stats', 'thank-you'];
   if (!session.username) {
@@ -715,19 +688,7 @@ ${body}
   if (!initData.settings.comparePerc) initData.settings.comparePerc = 50;
   if (!initData.settings.compareGlobalPerc) initData.settings.compareGlobalPerc = [99,90,50];
 
-  function getPageURLFromObject(page) {
-    let url = baseURL + page.name;
-    if (page.no) url += '/' + page.no;
-    if (page.era_id) url += '/' + page.era_id;
-    if (page.stats_page) {
-        if(Number(page.stats_page) > 0) {
-            url += '/area-' + page.stats_page;
-        } else {
-            url += '/' + page.stats_page;
-        }
-    }
-    return url;
-  }
+  const getPageURLFromObject = RaidarRouter.urlFromPage;
 
   function setData(data) {
     r.set(data);
@@ -741,14 +702,7 @@ ${body}
       return;
     }
     r.set('loading', true);
-    $.ajax({
-      type: 'GET',
-      url: 'leaderboards.json',
-      data: {
-        kind: kind,
-        era: era,
-      },
-    }).then(setData)
+    RaidarAPI.leaderboards(kind, era).then(setData)
     .then(() => {
       let lb = r.get('leaderboards');
       let week = r.get('page.leaderboards.week');
@@ -785,27 +739,24 @@ ${body}
     encounter: page => {
       r.set({
         loading: true,
+        encounter_missing: false,
         "page.phase": 'All',
         // damage and breakbar damage show the figures against the boss first
         "page.dps_boss": true,
         "page.breakbar_boss": true,
       });
       // the first encounter page reuses the request started alongside bootstrap.json
-      let prefetchedRequest = prefetched.encounter && prefetched.encounter.no == page.no
-        ? prefetched.encounter.promise : null;
+      let request = prefetched.encounter && prefetched.encounter.no == page.no
+        ? prefetched.encounter.request : RaidarAPI.encounter(page.no);
       delete prefetched.encounter;
-      let request = prefetchedRequest || $.get({ url: 'encounter/' + page.no + '.json' });
       Promise.resolve(request).then(setData).then(() => {
         // the tab is kept from encounter to encounter, but not every encounter has a replay
         if (r.get('persistent_page.tab') == 'replay' && !r.get('encounter.has_replay')) {
           r.set('persistent_page.tab', 'combat_stats');
         }
-      }, err => {
-        // jQuery requests report through ajaxError; the prefetch is a plain fetch
-        if (request === prefetchedRequest) {
-          console.error(err);
-          error("Error communicating to server");
-        }
+      }, xhr => {
+        // a 404 is an encounter that does not exist; other failures were reported by RaidarAPI.onError
+        if (xhr && xhr.status == 404) r.set('encounter_missing', true);
         r.set('loading', false);
       });
     },
@@ -814,9 +765,7 @@ ${body}
         loading: true,
         'page.area': 'All raid bosses',
       });
-      $.get({
-        url: getPageURLFromObject(page).substring(1) + '.json',
-      }).then(setData).then(() => {
+      RaidarAPI.profile(page.no).then(setData).then(() => {
         let era = r.get('profile.era');
         let eraOrder =  Object.values(r.get('profile.eras_for_dropdown'))
           .sort((e1, e2) => e2.started_at - e1.started_at);
@@ -830,15 +779,17 @@ ${body}
       r.set({
         loading: true,
       });
-      $.get({
-        url: getPageURLFromObject(page).substring(1) + '.json',
-      }).then(setData).then(() => {
+      RaidarAPI.globalStats(page.era_id, page.stats_page).then(setData).then(() => {
         let eras = r.get('global_stats.eras');
         let eraOrder = Object.values(eras)
           .sort((e1, e2) => e2.started_at - e1.started_at);
         r.set({
           'global_stats.stats.era_order': eraOrder,
         });
+      }, xhr => {
+        // a 404 is an era that does not exist; other failures were reported by RaidarAPI.onError
+        if (xhr && xhr.status == 404) error('There is no such era');
+        r.set('loading', false);
       });
     },
     leaderboards: page => {
@@ -854,9 +805,7 @@ ${body}
     if (encountersLoaded || !r.get('username')) return;
     encountersLoaded = true;
     r.set('loading', true);
-    $.get({
-      url: 'encounters.json',
-    }).then(response => {
+    RaidarAPI.encounters().then(response => {
       if (response.error) {
         encountersLoaded = false;
         error(response.error);
@@ -870,8 +819,7 @@ ${body}
     });
   }
 
-  $(window).on('popstate', evt => {
-    let page = evt.originalEvent.state;
+  RaidarRouter.onPopState(page => {
     r.set('page', page);
     // the other pages keep the data they had; the encounter list may never have loaded
     if (page && page.name == 'encounters') loadEncounters();
@@ -1082,8 +1030,7 @@ ${body}
         window.scrollTo(0, 0);
       });
     }
-    let url = getPageURLFromObject(page);
-    history.pushState(page, null, url);
+    RaidarRouter.navigate(page);
     if (pageInit[page.name]) {
       pageInit[page.name](page);
     }
@@ -1127,7 +1074,7 @@ ${body}
         'auth.input.password2': '',
         'auth.input.api_key': '',
       });
-      csrftoken = response.csrftoken;
+      // Django sets the new CSRF cookie itself (api.js reads it)
       delete response.csrftoken;
       lastNotificationId = response.last_notification_id;
       delete response.last_notification_id;
@@ -1192,13 +1139,7 @@ ${body}
       let username = this.get('auth.input.username'),
           password = this.get('auth.input.password');
 
-      $.post({
-        url: 'login.json',
-        data: {
-          username: username,
-          password: password,
-        },
-      }).done(didLogin);
+      RaidarAPI.login(username, password).done(didLogin);
 
       return false;
     },
@@ -1210,14 +1151,11 @@ ${body}
           apiKey = this.get('auth.input.api_key'),
           inviteCode = this.get('auth.input.invite_code');
 
-      $.post({
-        url: 'register.json',
-        data: {
-          username: username,
-          password: password,
-          api_key: apiKey,
-          invite_code: inviteCode,
-        },
+      RaidarAPI.register({
+        username: username,
+        password: password,
+        api_key: apiKey,
+        invite_code: inviteCode,
       }).done(didLogin);
 
       return false;
@@ -1227,21 +1165,14 @@ ${body}
 
       let email = this.get('auth.input.email');
 
-      $.post({
-        url: 'reset_pw.json',
-        data: {
-          email: email,
-        },
-      }).done(() => {
+      RaidarAPI.resetPassword(email).done(() => {
         notification('Sending now.', 'primary')
       })
 
       return false;
     },
     auth_logout: function logout() {
-      $.post({
-        url: 'logout.json',
-      }).done(response => {
+      RaidarAPI.logout().done(response => {
         this.set({
           username: null,
           email: '',
@@ -1260,13 +1191,10 @@ ${body}
     change_password: function changePassword(x) {
       if (!x.element.node.form.checkValidity()) return;
 
-      $.post({
-        url: 'change_password.json',
-        data: {
-          old_password: r.get('account.old_password'),
-          new_password1: r.get('account.password'),
-          new_password2: r.get('account.password2'),
-        },
+      RaidarAPI.changePassword({
+        old_password: r.get('account.old_password'),
+        new_password1: r.get('account.password'),
+        new_password2: r.get('account.password2'),
       }).done(response => {
         if (response.error) {
           error(response.error);
@@ -1282,12 +1210,7 @@ ${body}
     change_email: function changeEmail(x) {
       if (!x.element.node.form.checkValidity()) return;
 
-      $.post({
-        url: 'change_email.json',
-        data: {
-          email: r.get('email') || '',
-        },
-      }).done(response => {
+      RaidarAPI.changeEmail(r.get('email') || '').done(response => {
         if (response.error) {
           error(response.error);
         } else {
@@ -1301,12 +1224,7 @@ ${body}
       if (!x.element.node.form.checkValidity()) return;
 
       let api_key = r.get('account.api_key');
-      $.post({
-        url: 'add_api_key.json',
-        data: {
-          api_key: api_key,
-        },
-      }).done(response => {
+      RaidarAPI.addAPIKey(api_key).done(response => {
         if (response.error) {
           error(response.error);
         } else {
@@ -1331,12 +1249,7 @@ ${body}
     remove_api_key: function removeAPIKey(x, account_name) {
       if (!confirm(`Remove the API key for ${account_name}? That GW2 account will be unlinked from your user, and its encounters will no longer be shown here.`)) return false;
 
-      $.post({
-        url: 'remove_api_key.json',
-        data: {
-          account_name: account_name,
-        },
-      }).done(response => {
+      RaidarAPI.removeAPIKey(account_name).done(response => {
         if (response.error) {
           error(response.error);
         } else {
@@ -1352,10 +1265,7 @@ ${body}
 
       let data = r.get('contact.input');
 
-      $.post({
-        url: 'contact.json',
-        data: data
-      }).done(response => {
+      RaidarAPI.contact(data).done(response => {
         if (response.error) {
           error(response.error);
         } else {
@@ -1400,26 +1310,14 @@ ${body}
     },
     privacy: function privacy(evt) {
       let privacy = r.get('privacy');
-      $.post({
-        url: 'privacy.json',
-        data: {
-          privacy: privacy,
-        },
-      }).done(() => {
+      RaidarAPI.setPrivacy(privacy).done(() => {
         notification('Privacy updated.', 'success');
       });
     },
     set_tags_cat: function setTags(evt) {
       let encounter = r.get('encounter');
 
-      $.post({
-        url: 'set_tags_cat.json',
-        data: {
-          id: encounter.id,
-          tags: encounter.tags,
-          category: encounter.category,
-        },
-      }).done(() => {
+      RaidarAPI.setTagsAndCategory(encounter.id, encounter.tags, encounter.category).done(() => {
         // the list may not be loaded yet, and need not hold this encounter
         let eRowId = r.get('encounters').findIndex(e => e.id == encounter.id);
         if (eRowId != -1) {
@@ -1441,16 +1339,13 @@ ${body}
       let charDescription = profession == 'All' ? `All ${archetypeName}specialisations'` : archetypeName + r.get('data.specialisations')[profession][elite];
       let areaName = helpers.areaLabel(areaId);
 
-      $.post({
-        url: 'profile_graph.json',
-        data: {
-          era: eraId,
-          area: areaId,
-          archetype: archetype,
-          profession: profession,
-          elite: elite,
-          stat: stat,
-        },
+      RaidarAPI.profileGraph({
+        era: eraId,
+        area: areaId,
+        archetype: archetype,
+        profession: profession,
+        elite: elite,
+        stat: stat,
       }).then(payload => {
         let {globals, data, times} = payload;
         times = times.map(time => helpers.formatDate(time));
@@ -1559,12 +1454,6 @@ ${body}
     startUpload(true);
   }
 
-  let makeXHR = entry => {
-    let req = $.ajaxSettings.xhr();
-    req.upload.addEventListener("progress", uploadProgressHandler.bind(null, entry), false);
-    return req;
-  }
-
   let uploading = null;
   function startUpload(previousIsFinished) {
     if (uploading && !previousIsFinished) return;
@@ -1583,14 +1472,7 @@ ${body}
     if (tags) {
       form.set('tags', r.get('upload.tags'));
     }
-    return $.ajax({
-      url: 'upload.json',
-      data: form,
-      type: 'POST',
-      contentType: false,
-      processData: false,
-      xhr: makeXHR.bind(null, entry),
-    })
+    return RaidarAPI.upload(form, uploadProgressHandler.bind(null, entry))
     .done(uploadProgressDone.bind(null, entry))
     .fail(uploadProgressFail.bind(null, entry));
   }
@@ -1663,14 +1545,7 @@ ${body}
   const POLL_TIME = 30000;
   function pollNotifications() {
     if (r.get('username')) {
-      let options = {
-        url: 'poll.json',
-        type: 'POST',
-      }
-      if (lastNotificationId) {
-        options.data = { last_id: lastNotificationId };
-      }
-      $.ajax(options).done(data => {
+      RaidarAPI.poll(lastNotificationId).done(data => {
         if (data.last_id) {
           lastNotificationId = data.last_id;
         }
@@ -1696,7 +1571,6 @@ ${body}
     } else if(evt.type === 'change') {
       files = evt.originalEvent.target.files;
     }
-    let jQuery_xhr_factory = $.ajaxSettings.xhr;
     Array.from(files).forEach(file => {
       if (!file.name.endsWith('.evtc') && !file.name.endsWith('.evtc.zip') && !file.name.endsWith('.zevtc')) return;
       let entry = r.get('uploads').find(entry => entry.name === file.name);

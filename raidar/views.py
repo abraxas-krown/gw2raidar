@@ -14,18 +14,17 @@ from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from smtplib import SMTPException
 from django.db import transaction
 from django.db.utils import IntegrityError
 from django.http import JsonResponse, HttpResponse, Http404, UnreadablePostError
 from django.middleware.csrf import get_token
-from django.shortcuts import render
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters, sensitive_variables
 from django.views.decorators.http import require_GET, require_POST
 from gw2api.gw2api import GW2API, GW2APIException
-from json import dumps as json_dumps
 from os import makedirs
 from os.path import isfile, dirname
 from datetime import datetime, timezone
@@ -114,16 +113,15 @@ def _buff_data(buff):
 BOOTSTRAP_MAX_AGE = 60 * 60
 
 
-def _html_response(request, page):
-    """The page shell: the script loads its data from bootstrap.json, initial.json and the page's own JSON."""
-    boot = {
-        'page': page,
-        'debug': settings.DEBUG,
-        'version': settings.VERSION['id'],
+def _backend_urls():
+    """Backend (non-page) URLs the frontend links to, so it need not know Django's routes."""
+    return {
+        'admin': reverse('admin:index'),
+        'download': reverse('download'),
+        'report': reverse('report'),
+        'api_upload': reverse('api_upload'),
+        'api_categories': reverse('api_categories'),
     }
-    return render(request, template_name='raidar/index.html', context={
-            'boot': json_dumps(boot),
-        })
 
 
 @require_GET
@@ -145,6 +143,8 @@ def bootstrap(request):
         'buffs': {buff.code: _buff_data(buff) for buff in BUFF_TYPES},
         'buff_tabs': BUFF_TABS,
         'version': settings.VERSION,
+        'debug': settings.DEBUG,
+        'urls': _backend_urls(),
     })
     response['Cache-Control'] = 'public, max-age=%d' % BOOTSTRAP_MAX_AGE
     return response
@@ -185,11 +185,6 @@ def download(request, url_id=None):
 
 
 @require_GET
-def index(request, page=None):
-    return _html_response(request, page)
-
-
-@require_GET
 def profile(request, era_id=None):
     if not request.user.is_authenticated:
         return _error("Not authenticated")
@@ -224,16 +219,12 @@ def profile(request, era_id=None):
     return JsonResponse(result)
 
 @require_GET
-def global_stats(request, era_id=None, stats_page=None, json=None):
+def global_stats(request, era_id=None, stats_page=None):
     if stats_page is None:
         stats_page = 'All raid bosses'
 
-    if not json:
-        return _html_response(request, {
-            "name": "global_stats",
-            "era_id": era_id,
-            "stats_page": stats_page
-        })
+    if era_id is not None and not Era.objects.filter(id=era_id).exists():
+        return _error("Era does not exist", status=404)
 
     eras = {
         era.id: {
@@ -488,17 +479,11 @@ def replay(request, url_id=None):
 
 
 @require_GET
-def encounter(request, url_id=None, json=None):
-    if not json:
-        # the page shell only; the script loads the encounter from encounter/<url_id>.json
-        if not Encounter.objects.filter(url_id=url_id).exists():
-            raise Http404("Encounter does not exist")
-        return _html_response(request, {"name": "encounter", "no": url_id})
-
+def encounter(request, url_id=None):
     try:
         prv_encounter = Encounter.objects.select_related('area', 'uploaded_by').get(url_id=url_id)
     except Encounter.DoesNotExist:
-        return _error("Encounter does not exist")
+        return _error("Encounter does not exist", status=404)
 
     own_account_names = [
         account.name for account in Account.objects.filter(participations__encounter_id=prv_encounter.id,
@@ -554,6 +539,7 @@ def encounter(request, url_id=None, json=None):
 
 
 @require_GET
+@ensure_csrf_cookie
 def initial(request):
     """The signed-in user's state; also the Docker healthcheck, so it stays public."""
     return JsonResponse(_session_data(request))
@@ -583,9 +569,6 @@ def _perform_login(request):
 @require_POST
 @sensitive_post_parameters('password')
 def login(request):
-    if request.method == 'GET':
-        return index(request, page={ 'name': 'login' })
-
     user = _perform_login(request)
     if user is not None and user.is_active:
         return _login_successful(request, user)
@@ -607,12 +590,10 @@ def reset_pw(request):
         return JsonResponse({})
 
 
+@require_POST
 @sensitive_post_parameters('password')
 @sensitive_variables('password')
 def register(request):
-    if request.method == 'GET':
-        return index(request, page={ 'name': 'register' })
-
     username = request.POST.get('username').strip()
     password = request.POST.get('password').strip()
     invalid_invite = 'Invalid or expired invite code'
@@ -813,11 +794,6 @@ def profile_graph(request):
         'times': times,
     }
     return JsonResponse(result)
-
-
-@require_GET
-def named(request, name, no=None):
-    return index(request, { 'name': name, 'no': int(no) if type(no) == str else no })
 
 
 @login_required

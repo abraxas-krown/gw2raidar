@@ -6,6 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="A Guild Wars 2 log parsing site to upload ArcDPS combat logs from high end PvE content such as Raids and Challenge Mote Fractals">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="raidar-version" content="{{ version }}">
+    <meta name="raidar-base" content="{{ base_url }}">
     <script
       src="https://code.jquery.com/jquery-3.7.1.min.js"
       integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
@@ -26,8 +28,8 @@
     <script src="{% static 'raidar/vendor/tags-input/tags-input.js' %}" defer></script>
     <link href="{% static 'raidar/vendor/tags-input/tags-input.css' %}" rel="stylesheet">
     <script>
-      window.baseURL = "{% url 'index' %}";
-      window.raidar_boot = {{ boot|safe }};
+      {# built once for every page and user (raidar/frontend.py), and served by nginx: nothing here may depend on the request #}
+      window.baseURL = "{{ base_url }}";
     </script>
     <link rel="apple-touch-icon" sizes="57x57" href="{% static 'raidar/img/favicon/apple-icon-57x57.png' %}">
     <link rel="apple-touch-icon" sizes="60x60" href="{% static 'raidar/img/favicon/apple-icon-60x60.png' %}">
@@ -59,7 +61,7 @@
                               <ul class="uk-navbar-nav uk-visible@m">
                                 [[#if username]]
                                   [[#if is_staff]]
-                                    <li class="no-hover"><a href="{% url 'admin:index' %}[[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
+                                    <li class="no-hover"><a href="[[~/data.urls.admin]][[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
                                   [[/if]]
                                   <!-- Uncomment this to enable notifications.
                                   <li class="uk-inline">
@@ -114,7 +116,7 @@
                                     <li class="[[page.name=='profile' ? 'uk-active' : '']]"><a href="[[@this.getPageURL('profile')]]" on-click="@this.page('profile')">Personal Stats</a></li>
                                     <li class="[[page.name=='encounters' || page.name=='encounter' ? 'uk-active' : '']]"><a href="[[@this.getPageURL({name: 'encounters', no: 1})]]" on-click="@this.page({name: 'encounters', no: 1})">Encounters</a></li>
                                   [[#if is_staff]]
-                                    <li class="uk-hidden@m "><a href="{% url 'admin:index' %}[[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
+                                    <li class="uk-hidden@m "><a href="[[~/data.urls.admin]][[#if page.name=='encounter']]raidar/encounter/[[encounter.id]]/change/[[/if]]">Admin</a>
                                   [[/if]]
                                     <li class="uk-hidden@m [[page.name=='account' ? 'uk-active' : '']]"><a class=" uk-text-small uk-text-white" href="[[@this.getPageURL('account')]]" on-click="@this.page('account')" title="Account: [[username]]" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">perm_identity</i></a></li>
                                     <li class="uk-hidden@m"><a class=" uk-text-small uk-text-white" href="#" on-click="auth_logout" title="Logout" uk-tooltip="offset: -15"><i class="material-icons uk-margin-small-right">exit_to_app</i> </a></li>
@@ -203,6 +205,17 @@
                     </svg>
                     <p class="uk-text-center uk-width-1-1">Want to help improve GW2 Raidar? Contribute to the <a target="_blank" href="https://github.com/GW2Raidar/gw2raidar">project on Github</a>.</p>
                 </div>
+
+                [[elseif page.name == "encounter" && encounter_missing]]
+
+                  {# encounter/<id>.json answered 404 #}
+                  <div class="uk-text-center uk-margin-large-top">
+                    <h2>Encounter not found</h2>
+                    <p>There is no encounter <code>[[page.no]]</code>. It may have been removed, or the link may be wrong.</p>
+                    [[#if username]]
+                    <p><a href="[[@this.getPageURL({name: 'encounters', no: 1})]]" on-click="@this.page({name: 'encounters', no: 1})">Back to your encounters</a></p>
+                    [[/if]]
+                  </div>
 
                 [[elseif page.name == "encounter"]]
 
@@ -411,10 +424,10 @@
     </script>
   </head>
   <body class="uk-height-viewport">
-    {% csrf_token %}
-
     <div id="container" class="uk-height-viewport">
     </div>
+    <script src="{% static 'raidar/api.js' %}"></script>
+    <script src="{% static 'raidar/router.js' %}"></script>
     <script src="{% static 'raidar/replay.js' %}"></script>
     <script src="{% static 'raidar/script.js' %}"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js"></script>

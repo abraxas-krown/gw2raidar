@@ -30,8 +30,14 @@ one before changing the pin:
 
 # Docker Compose deploy
 
-`docker-compose.yml` runs the database, the site (`web`) and the upload processor (`worker`).
-It needs `SECRET_KEY`, `ALLOWED_HOSTS` and `POSTGRES_PASSWORD` in the environment.
+`docker-compose.yml` runs the database, the site's front (`frontend`, nginx), Django (`web`) and the upload
+processor (`worker`). It needs `SECRET_KEY`, `ALLOWED_HOSTS` and `POSTGRES_PASSWORD` in the environment.
+
+**Point the domain (Traefik/Dokploy) at `frontend`, port 80.** It serves the page shell and the static files,
+and passes everything else to `web` (`docker/nginx.conf`). `web` (gunicorn, port 8000) answers only the JSON
+API, downloads, the admin and Django's own pages, and is not meant to be reached directly: it has no page
+URLs and doesn't serve `/static/`. `frontend` and `web`/`worker` are two targets of the same Dockerfile, so one
+`docker compose build` makes a shell and static files that match.
 
 Files are kept on two volumes:
 
@@ -189,6 +195,10 @@ STATIC_URL = '/gw2r-test/static/'
 STATIC_ROOT = '/var/www/apps/gw2r-test/static/'
 ```
 
+This setup predates the separate frontend and is no longer complete: Django no longer serves the pages.
+Apache would also have to serve the page shell for the page URLs (see "The frontend" below and
+`docker/nginx.conf`), built with `FORCE_SCRIPT_NAME = '/gw2r-test/'` so it uses the site's prefix.
+
 
 # Adding a user
 
@@ -202,3 +212,18 @@ chown amadan:amadan . authorized_hosts
 chmod og-rwx . authorized_hosts
 usermod -aG sudo amadan
 
+
+# The frontend
+
+The frontend (Ractive, `raidar/templates/raidar/` and `raidar/static/raidar/`) is a static page shell plus
+the JSON API in `raidar/urls_api.py`, described in `docs/frontend-api.md`. `manage.py build_frontend` renders
+the shell once to `frontend_dist/index.html` (`FRONTEND_INDEX`). Run it after `collectstatic`, with
+`DJANGO_DEBUG=false`, since the shell names the hashed static files; the Docker image does this.
+`build_frontend --check` exits 1 if the built shell is out of date.
+
+Django doesn't serve the shell or the static files. A web server does, which in Compose is the `frontend`
+service (`docker/nginx.conf`):
+- for each page URL, `frontend_dist/index.html` with `Cache-Control: no-cache`;
+- `STATIC_ROOT` under `STATIC_URL` (hashed names can be cached forever);
+- everything else (the `*.json` endpoints, `api/`, `download/`, `report/`, `reset/`, `admin/`, `robots.txt`)
+  passed to Django.
