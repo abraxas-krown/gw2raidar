@@ -27,7 +27,7 @@
     <link href="{% static 'raidar/vendor/tags-input/tags-input.css' %}" rel="stylesheet">
     <script>
       window.baseURL = "{% url 'index' %}";
-      window.raidar_data = {{ userprops|safe }};
+      window.raidar_boot = {{ boot|safe }};
     </script>
     <link rel="apple-touch-icon" sizes="57x57" href="{% static 'raidar/img/favicon/apple-icon-57x57.png' %}">
     <link rel="apple-touch-icon" sizes="60x60" href="{% static 'raidar/img/favicon/apple-icon-60x60.png' %}">

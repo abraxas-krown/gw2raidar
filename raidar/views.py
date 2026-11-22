@@ -74,8 +74,20 @@ def _userprops(request):
                                    if account.api_key != "" else "",
                     }
                     for account in accounts],
-                'encounter_count': Encounter.objects.count(),
             }
+
+
+def _session_data(request):
+    """The signed-in user's state, as initial.json and the login response return it."""
+    data = _userprops(request)
+    if request.user.is_authenticated:
+        data['privacy'] = request.user.user_profile.privacy
+        try:
+            data['last_notification_id'] = request.user.notifications.latest('id').id
+        except Notification.DoesNotExist:
+            # it's okay
+            pass
+    return data
 
 
 def _encounter_data(request):
@@ -84,12 +96,9 @@ def _encounter_data(request):
 
 def _login_successful(request, user):
     auth_login(request, user)
-    csrftoken = get_token(request)
-    userprops = _userprops(request)
-    userprops['csrftoken'] = csrftoken
-    userprops['encounters'] = _encounter_data(request)
-    userprops['privacy'] = request.user.user_profile.privacy
-    return JsonResponse(userprops)
+    response = _session_data(request)
+    response['csrftoken'] = get_token(request)
+    return JsonResponse(response)
 
 
 def _buff_data(buff):
@@ -100,39 +109,78 @@ def _buff_data(buff):
     return data
 
 
-def _html_response(request, page, data=None):
-    if data is None:
-        data = {}
-    response = _userprops(request)
-    response.update(data)
-    response['archetypes'] = {k: v for k, v in ARCHETYPE_CHOICES}
-    response['areas'] = {id: {
-            "name": boss.base_name,
-            "mode": int(boss.mode),
-            "tag": boss.tag,
-            "icon": boss.base_area_id,
-            "kind": boss.kind,
-            "enrage": boss.enrage,
-        } for id, boss in BOSSES.items()}
-    response['boss_locations'] = BOSS_LOCATIONS
-    response['specialisations'] = {p: {e: n for (pp, e), n in SPECIALISATIONS.items() if pp == p} for p in Profession}
-    response['categories'] = {category.id: category.name for category in Category.objects.all()}
-    response['buffs'] = { buff.code: _buff_data(buff) for buff in BUFF_TYPES }
-    response['buff_tabs'] = BUFF_TABS
-    response['page'] = page
-    response['debug'] = settings.DEBUG
-    response['version'] = settings.VERSION
-    if request.user.is_authenticated:
-        response['privacy'] = request.user.user_profile.privacy
-        try:
-            last_notification = request.user.notifications.latest('id')
-            response['last_notification_id'] = last_notification.id
-        except Notification.DoesNotExist:
-            # it's okay
-            pass
+# the boons the encounter pages list, in the order they show
+BOONS = [
+    {'boon': 'might', 'stacks': 25},
+    {'boon': 'fury'},
+    {'boon': 'quickness'},
+    {'boon': 'alacrity'},
+    {'boon': 'protection'},
+    {'boon': 'retaliation'},
+    {'boon': 'regen'},
+    {'boon': 'aegis'},
+    {'boon': 'resist'},
+    {'boon': 'stab', 'stacks': 25},
+    {'boon': 'swift'},
+    {'boon': 'vigor'},
+    {'boon': 'spotter'},
+    {'boon': 'glyph_of_empowerment'},
+    {'boon': 'spirit_of_frost'},
+    {'boon': 'sun_spirit'},
+    {'boon': 'stone_spirit'},
+    {'boon': 'storm_spirit'},
+    {'boon': 'empower_allies'},
+    {'boon': 'banner_strength'},
+    {'boon': 'banner_discipline'},
+    {'boon': 'banner_tactics'},
+    {'boon': 'banner_defence'},
+    {'boon': 'assassins_presence'},
+    {'boon': 'naturalistic_resonance'},
+    {'boon': 'pinpoint_distribution'},
+    {'boon': 'soothing_mist'},
+    {'boon': 'vampiric_presence'},
+]
+
+# bootstrap.json is requested with the version in its query string, so a deploy gets a fresh copy;
+# categories can change without a deploy, which this bounds
+BOOTSTRAP_MAX_AGE = 60 * 60
+
+
+def _html_response(request, page):
+    """The page shell: the script loads its data from bootstrap.json, initial.json and the page's own JSON."""
+    boot = {
+        'page': page,
+        'debug': settings.DEBUG,
+        'version': settings.VERSION['id'],
+    }
     return render(request, template_name='raidar/index.html', context={
-            'userprops': json_dumps(response),
+            'boot': json_dumps(boot),
         })
+
+
+@require_GET
+def bootstrap(request):
+    """Reference data that is the same for every user."""
+    response = JsonResponse({
+        'archetypes': {k: v for k, v in ARCHETYPE_CHOICES},
+        'areas': {id: {
+                "name": boss.base_name,
+                "mode": int(boss.mode),
+                "tag": boss.tag,
+                "icon": boss.base_area_id,
+                "kind": boss.kind,
+                "enrage": boss.enrage,
+            } for id, boss in BOSSES.items()},
+        'boss_locations': BOSS_LOCATIONS,
+        'specialisations': {p: {e: n for (pp, e), n in SPECIALISATIONS.items() if pp == p} for p in Profession},
+        'categories': {category.id: category.name for category in Category.objects.all()},
+        'buffs': {buff.code: _buff_data(buff) for buff in BUFF_TYPES},
+        'buff_tabs': BUFF_TABS,
+        'boons': BOONS,
+        'version': settings.VERSION,
+    })
+    response['Cache-Control'] = 'public, max-age=%d' % BOOTSTRAP_MAX_AGE
+    return response
 
 @require_GET
 def download(request, url_id=None):
@@ -474,13 +522,16 @@ def replay(request, url_id=None):
 
 @require_GET
 def encounter(request, url_id=None, json=None):
+    if not json:
+        # the page shell only; the script loads the encounter from encounter/<url_id>.json
+        if not Encounter.objects.filter(url_id=url_id).exists():
+            raise Http404("Encounter does not exist")
+        return _html_response(request, {"name": "encounter", "no": url_id})
+
     try:
         prv_encounter = Encounter.objects.select_related('area', 'uploaded_by').get(url_id=url_id)
     except Encounter.DoesNotExist:
-        if json:
-            return _error("Encounter does not exist")
-        else:
-            raise Http404("Encounter does not exist")
+        return _error("Encounter does not exist")
 
     own_account_names = [
         account.name for account in Account.objects.filter(participations__encounter_id=prv_encounter.id,
@@ -532,18 +583,21 @@ def encounter(request, url_id=None, json=None):
             if isfile(path):
                 data["encounter"]["downloadable"] = True
 
-    if json:
-        return JsonResponse(data)
-    else:
-        return _html_response(request, {"name": "encounter", "no": prv_encounter.url_id}, data)
+    return JsonResponse(data)
 
 
 @require_GET
 def initial(request):
-    response = _userprops(request)
-    if request.user.is_authenticated:
-        response['encounters'] = _encounter_data(request)
-    return JsonResponse(response)
+    """The signed-in user's state; also the Docker healthcheck, so it stays public."""
+    return JsonResponse(_session_data(request))
+
+
+@require_GET
+def encounters(request):
+    """The signed-in user's encounter list, for the Encounters page."""
+    if not request.user.is_authenticated:
+        return _error("Not authenticated", status=401)
+    return JsonResponse({'encounters': _encounter_data(request)})
 
 
 @sensitive_variables('password')
