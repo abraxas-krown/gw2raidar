@@ -109,38 +109,6 @@ def _buff_data(buff):
     return data
 
 
-# the boons the encounter pages list, in the order they show
-BOONS = [
-    {'boon': 'might', 'stacks': 25},
-    {'boon': 'fury'},
-    {'boon': 'quickness'},
-    {'boon': 'alacrity'},
-    {'boon': 'protection'},
-    {'boon': 'retaliation'},
-    {'boon': 'regen'},
-    {'boon': 'aegis'},
-    {'boon': 'resist'},
-    {'boon': 'stab', 'stacks': 25},
-    {'boon': 'swift'},
-    {'boon': 'vigor'},
-    {'boon': 'spotter'},
-    {'boon': 'glyph_of_empowerment'},
-    {'boon': 'spirit_of_frost'},
-    {'boon': 'sun_spirit'},
-    {'boon': 'stone_spirit'},
-    {'boon': 'storm_spirit'},
-    {'boon': 'empower_allies'},
-    {'boon': 'banner_strength'},
-    {'boon': 'banner_discipline'},
-    {'boon': 'banner_tactics'},
-    {'boon': 'banner_defence'},
-    {'boon': 'assassins_presence'},
-    {'boon': 'naturalistic_resonance'},
-    {'boon': 'pinpoint_distribution'},
-    {'boon': 'soothing_mist'},
-    {'boon': 'vampiric_presence'},
-]
-
 # bootstrap.json is requested with the version in its query string, so a deploy gets a fresh copy;
 # categories can change without a deploy, which this bounds
 BOOTSTRAP_MAX_AGE = 60 * 60
@@ -176,7 +144,6 @@ def bootstrap(request):
         'categories': {category.id: category.name for category in Category.objects.all()},
         'buffs': {buff.code: _buff_data(buff) for buff in BUFF_TYPES},
         'buff_tabs': BUFF_TABS,
-        'boons': BOONS,
         'version': settings.VERSION,
     })
     response['Cache-Control'] = 'public, max-age=%d' % BOOTSTRAP_MAX_AGE
