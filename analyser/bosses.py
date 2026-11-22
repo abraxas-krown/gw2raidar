@@ -79,7 +79,7 @@ class Boss:
     ("Cairn"), which is what the site shows next to a tag for the mode.
 
     ``base_area_id`` is the area ID of the normal mode encounter, shared by all its modes; the boss image
-    is ``raidar/static/raidar/img/icon/<base_area_id>.png``.
+    is ``frontend/assets/img/icon/<base_area_id>.png``.
 
     ``metrics`` are the mechanics the pre-EI analyser recorded; they are only
     used to label mechanics of encounters parsed before the EI switch.

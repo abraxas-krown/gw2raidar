@@ -1,18 +1,12 @@
 """The contract between the backend and the frontend (docs/frontend-api.md).
 
-The frontend is a static shell (served by nginx) plus the JSON API; these check the parts of that contract the frontend
-depends on, so either side can change without breaking the other.
+The frontend (frontend/, served by nginx) is a static shell plus the JSON API; these check the parts of that
+contract the frontend depends on, so either side can change without breaking the other. The frontend's own
+build has its tests in frontend/test_build.py.
 """
-import os
-import tempfile
-from io import StringIO
-
-from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.management import CommandError, call_command
 from django.test import Client, TestCase, override_settings
 
-from raidar import frontend
 from raidar.models import Era
 
 # the tests run without collectstatic, so static URLs are not looked up in the hashed-files manifest
@@ -25,29 +19,7 @@ PAGE_URLS = ['/', '/info-help', '/encounters/2', '/encounter/doesnotexist', '/gl
              '/global_stats/1/area-17', '/global_stats/All%20raid%20bosses', '/login', '/account']
 
 
-@override_settings(STORAGES=PLAIN_STATIC)
-class ShellTests(TestCase):
-    def test_render_is_static(self):
-        html = frontend.render_shell()
-        for marker in frontend.FORBIDDEN:
-            self.assertNotIn(marker, html)
-        self.assertIn('<meta name="raidar-version" content="%s">' % settings.VERSION['id'], html)
-        self.assertIn('<meta name="raidar-base" content="/">', html)
-        self.assertIn('raidar/api.js', html)
-
-    def test_build_and_check(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = os.path.join(tmp, 'dist', 'index.html')
-            with override_settings(FRONTEND_INDEX=path):
-                call_command('build_frontend', stdout=StringIO(), stderr=StringIO())
-                with open(path, encoding='utf-8') as f:
-                    self.assertEqual(f.read(), frontend.render_shell())
-                call_command('build_frontend', '--check', stdout=StringIO(), stderr=StringIO())
-                with open(path, 'a', encoding='utf-8') as f:
-                    f.write('changed')
-                with self.assertRaises(CommandError):
-                    call_command('build_frontend', '--check', stdout=StringIO(), stderr=StringIO())
-
+class PageTests(TestCase):
     def test_page_urls_are_not_served_by_django(self):
         # nginx serves them (docker/nginx.conf); Django only answers the API
         for url in PAGE_URLS:
@@ -57,11 +29,24 @@ class ShellTests(TestCase):
 @override_settings(STORAGES=PLAIN_STATIC)
 class APITests(TestCase):
     def test_bootstrap(self):
-        data = Client().get('/bootstrap.json?v=1').json()
+        data = Client().get('/bootstrap.json').json()
         for key in ('areas', 'boss_locations', 'specialisations', 'categories', 'buffs', 'buff_tabs',
                     'archetypes', 'version', 'debug', 'urls'):
             self.assertIn(key, data)
         self.assertEqual(set(data['urls']), {'admin', 'download', 'report', 'api_upload', 'api_categories'})
+
+    def test_bootstrap_revalidates(self):
+        # no-cache with an ETag: a deploy of either side never leaves a stale copy, and an unchanged one is a 304
+        response = Client().get('/bootstrap.json')
+        self.assertEqual(response['Cache-Control'], 'no-cache')
+        etag = response['ETag']
+        self.assertEqual(Client().get('/bootstrap.json', HTTP_IF_NONE_MATCH=etag).status_code, 304)
+
+    @override_settings(ASSETS_URL='https://cdn.example/assets/')
+    def test_site_images_are_frontend_assets(self):
+        # the API names the frontend's images by their path in frontend/assets/, under ASSETS_URL
+        buffs = Client().get('/bootstrap.json').json()['buffs']
+        self.assertEqual(buffs['might']['icon'], 'https://cdn.example/assets/img/buff/might.png')
 
     def test_initial_anonymous_sets_csrf_cookie(self):
         response = Client().get('/initial.json')

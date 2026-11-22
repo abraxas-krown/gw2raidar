@@ -1,6 +1,7 @@
 # Two images from one build (docker-compose.yml picks them with `target`):
 #   app       Django/gunicorn (the `web` and `worker` services): the JSON API and upload processing
-#   frontend  nginx (the `frontend` service): the page shell and the static files, proxying the rest to `web`
+#   frontend  nginx (the `frontend` service): the frontend built from frontend/, proxying the rest to `web`
+# The two share nothing: the frontend stages use only frontend/ and docker/nginx.conf.
 # `frontend` is the last stage, so a plain `docker build .` makes the nginx image; use `--target app` for Django.
 
 # ---- .NET runtime, needed to run the Elite Insights CLI (the log parser); only its files are copied ----
@@ -42,11 +43,9 @@ COPY --from=dotnet /usr/share/dotnet /usr/share/dotnet
 COPY --from=builder /opt/gw2ei /opt/gw2ei
 WORKDIR /app
 COPY . /app
-# Collect the static files, then build the page shell, which names their hashed copies (raidar/frontend.py);
-# the frontend stage below serves both. No database is needed for these steps.
+# Collect Django's own static files (the admin's), which WhiteNoise serves; no database is needed for this.
 # /app/log, /data/uploads and /data/reports are the only places the app writes to.
 RUN python manage.py collectstatic --noinput \
-    && DJANGO_DEBUG=false python manage.py build_frontend \
     && (python -m compileall -q raidar analyser eiparser gw2api gw2raidar || true) \
     && mkdir -p /app/log /data/uploads /data/reports \
     && chown app:app /app/log /data/uploads /data/reports
@@ -57,9 +56,12 @@ EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["web"]
 
-# ---- frontend: nginx with the page shell and the static files from the app stage (docker/nginx.conf) ----
+# ---- frontend: build frontend/ (frontend/build.py, standard library only) and serve it with nginx ----
+FROM python:3.13-alpine AS frontend-build
+COPY frontend/ /src/
+RUN python /src/build.py --out /dist
+
 FROM nginx:1.27-alpine AS frontend
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=app /app/frontend_dist/index.html /usr/share/nginx/html/index.html
-COPY --from=app /app/staticfiles /usr/share/nginx/static
+COPY --from=frontend-build /dist /usr/share/nginx/html
 EXPOSE 80

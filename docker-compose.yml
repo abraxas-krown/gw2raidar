@@ -19,7 +19,7 @@ services:
       start_interval: 2s
 
   # The site's entry point: Traefik (Dokploy) sends the domain's traffic to this service, port 80. It serves
-  # the page shell and the static files, and passes the API and the rest to `web` (docker/nginx.conf).
+  # the frontend (frontend/: the page shell and /assets/), and passes the API and the rest to `web` (docker/nginx.conf).
   frontend:
     build:
       context: .

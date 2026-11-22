@@ -21,7 +21,7 @@ one before changing the pin:
 1. **New bosses.** Encounters EI added or renumbered (their `LogID`s, under `LogLogic/`) need an entry in
    `analyser/bosses.py`, or their logs are rejected as unsupported.
 2. **New or changed maps.** Replays use the site's own map of each boss: the images in
-   `raidar/static/raidar/img/replay/`, listed in `eiparser/replay_maps.json`. Both are taken from EI: the image
+   `frontend/assets/img/replay/`, listed in `eiparser/replay_maps.json`. Both are taken from EI: the image
    (`ParserHelpers/Images/LogImages.cs`, the `CombatReplay...` constants) and the world rectangle and size of
    the boss's `CombatReplayMap` (in its `GetCombatMapInternal`).
    Add maps for new bosses, and update the image, `world` and `size` of any boss whose map changed. While a
@@ -33,11 +33,11 @@ one before changing the pin:
 `docker-compose.yml` runs the database, the site's front (`frontend`, nginx), Django (`web`) and the upload
 processor (`worker`). It needs `SECRET_KEY`, `ALLOWED_HOSTS` and `POSTGRES_PASSWORD` in the environment.
 
-**Point the domain (Traefik/Dokploy) at `frontend`, port 80.** It serves the page shell and the static files,
-and passes everything else to `web` (`docker/nginx.conf`). `web` (gunicorn, port 8000) answers only the JSON
-API, downloads, the admin and Django's own pages, and is not meant to be reached directly: it has no page
-URLs and doesn't serve `/static/`. `frontend` and `web`/`worker` are two targets of the same Dockerfile, so one
-`docker compose build` makes a shell and static files that match.
+**Point the domain (Traefik/Dokploy) at `frontend`, port 80.** It serves the frontend (the page shell and
+`/assets/`) and passes everything else to `web` (`docker/nginx.conf`). `web` (gunicorn, port 8000) answers only
+the JSON API, downloads, the admin (with its `/static/` files) and Django's own pages, and is not meant to be
+reached directly: it has no page URLs. `frontend` and `web`/`worker` are two targets of the same Dockerfile but
+share nothing: the `frontend` image is built from `frontend/` alone, so either side can be deployed on its own.
 
 Files are kept on two volumes:
 
@@ -50,6 +50,20 @@ Files are kept on two volumes:
 `MIN_FREE_DISK_GB` (default 10) controls log pruning: `restat` deletes the oldest uploaded `.evtc` files
 while the upload volume has less than that many GB free. The parsed encounters and their Elite Insights
 reports stay, as they are on their own volume; only the encounter's download goes. `0` keeps every log.
+
+## Resetting the database
+
+To start over with an empty database (for example on a test deployment), remove its volume. This deletes
+every account and encounter, and cannot be undone:
+
+```
+docker compose down
+docker volume rm <project>_pgdata17     # only the database; the uploads and reports volumes stay
+docker compose up -d                    # web applies the migrations to the new, empty database
+docker compose exec web python manage.py createsuperuser
+```
+
+`docker compose down -v` instead removes every volume, the stored logs and reports included.
 
 ## Upgrading PostgreSQL
 
@@ -196,8 +210,8 @@ STATIC_ROOT = '/var/www/apps/gw2r-test/static/'
 ```
 
 This setup predates the separate frontend and is no longer complete: Django no longer serves the pages.
-Apache would also have to serve the page shell for the page URLs (see "The frontend" below and
-`docker/nginx.conf`), built with `FORCE_SCRIPT_NAME = '/gw2r-test/'` so it uses the site's prefix.
+Apache would also have to serve the built frontend (see "The frontend" below and `docker/nginx.conf`), and
+the frontend is built for the site root, not a prefix like `/gw2r-test/`.
 
 
 # Adding a user
@@ -215,15 +229,13 @@ usermod -aG sudo amadan
 
 # The frontend
 
-The frontend (Ractive, `raidar/templates/raidar/` and `raidar/static/raidar/`) is a static page shell plus
-the JSON API in `raidar/urls_api.py`, described in `docs/frontend-api.md`. `manage.py build_frontend` renders
-the shell once to `frontend_dist/index.html` (`FRONTEND_INDEX`). Run it after `collectstatic`, with
-`DJANGO_DEBUG=false`, since the shell names the hashed static files; the Docker image does this.
-`build_frontend --check` exits 1 if the built shell is out of date.
+The frontend (Ractive) is [`frontend/`](frontend/README.md): a static page shell and its assets, talking to
+the JSON API in `raidar/urls_api.py`, described in `docs/frontend-api.md`. Django has no part in building or
+serving it. `python frontend/build.py` (standard library only) writes it to `frontend/dist/`; the Docker
+image's `frontend` stage does this.
 
-Django doesn't serve the shell or the static files. A web server does, which in Compose is the `frontend`
-service (`docker/nginx.conf`):
-- for each page URL, `frontend_dist/index.html` with `Cache-Control: no-cache`;
-- `STATIC_ROOT` under `STATIC_URL` (hashed names can be cached forever);
-- everything else (the `*.json` endpoints, `api/`, `download/`, `report/`, `reset/`, `admin/`, `robots.txt`)
-  passed to Django.
+A web server serves it, which in Compose is the `frontend` service (`docker/nginx.conf`):
+- for each page URL, `dist/index.html` with `Cache-Control: no-cache`;
+- `dist/assets/` under `/assets/` (the hashed copies can be cached forever);
+- everything else (the `*.json` endpoints, `api/`, `download/`, `report/`, `reset/`, `admin/`, `static/`,
+  `robots.txt`) passed to Django, which serves the admin's static files itself (WhiteNoise).

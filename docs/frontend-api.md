@@ -4,17 +4,18 @@ The frontend is a **static page shell** plus the **JSON API** below. They share 
 server-rendered data in the HTML, no Django template logic at runtime. Any frontend (the current Ractive
 one, or a replacement) only needs what is on this page.
 
-- Backend routes (Django): [`raidar/urls_api.py`](../raidar/urls_api.py). Page URLs and static files (nginx): [`docker/nginx.conf`](../docker/nginx.conf).
-- The Ractive frontend calls the API only through [`raidar/static/raidar/api.js`](../raidar/static/raidar/api.js)
-  (`window.RaidarAPI`). It maps URLs to pages only through [`router.js`](../raidar/static/raidar/router.js) (`window.RaidarRouter`).
+- Backend routes (Django): [`raidar/urls_api.py`](../raidar/urls_api.py). Page URLs and assets (nginx): [`docker/nginx.conf`](../docker/nginx.conf).
+- The frontend is [`frontend/`](../frontend/README.md); Django has no part in building or serving it.
+- The Ractive frontend calls the API only through [`frontend/assets/api.js`](../frontend/assets/api.js)
+  (`window.RaidarAPI`). It maps URLs to pages only through [`router.js`](../frontend/assets/router.js) (`window.RaidarRouter`).
 - [`raidar/tests.py`](../raidar/tests.py) checks the parts of this contract that the frontend depends on.
 
 ## The page shell
 
 Every page URL returns the same HTML, byte for byte, for every user. The response sends `Cache-Control: no-cache`.
-[`raidar/frontend.py`](../raidar/frontend.py) builds it once with `python manage.py build_frontend` (after
-`collectstatic`). The web server serves it, not Django: in Compose, that's the `frontend` nginx, which also
-serves `/static/` and passes everything else to Django.
+`python frontend/build.py` builds it, with the frontend's assets, into `frontend/dist/`. The web server serves
+it, not Django: in Compose, that's the `frontend` nginx, which also serves `/assets/` and passes everything else
+(`/static/`, the admin's files, included) to Django.
 
 | Page URL | Page |
 | --- | --- |
@@ -26,12 +27,19 @@ serves `/static/` and passes everything else to Django.
 Page URLs never touch the database. If the thing a page shows doesn't exist, its JSON says so: for example,
 `encounter/<url_id>.json` answers 404, and the frontend shows "Encounter not found".
 
-The shell gives the frontend two values in `<head>`:
+`<meta name="raidar-base" content="/">` in the shell's `<head>` is the site root that every URL below is
+relative to. The site is served at the root; a prefix would need a different build.
 
-- `<meta name="raidar-base" content="/">` is the site root that every URL below is relative to. A site served
-  under a prefix builds with `FORCE_SCRIPT_NAME`.
-- `<meta name="raidar-version" content="3.1.0">` is the build. Send it as `bootstrap.json?v=` so a deploy gets a
-  fresh copy, and compare it with `poll.json`'s `version` to notice an upgrade.
+The frontend and the backend deploy separately. `bootstrap.json` is revalidated on every load (an ETag), so a
+backend deploy is never hidden behind a cached copy; the frontend compares its `version` with `poll.json`'s to
+notice an upgrade and reload.
+
+## Assets
+
+The frontend's assets (scripts, stylesheets, images) are served under `/assets/`, from `frontend/assets/`. The
+API names a few of the frontend's images by URL: boon icons (`img/buff/<code>.png`) and replay maps
+(`img/replay/<file>`), under the backend's `ASSETS_URL` setting (default `/assets/`). A frontend must keep those
+two folders; other buff icons are absolute URLs from Elite Insights.
 
 ## Conventions
 
@@ -53,7 +61,7 @@ The shell gives the frontend two values in `<head>`:
 
 | Endpoint | Method | Auth | Request | Response |
 | --- | --- | --- | --- | --- |
-| `bootstrap.json?v=<version>` | GET | – | | Reference data, the same for everyone; cached for 1 hour. Keys: `archetypes`, `areas` (`{id: {name, mode, tag, icon, kind, enrage}}`), `boss_locations`, `specialisations`, `categories`, `buffs` (`{code: {name, icon, stacks?}}`), `buff_tabs`, `version` (`{id, timestamp}`), `debug`, `urls` (`{admin, download, report, api_upload, api_categories}`: backend URLs the frontend links to) |
+| `bootstrap.json` | GET | – | | Reference data, the same for everyone; `no-cache` with an ETag. Keys: `archetypes`, `areas` (`{id: {name, mode, tag, icon, kind, enrage}}`), `boss_locations`, `specialisations`, `categories`, `buffs` (`{code: {name, icon, stacks?}}`), `buff_tabs`, `version` (`{id, timestamp}`), `debug`, `urls` (`{admin, download, report, api_upload, api_categories}`: backend URLs the frontend links to) |
 | `initial.json` | GET | – | | The current user: `{username, email, is_staff, accounts: [{name, api_key (masked)}]}`, plus `privacy` and `last_notification_id` when signed in (`username` is `""` for guests). Sets the CSRF cookie. Also the Docker healthcheck. |
 | `login.json` | POST | – | `username`, `password` | As `initial.json`, plus `csrftoken`, or `{error}` |
 | `register.json` | POST | – | `username`, `password`, `api_key`, `invite_code` | As `login.json`, or `{error}` |
@@ -66,7 +74,7 @@ The shell gives the frontend two values in `<head>`:
 | --- | --- | --- | --- | --- |
 | `encounters.json` | GET | 401 if not | | `{encounters: [...]}`: the user's encounter list |
 | `encounter/<url_id>.json` | GET | – | | `{encounter: {..., has_report, has_replay, evtc_url?, downloadable?}}`, with names hidden according to the players' privacy settings; **404** `{error}` if there is no such encounter |
-| `replay/<url_id>.json` | GET | – | | The combat replay (see `raidar/static/raidar/replay.js`); 404 if there is none |
+| `replay/<url_id>.json` | GET | – | | The combat replay (see `frontend/assets/replay.js`); 404 if there is none |
 | `leaderboards.json?kind=&era=` | GET | – | `kind` (boss location index), `era` (id; empty for the latest) | `{leaderboards: {...}}` |
 | `profile[/<era_id>].json` | GET | `{error}` if not | | `{profile: {...}}`: personal stats for an era (the latest by default) |
 | `profile_graph.json` | POST | login | `era`, `area`, `archetype`, `profession`, `elite`, `stat` | `{globals, data, times}` |
