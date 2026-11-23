@@ -1,0 +1,20 @@
+# Local use only: `docker compose` reads this file automatically next to docker-compose.yml, and it builds
+# the images from this checkout instead of pulling them from GHCR. Dokploy reads only docker-compose.yml.
+services:
+  frontend:
+    build:
+      context: .
+      target: frontend
+    pull_policy: build
+
+  web:
+    build:
+      context: .
+      target: app
+    pull_policy: build
+
+  worker:
+    build:
+      context: .
+      target: app
+    pull_policy: build

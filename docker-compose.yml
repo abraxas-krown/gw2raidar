@@ -1,3 +1,5 @@
+# The images are built by GitHub Actions (.github/workflows/docker.yml) and pulled from GHCR; IMAGE_TAG
+# picks which build runs (see "Images" in DEPLOY.md). docker-compose.override.yml builds them locally instead.
 services:
   db:
     # A new major version cannot read the data directory of an older one, so each gets its own
@@ -21,9 +23,8 @@ services:
   # The site's entry point: Traefik (Dokploy) sends the domain's traffic to this service, port 80. It serves
   # the frontend (frontend/: the page shell and /assets/), and passes the API and the rest to `web` (docker/nginx.conf).
   frontend:
-    build:
-      context: .
-      target: frontend
+    image: ghcr.io/abraxas-krown/gw2raidar-frontend:${IMAGE_TAG:-latest}
+    pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy
     restart: unless-stopped
     expose:
       - "80"
@@ -40,9 +41,8 @@ services:
 
   # Django: the JSON API, downloads and the admin; only reachable through `frontend`
   web:
-    build:
-      context: .
-      target: app
+    image: ghcr.io/abraxas-krown/gw2raidar-app:${IMAGE_TAG:-latest}
+    pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy
     restart: unless-stopped
     command: ["web"]
     depends_on:
@@ -78,9 +78,8 @@ services:
       start_interval: 5s
 
   worker:
-    build:
-      context: .
-      target: app
+    image: ghcr.io/abraxas-krown/gw2raidar-app:${IMAGE_TAG:-latest}
+    pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy
     restart: unless-stopped
     command: ["worker"]
     depends_on:
