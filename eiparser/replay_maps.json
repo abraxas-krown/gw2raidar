@@ -1,6 +1,6 @@
 {
   "Aetherblade Hideout": {
-    "image": "aetherblade-hideout.png",
+    "image": "aetherblade-hideout.svg",
     "size": [
       838,
       639
@@ -13,7 +13,7 @@
     ]
   },
   "Ai, Keeper of the Peak": {
-    "image": "ai-keeper-of-the-peak.png",
+    "image": "ai-keeper-of-the-peak.svg",
     "size": [
       823,
       1000
@@ -26,7 +26,7 @@
     ]
   },
   "Arkk": {
-    "image": "arkk.png",
+    "image": "arkk.svg",
     "size": [
       914,
       914
@@ -39,7 +39,7 @@
     ]
   },
   "Artsariiv": {
-    "image": "artsariiv.png",
+    "image": "artsariiv.svg",
     "size": [
       914,
       914
@@ -65,7 +65,7 @@
     ]
   },
   "Bandit Trio": {
-    "image": "bandit-trio.png",
+    "image": "bandit-trio.svg",
     "size": [
       1000,
       913
@@ -91,7 +91,7 @@
     ]
   },
   "Broken King": {
-    "image": "broken-king.png",
+    "image": "broken-king.svg",
     "size": [
       999,
       890
@@ -104,7 +104,7 @@
     ]
   },
   "Cairn": {
-    "image": "cairn.png",
+    "image": "cairn.svg",
     "size": [
       607,
       607
@@ -117,7 +117,7 @@
     ]
   },
   "Cardinal Adina": {
-    "image": "cardinal-adina.png",
+    "image": "cardinal-adina.svg",
     "size": [
       866,
       1000
@@ -130,10 +130,10 @@
     ]
   },
   "Cardinal Sabir": {
-    "image": "cardinal-sabir.png",
+    "image": "cardinal-sabir.svg",
     "size": [
       1000,
-      910
+      912
     ],
     "world": [
       -14122.0,
@@ -143,7 +143,7 @@
     ]
   },
   "Conjured Amalgamate": {
-    "image": "conjured-amalgamate.png",
+    "image": "conjured-amalgamate.svg",
     "size": [
       544,
       1000
@@ -156,7 +156,7 @@
     ]
   },
   "Cosmic Observatory": {
-    "image": "cosmic-observatory.png",
+    "image": "cosmic-observatory.svg",
     "size": [
       1169,
       1169
@@ -169,7 +169,7 @@
     ]
   },
   "Dark Ai": {
-    "image": "ai-keeper-of-the-peak.png",
+    "image": "ai-keeper-of-the-peak.svg",
     "size": [
       823,
       1000
@@ -182,7 +182,7 @@
     ]
   },
   "Decima, the Stormsinger": {
-    "image": "decima-the-stormsinger.png",
+    "image": "decima-the-stormsinger.svg",
     "size": [
       1602,
       1602
@@ -195,7 +195,7 @@
     ]
   },
   "Deimos": {
-    "image": "deimos.png",
+    "image": "deimos.svg",
     "size": [
       765,
       1000
@@ -208,7 +208,7 @@
     ]
   },
   "Dhuum": {
-    "image": "dhuum.png",
+    "image": "dhuum.svg",
     "size": [
       1000,
       899
@@ -221,7 +221,7 @@
     ]
   },
   "Elemental Ai": {
-    "image": "ai-keeper-of-the-peak.png",
+    "image": "ai-keeper-of-the-peak.svg",
     "size": [
       823,
       1000
@@ -234,10 +234,10 @@
     ]
   },
   "Ensolyss": {
-    "image": "ensolyss.png",
+    "image": "ensolyss.svg",
     "size": [
-      366,
-      366
+      343,
+      343
     ],
     "world": [
       532.0,
@@ -247,7 +247,7 @@
     ]
   },
   "Eparch": {
-    "image": "eparch.png",
+    "image": "eparch.svg",
     "size": [
       1035,
       934
@@ -260,10 +260,10 @@
     ]
   },
   "Escort": {
-    "image": "escort.png",
+    "image": "escort.svg",
     "size": [
-      1080,
-      676
+      2948,
+      1844
     ],
     "world": [
       -6081.86,
@@ -273,7 +273,7 @@
     ]
   },
   "Eyes of Judgement and Fate": {
-    "image": "eyes-of-judgement-and-fate.png",
+    "image": "eyes-of-judgement-and-fate.svg",
     "size": [
       809,
       1000
@@ -312,7 +312,7 @@
     ]
   },
   "Greer, the Blightbringer": {
-    "image": "greer-the-blightbringer.png",
+    "image": "greer-the-blightbringer.svg",
     "size": [
       1912,
       1845
@@ -338,7 +338,7 @@
     ]
   },
   "Harvest Temple": {
-    "image": "harvest-temple.png",
+    "image": "harvest-temple.svg",
     "size": [
       1024,
       1024
@@ -533,7 +533,7 @@
     ]
   },
   "Old Lion's Court": {
-    "image": "old-lion-s-court.png",
+    "image": "old-lion-s-court.svg",
     "size": [
       1008,
       1008
@@ -559,7 +559,7 @@
     ]
   },
   "Qadim the Peerless": {
-    "image": "qadim-the-peerless.png",
+    "image": "qadim-the-peerless.svg",
     "size": [
       1000,
       1000
@@ -676,7 +676,7 @@
     ]
   },
   "Soulless Horror": {
-    "image": "soulless-horror.png",
+    "image": "soulless-horror.svg",
     "size": [
       1000,
       1000
@@ -715,7 +715,7 @@
     ]
   },
   "Temple of Febe": {
-    "image": "temple-of-febe.png",
+    "image": "temple-of-febe.svg",
     "size": [
       1149,
       1149

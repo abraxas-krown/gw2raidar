@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 1000 1000" width="1000" height="1000">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#1a7e0a;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<g class="fill-base"><polygon points="370,0 340,67 429,43"/><polygon points="762,57 694,81 774,128"/><polygon points="1000,370 933,340 957,429"/><polygon points="945,762 920,693 873,773"/><polygon points="630,1000 660,933 571,957"/><polygon points="237,943 305,919 226,872"/><polygon points="0,628 66,659 43,569"/><polygon points="55,238 80,307 127,227"/><circle class="stroke-deep" stroke-width="6" cx="500" cy="500" r="470"/></g>
+<g class="fill-none stroke-edge" stroke-width="2.5"><circle cx="500" cy="500" r="407"/><circle cx="500" cy="500" r="343"/><circle cx="500" cy="500" r="279"/></g>
+<g class="fill-edge"><polygon points="415,172 497,275 393,302"/><polygon points="672,208 657,339 564,284"/><polygon points="828,415 725,497 698,393"/><polygon points="792,672 661,657 716,564"/><polygon points="585,828 503,725 607,698"/><polygon points="328,792 343,661 436,716"/><polygon points="172,585 275,503 302,607"/><polygon points="208,328 339,343 284,436"/></g>
+<circle class="fill-light stroke-ink" stroke-width="18" cx="500" cy="500" r="216"/>
+<circle class="fill-pale stroke-deep" stroke-width="3" cx="500" cy="500" r="82"/>
+<g class="fill-deep"><circle cx="460" cy="341" r="17"/><circle cx="584" cy="359" r="17"/><circle cx="659" cy="460" r="17"/><circle cx="641" cy="584" r="17"/><circle cx="540" cy="659" r="17"/><circle cx="416" cy="641" r="17"/><circle cx="341" cy="540" r="17"/><circle cx="359" cy="416" r="17"/></g>
+</svg>

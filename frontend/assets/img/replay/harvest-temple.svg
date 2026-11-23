@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 1024 1024" width="1024" height="1024">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#1a7e0a;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<circle class="fill-base" cx="512" cy="512" r="510"/>
+<path class="fill-none stroke-edge" stroke-width="12" stroke-linejoin="miter" d="M495.3 6.0L495.3 366.5L432.0 366.5M6.0 494.0L366.6 494.0L366.6 430.5M528.7 6.0L528.7 366.5L592.0 366.5M1018.0 494.0L657.4 494.0L657.4 430.5M495.3 1018.0L495.3 657.5L432.0 657.5M6.0 530.0L366.6 530.0L366.6 593.5M528.7 1018.0L528.7 657.5L592.0 657.5M1018.0 530.0L657.4 530.0L657.4 593.5"/>
+<path class="fill-strong stroke-edge" stroke-width="24" paint-order="stroke" stroke-linejoin="miter" d="M856.3 534.5A345 345 0 0 1 534.5 856.3L534.5 807.1A296 296 0 0 0 807.1 534.5ZM489.5 856.3A345 345 0 0 1 167.7 534.5L216.9 534.5A296 296 0 0 0 489.5 807.1ZM167.7 489.5A345 345 0 0 1 489.5 167.7L489.5 216.9A296 296 0 0 0 216.9 489.5ZM534.5 167.7A345 345 0 0 1 856.3 489.5L807.1 489.5A296 296 0 0 0 534.5 216.9ZM976.5 564.9A467.5 467.5 0 0 1 870.6 811.9L812.3 763.1A391.5 391.5 0 0 0 901.0 556.3ZM811.9 870.6A467.5 467.5 0 0 1 564.9 976.5L556.3 901.0A391.5 391.5 0 0 0 763.1 812.3ZM459.1 976.5A467.5 467.5 0 0 1 212.1 870.6L260.9 812.3A391.5 391.5 0 0 0 467.7 901.0ZM153.4 811.9A467.5 467.5 0 0 1 47.5 564.9L123.0 556.3A391.5 391.5 0 0 0 211.7 763.1ZM47.5 459.1A467.5 467.5 0 0 1 153.4 212.1L211.7 260.9A391.5 391.5 0 0 0 123.0 467.7ZM212.1 153.4A467.5 467.5 0 0 1 459.1 47.5L467.7 123.0A391.5 391.5 0 0 0 260.9 211.7ZM564.9 47.5A467.5 467.5 0 0 1 811.9 153.4L763.1 211.7A391.5 391.5 0 0 0 556.3 123.0ZM870.6 212.1A467.5 467.5 0 0 1 976.5 459.1L901.0 467.7A391.5 391.5 0 0 0 812.3 260.9ZM328.0 328.0H418.0V418.0H328.0ZM431.5 431.5H478.0V478.0H431.5ZM606.0 328.0H696.0V418.0H606.0ZM546.0 431.5H592.5V478.0H546.0ZM328.0 606.0H418.0V696.0H328.0ZM431.5 546.0H478.0V592.5H431.5ZM606.0 606.0H696.0V696.0H606.0ZM546.0 546.0H592.5V592.5H546.0Z"/>
+<path class="fill-none stroke-edge" stroke-width="12" d="M779.9 623.0L836.3 646.3M717.1 717.1L760.2 760.2M623.0 779.9L646.3 836.3M866.8 664.1L947.7 698.7M664.1 866.8L698.7 947.7M760.2 760.2L863.4 863.4M401.0 779.9L377.7 836.3M306.9 717.1L263.8 760.2M244.1 623.0L187.7 646.3M359.9 866.8L325.3 947.7M157.2 664.1L76.3 698.7M263.8 760.2L160.6 863.4M244.1 401.0L187.7 377.7M306.9 306.9L263.8 263.8M401.0 244.1L377.7 187.7M157.2 359.9L76.3 325.3M359.9 157.2L325.3 76.3M263.8 263.8L160.6 160.6M623.0 244.1L646.3 187.7M717.1 306.9L760.2 263.8M779.9 401.0L836.3 377.7M664.1 157.2L698.7 76.3M866.8 359.9L947.7 325.3M760.2 263.8L863.4 160.6"/>
+<g class="fill-edge"><path d="M362.0 362.0H418.0V418.0H362.0Z"/><path d="M606.0 362.0H662.0V418.0H606.0Z"/><path d="M362.0 606.0H418.0V662.0H362.0Z"/><path d="M606.0 606.0H662.0V662.0H606.0Z"/></g>
+<g class="fill-strong"><path d="M374.0 374.0H418.0V418.0H374.0Z"/><path d="M606.0 374.0H650.0V418.0H606.0Z"/><path d="M374.0 606.0H418.0V650.0H374.0Z"/><path d="M606.0 606.0H650.0V650.0H606.0Z"/></g>
+<circle class="fill-none stroke-ink" stroke-width="10" cx="512" cy="512" r="505"/>
+</svg>

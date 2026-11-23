@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 999 890" width="999" height="890">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#1a7e0a;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<path class="fill-light stroke-ink" stroke-width="4" stroke-linejoin="round" d="M975 350L854 377L842 423L761 537L710 551L676 542L645 567L573 555L533 590L540 622L427 649L378 643L271 568L159 581L146 693L283 738L416 835L468 792L552 842L646 761L688 749L692 654L801 670L851 645L947 547L993 417Z"/>
+<path class="fill-base stroke-ink" stroke-width="4" stroke-linejoin="round" d="M747 156L524 47L190 53L13 193L0 240L26 346L16 381L85 453L158 582L285 571L374 639L438 649L539 621L534 587L568 552L641 567L671 542L706 551L761 536L841 423L852 378Z"/>
+<path class="fill-none stroke-edge" stroke-width="13" d="M822 656L893 872"/>
+<circle class="fill-highlight" fill-opacity=".55" cx="355" cy="56" r="34"/>
+<circle class="fill-highlight" cx="355" cy="56" r="9"/>
+</svg>
