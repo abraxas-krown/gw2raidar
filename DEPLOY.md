@@ -31,7 +31,9 @@ one before changing the pin:
 # Docker Compose deploy
 
 `docker-compose.yml` runs the database, the site's front (`frontend`, nginx), Django (`web`) and the upload
-processor (`worker`). It needs `SECRET_KEY`, `ALLOWED_HOSTS` and `POSTGRES_PASSWORD` in the environment.
+processor (`worker`). It needs `SECRET_KEY`, `ALLOWED_HOSTS` and `POSTGRES_PASSWORD` in the environment, and
+optionally `IMAGE_TAG` (see "Images" below). The server does not build anything: it pulls the images that
+GitHub Actions built.
 
 **Point the domain (Traefik/Dokploy) at `frontend`, port 80.** It serves the frontend (the page shell and
 `/assets/`) and passes everything else to `web` (`docker/nginx.conf`). `web` (gunicorn, port 8000) answers only
@@ -50,6 +52,40 @@ Files are kept on two volumes:
 `MIN_FREE_DISK_GB` (default 10) controls log pruning: `restat` deletes the oldest uploaded `.evtc` files
 while the upload volume has less than that many GB free. The parsed encounters and their Elite Insights
 reports stay, as they are on their own volume; only the encounter's download goes. `0` keeps every log.
+
+## Images
+
+`.github/workflows/docker.yml` builds the Dockerfile's two targets and publishes them to the GitHub Container
+Registry as `ghcr.io/abraxas-krown/gw2raidar-app` (`web` and `worker`) and
+`ghcr.io/abraxas-krown/gw2raidar-frontend`. It runs on every push to `develop` and `feature/**`, on release
+tags (`v*`), and by hand from the Actions tab. It only builds: nothing is deployed.
+
+Each build is tagged with:
+
+| Pushed           | Image tags                               |
+|------------------|------------------------------------------|
+| `develop`        | `latest`, `develop`, `sha-<commit>`      |
+| `feature/foo`    | `feature-foo`, `sha-<commit>`            |
+| tag `v3.2.0`     | `3.2.0`, `3.2`, `sha-<commit>`           |
+
+`IMAGE_TAG` picks which of these the deployment runs (default `latest`). Pin production to a release
+(`IMAGE_TAG=3.2.0`) so it changes only when you change it; going back is setting the previous tag and
+redeploying. The services pull on every deploy (`pull_policy: always`), so a moving tag like `latest` or a
+branch name gets its newest build.
+
+Wait for the Actions run to finish before deploying: a deploy started earlier still finds the previous
+image under the tag and runs that. In Dokploy, turn off auto-deploy on push for this reason, and deploy by
+hand once the run is green.
+
+The packages must be public for the server to pull them without logging in (on GitHub, each package's
+settings → Change visibility). For private packages, add `ghcr.io` as a registry in Dokploy (or
+`docker login ghcr.io` on the server) with a token that has `read:packages`.
+
+### Building locally
+
+`docker compose` also reads `docker-compose.override.yml` when it sits next to `docker-compose.yml`. That
+file builds the images from the checkout instead of pulling them, so locally `docker compose up --build`
+runs the code as it is. Dokploy names `docker-compose.yml` explicitly and does not read the override.
 
 ## Resetting the database
 
