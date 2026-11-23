@@ -300,6 +300,25 @@ def _start_timestamp(log):
         raise EIAdapterException("This log has no usable start time")
 
 
+def boss_health(log):
+    """The health the main boss (the full fight's first target) had left at the end, in percent, or None when EI
+    does not say."""
+    phases = log.get("phases") or []
+    targets = log.get("targets") or []
+    indices = (phases[0].get("targets") or []) if phases else []
+    if not indices or not 0 <= indices[0] < len(targets):
+        return None
+    target = targets[indices[0]]
+    burned = target.get("healthPercentBurned")
+    if burned is not None:
+        remaining = 100.0 - burned
+    elif target.get("healthPercents"):
+        remaining = target["healthPercents"][-1][1]
+    else:
+        return None
+    return round(min(100.0, max(0.0, remaining)), 2)
+
+
 def convert(log):
     """Converts a parsed EI JSON document. Raises EIAdapterException for logs the site cannot use."""
     if log.get("isInstanceLog"):
@@ -364,6 +383,8 @@ def convert(log):
             "end_tick": full_fight["end"],
             "duration": (full_fight["end"] - full_fight["start"]) / 1000.0,
             "success": bool(log.get("success")),
+            # the boss's health left at the end, in percent (0 for a success)
+            "boss_health": 0.0 if log.get("success") else boss_health(log),
             "cm": bool(log.get("isCM")),
             "legendary_cm": bool(log.get("isLegendaryCM")),
             "phase_order": [name for _, name, _ in phases],

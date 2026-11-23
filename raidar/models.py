@@ -558,6 +558,8 @@ class Encounter(models.Model):
     started_at = models.IntegerField(db_index=True)
     duration = models.FloatField()
     success = models.BooleanField()
+    # The boss's health left at the end, in percent; null when unknown (encounters stored before it was kept)
+    boss_health = models.FloatField(null=True, blank=True)
     filename = models.CharField(max_length=255)
     uploaded_on = models.DateTimeField()
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
@@ -773,6 +775,7 @@ class Encounter(models.Model):
                 "started_at": self.started_at,
                 "duration": self.duration,
                 "success": self.success,
+                "boss_health": self.boss_health,
                 "tags": self.tagstring,
                 "category": self.category_id,
                 "phase_order": [phase.name for phase in phases if phase.name != "All"],
@@ -880,6 +883,7 @@ class Participation(models.Model):
             "elite": self.elite,
             "uploaded_at": self.encounter.uploaded_on.timestamp(),
             "success": self.encounter.success,
+            "boss_health": self.encounter.boss_health,
             "category": self.encounter.category_id,
             "tags": [tag.name for tag in self.encounter.tags.all()],
         }

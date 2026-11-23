@@ -202,7 +202,13 @@
 
         [[#each encounterSlice]]
           <a class="r-encounters-list" on-click="(@event.ctrlKey || @event.metaKey) || @this.page({ name: 'encounter', no: url_id })" href="[[baseURL]]/encounter/[[url_id]]">
-            <td colspan="3">
+            <td colspan="3" class="r-encounters-first">
+              {# a wipe: the boss's health left at the end, as a thin bar down the row's edge (as player activity) #}
+              [[#if !success && boss_health != null]]
+                <div class="r-encounters-boss-hp" uk-tooltip title="Boss health left: [[perc(boss_health, 1)]]">
+                  <div class="r-encounters-boss-hp-fill" style="height: [[boss_health]]%"></div>
+                </div>
+              [[/if]]
               <h4 class="uk-margin-remove">[[area]][[#if mode_tag]] <span class="uk-label r-mode-[[mode_tag]]">[[mode_tag]]</span>[[/if]]</h4>
               <span class="uk-badge uk-text-bold [[success ? 'uk-label-success' : 'uk-label-danger']]">[[success ? 'Success' : 'Wipe']]  ([[formatTime(duration)]])</span>
               <span class="uk-badge uk-text-bold r-bg-0">[[formatDate(started_at)]]</span>

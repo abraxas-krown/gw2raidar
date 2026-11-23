@@ -503,6 +503,27 @@ $encounter-player-column:                        200px;
   }
 }
 
+// a wipe's boss health left: a thin bar down the row's left edge (as player activity), filled from the bottom
+.r-encounters-first {
+  position: relative;
+}
+.r-encounters-boss-hp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 3px 0 0 3px;
+  background-color: lighten($global-muted-background, 10%);
+  overflow: hidden;
+}
+.r-encounters-boss-hp-fill {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background-color: $global-danger-background;
+}
+
 // Profile/Personal Stats
 .r-profile-stats {
   display: grid;
