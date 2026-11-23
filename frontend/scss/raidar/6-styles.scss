@@ -503,7 +503,7 @@ $encounter-player-column:                        200px;
   }
 }
 
-// a wipe's boss health left: a thin bar down the row's left edge, filled from the top (as player activity)
+// a wipe's boss health left: a thin bar down the row's left edge (as player activity), filled from the bottom
 .r-encounters-first {
   position: relative;
 }
@@ -518,6 +518,8 @@ $encounter-player-column:                        200px;
   overflow: hidden;
 }
 .r-encounters-boss-hp-fill {
+  position: absolute;
+  bottom: 0;
   width: 100%;
   background-color: $global-danger-background;
 }
