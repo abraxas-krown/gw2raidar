@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 1024 1024" width="1024" height="1024">
 <style>
   /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
-  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#1a7e0a;--c-highlight:#5ae1e4}
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
   .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
   .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
   .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
