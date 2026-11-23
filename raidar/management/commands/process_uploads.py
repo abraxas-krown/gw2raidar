@@ -157,6 +157,7 @@ class Command(BaseCommand):
             started_at = encounter_dump['start']
             duration = encounter_dump['duration']
             success = encounter_dump['success']
+            boss_health = encounter_dump.get('boss_health')
             upload_val = upload.val
 
             boss = find_boss(encounter_dump['ei_encounter_id'], encounter_dump['cm'], encounter_dump['legendary_cm'])
@@ -220,6 +221,7 @@ class Command(BaseCommand):
                     encounter.uploaded_by = upload.uploaded_by
                     encounter.duration = duration
                     encounter.success = success
+                    encounter.boss_health = boss_health
                     encounter.encounter_data = encounter_data
                     encounter.started_at = started_at
                     encounter.started_at_full = started_at_full
@@ -230,7 +232,8 @@ class Command(BaseCommand):
                         filename=filename,
                         uploaded_on=datetime.fromtimestamp(upload.uploaded_at, timezone.utc),
                         uploaded_by=upload.uploaded_by,
-                        duration=duration, success=success, encounter_data=encounter_data,
+                        duration=duration, success=success, boss_health=boss_health,
+                        encounter_data=encounter_data,
                         area=area, era=era, started_at=started_at,
                         started_at_full=started_at_full, started_at_half=started_at_half,
                         has_evtc=True, account_hash=account_hash

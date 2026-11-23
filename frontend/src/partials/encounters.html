@@ -206,6 +206,13 @@
               <h4 class="uk-margin-remove">[[area]][[#if mode_tag]] <span class="uk-label r-mode-[[mode_tag]]">[[mode_tag]]</span>[[/if]]</h4>
               <span class="uk-badge uk-text-bold [[success ? 'uk-label-success' : 'uk-label-danger']]">[[success ? 'Success' : 'Wipe']]  ([[formatTime(duration)]])</span>
               <span class="uk-badge uk-text-bold r-bg-0">[[formatDate(started_at)]]</span>
+              {# a wipe: the boss's health left at the end, as the replay's health bars #}
+              [[#if !success && boss_health != null]]
+                <div class="r-encounters-boss-hp" title="Boss health left: [[perc(boss_health, 1)]]">
+                  <div class="r-replay-bar"><div class="r-replay-bar-fill" style="width: [[boss_health]]%"></div></div>
+                  <span class="r-replay-unit-value">[[perc(boss_health, 1)]]</span>
+                </div>
+              [[/if]]
                 [[#each tags]]
                   <span class="tag uk-badge uk-text-bold" style="margin-right:2px;">[[.]]</span>
                 [[/each]]

@@ -503,6 +503,21 @@ $encounter-player-column:                        200px;
   }
 }
 
+// a wipe's boss health left, under its badges: the replay's HP bar, in the boss's colour
+.r-encounters-boss-hp {
+  display: flex;
+  align-items: center;
+  max-width: 240px;
+  margin-top: 4px;
+  .r-replay-bar {
+    flex: 1;
+    margin: 0 6px 0 0;
+  }
+  .r-replay-bar-fill {
+    background-color: $global-danger-background;
+  }
+}
+
 // Profile/Personal Stats
 .r-profile-stats {
   display: grid;
