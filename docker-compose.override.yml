@@ -11,10 +11,14 @@ services:
     build:
       context: .
       target: app
+      args:
+        - GW2EI_TAG   # passed on only when set in the shell or .env; else the Dockerfile's pin
     pull_policy: build
 
   worker:
     build:
       context: .
       target: app
+      args:
+        - GW2EI_TAG   # passed on only when set in the shell or .env; else the Dockerfile's pin
     pull_policy: build

@@ -4,6 +4,7 @@
 #   ghcr.io/abraxas-krown/gw2raidar-frontend
 # Tags: the branch name (feature/foo -> feature-foo), sha-<short commit>, and `latest` for develop.
 # A release tag (git tag v3.2.0) gives `3.2.0` and `3.2`.
+# Elite Insights comes ready-made from ghcr.io/abraxas-krown/gw2ei (built in our GW2-Elite-Insights-Parser fork).
 # Nothing here deploys; Dokploy is unaffected.
 name: Docker images
 
@@ -64,6 +65,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # The Elite Insights image tag is pinned in the Dockerfile (GW2EI_TAG); the repository variable
+          # GW2EI_TAG, when set, overrides it for every build (Settings -> Secrets and variables -> Actions)
+          build-args: ${{ vars.GW2EI_TAG && format('GW2EI_TAG={0}', vars.GW2EI_TAG) || '' }}
           # Layer cache kept in GitHub Actions, one per target; branches also read develop's
           cache-from: type=gha,scope=${{ matrix.target }}
           cache-to: type=gha,scope=${{ matrix.target }},mode=max

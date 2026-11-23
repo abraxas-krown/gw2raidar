@@ -14,9 +14,31 @@ vulnerabilities with `pip-audit -r requirements.txt`.
 
 ## Upgrading Elite Insights
 
-The Elite Insights CLI is pinned in the `Dockerfile` (`GW2EI_VERSION` and the checksum of its zip). The
-site depends on its encounter IDs and its JSON output, so compare the new version's source with the old
-one before changing the pin:
+The Elite Insights CLI comes from its own image, `ghcr.io/abraxas-krown/gw2ei:<tag>`, which the `Dockerfile`
+copies into the app image. It is built from source in our fork,
+[abraxas-krown/GW2-Elite-Insights-Parser](https://github.com/abraxas-krown/GW2-Elite-Insights-Parser)
+(`docker/cli/Dockerfile` there), by its "Docker CLI image" workflow:
+
+| Pushed to the fork        | Image tags                             |
+|---------------------------|----------------------------------------|
+| `master`                  | `latest`, `master`, `sha-<commit>`     |
+| git tag `v3.33.0.0-krown.1` | `v3.33.0.0-krown.1`, `sha-<commit>`  |
+
+Pin a git tag's image. A git tag's image is never replaced (the workflow refuses), so it always means the same
+build; `latest` and `master` move with every push to the fork, so the site would change without a commit here.
+To release a new EI build: tag the fork's commit (`git tag v3.33.0.0-krown.1 && git push origin
+v3.33.0.0-krown.1`), wait for its "Docker CLI image" run, then move the pin.
+
+Which tag the app uses is `GW2EI_TAG`:
+
+- pinned in the `Dockerfile` (`ARG GW2EI_TAG=...`), so it changes with the code and is reviewed with it;
+- overridden for every GitHub build by the repository variable `GW2EI_TAG`, when set (Settings → Secrets and
+  variables → Actions → Variables). That applies to all branches at once, so use it for trying a build, and
+  move the pin in the `Dockerfile` once it is settled;
+- overridden locally by `GW2EI_TAG` in the shell or `.env` (`docker-compose.override.yml` passes it on).
+
+The site depends on EI's encounter IDs and its JSON output, so compare the new version's source with the old
+one before moving the pin:
 
 1. **New bosses.** Encounters EI added or renumbered (their `LogID`s, under `LogLogic/`) need an entry in
    `analyser/bosses.py`, or their logs are rejected as unsupported.

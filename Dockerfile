@@ -4,6 +4,14 @@
 # The two share nothing: the frontend stages use only frontend/ and docker/nginx.conf.
 # `frontend` is the last stage, so a plain `docker build .` makes the nginx image; use `--target app` for Django.
 
+# Elite Insights CLI (the log parser), taken from its own image, built from our fork
+# (https://github.com/abraxas-krown/GW2-Elite-Insights-Parser, its docker/cli/Dockerfile and "Docker CLI image"
+# workflow). The site depends on the structure of EI's JSON output and on its encounter IDs, so the tag is
+# pinned here and changes with the code: pin an image made from one of the fork's git tags, never `latest` or
+# `master`, which move. `--build-arg GW2EI_TAG=...` overrides it for one build. See DEPLOY.md.
+ARG GW2EI_TAG=v3.33.0.0-krown.1
+FROM ghcr.io/abraxas-krown/gw2ei:${GW2EI_TAG} AS gw2ei
+
 # ---- .NET runtime, needed to run the Elite Insights CLI (the log parser); only its files are copied ----
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS dotnet
 
@@ -13,17 +21,6 @@ ENV PIP_NO_CACHE_DIR=1
 RUN python -m venv /opt/venv
 COPY requirements.txt /tmp/requirements.txt
 RUN /opt/venv/bin/pip install -r /tmp/requirements.txt
-
-# Elite Insights CLI: official release from https://github.com/baaron4/GW2-Elite-Insights-Parser/releases
-# The version is pinned because the site depends on the structure of EI's JSON output and on its
-# encounter IDs. To upgrade, change both the version and the checksum of its GW2EICLI.zip.
-ARG GW2EI_VERSION=v3.32.0.0
-ARG GW2EI_SHA256=ffcd8578a333723f6ca23ba875bc8b1ac758bdb6888f473c4b5c0602d4d902dd
-RUN curl -fsSL -o /tmp/GW2EICLI.zip \
-        "https://github.com/baaron4/GW2-Elite-Insights-Parser/releases/download/${GW2EI_VERSION}/GW2EICLI.zip" \
-    && echo "${GW2EI_SHA256}  /tmp/GW2EICLI.zip" | sha256sum -c - \
-    && python -m zipfile -e /tmp/GW2EICLI.zip /opt/gw2ei \
-    && rm /tmp/GW2EICLI.zip
 
 # ---- app: the Django runtime, a slim image; only the virtualenv is carried over (no apt-get needed) ----
 FROM python:3.13-slim-trixie AS app
@@ -40,7 +37,7 @@ ENV PYTHONUNBUFFERED=1 \
 RUN useradd --system --uid 1000 --home-dir /app --shell /usr/sbin/nologin app
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=dotnet /usr/share/dotnet /usr/share/dotnet
-COPY --from=builder /opt/gw2ei /opt/gw2ei
+COPY --from=gw2ei /opt/gw2ei /opt/gw2ei
 WORKDIR /app
 COPY . /app
 # Collect Django's own static files (the admin's), which WhiteNoise serves; no database is needed for this.
