@@ -503,19 +503,23 @@ $encounter-player-column:                        200px;
   }
 }
 
-// a wipe's boss health left, under its badges: the replay's HP bar, in the boss's colour
+// a wipe's boss health left: a thin bar down the row's left edge, filled from the top (as player activity)
+.r-encounters-first {
+  position: relative;
+}
 .r-encounters-boss-hp {
-  display: flex;
-  align-items: center;
-  max-width: 240px;
-  margin-top: 4px;
-  .r-replay-bar {
-    flex: 1;
-    margin: 0 6px 0 0;
-  }
-  .r-replay-bar-fill {
-    background-color: $global-danger-background;
-  }
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 3px 0 0 3px;
+  background-color: lighten($global-muted-background, 10%);
+  overflow: hidden;
+}
+.r-encounters-boss-hp-fill {
+  width: 100%;
+  background-color: $global-danger-background;
 }
 
 // Profile/Personal Stats
