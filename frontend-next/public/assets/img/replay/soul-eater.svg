@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 710 709" width="710" height="709">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<circle class="fill-base stroke-deep" stroke-width="14" cx="355" cy="354.5" r="316"/>
+<g class="fill-strong stroke-deep" stroke-width="3" stroke-linejoin="round"><path transform="translate(355 354.5) rotate(2.3)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(31.9)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(61.6)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(91.4)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(121.7)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(151.3)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(181.5)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(242.3)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(267.5)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(302.1)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/><path transform="translate(355 354.5) rotate(331.9)" d="M-46.5 -265L46.5 -265L22 -350L-22 -350Z"/></g>
+<g class="fill-none stroke-light" stroke-width="4"><circle cx="355" cy="354.5" r="143"/><circle cx="355" cy="354.5" r="110"/></g>
+<circle class="fill-mid stroke-light" stroke-width="3" cx="355" cy="354.5" r="46"/>
+<g class="fill-none stroke-ink" stroke-width="3.5" stroke-linejoin="round"><path d="M440 122L510 161L458 237L402 205Z"/><path d="M143 225L225 268L201 326L112 298Z"/><path d="M509 383L597 411L566 484L485 442Z"/><path d="M252 472L307 504L269 587L199 548Z"/></g>
+<g class="fill-strong"><circle cx="449" cy="146" r="9.6"/><circle cx="485" cy="167" r="9.6"/><circle cx="435" cy="175" r="9.6"/><circle cx="466" cy="194" r="9.6"/><circle cx="438" cy="207" r="9.6"/><circle cx="152" cy="249" r="9.6"/><circle cx="181" cy="264" r="9.6"/><circle cx="136" cy="287" r="9.6"/><circle cx="197" cy="291" r="9.6"/><circle cx="166" cy="298" r="9.6"/><circle cx="543" cy="411" r="9.6"/><circle cx="512" cy="418" r="9.6"/><circle cx="574" cy="422" r="9.6"/><circle cx="529" cy="445" r="9.6"/><circle cx="557" cy="460" r="9.6"/><circle cx="272" cy="502" r="9.6"/><circle cx="243" cy="515" r="9.6"/><circle cx="274" cy="534" r="9.6"/><circle cx="224" cy="542" r="9.6"/><circle cx="260" cy="563" r="9.6"/></g>
+<g class="fill-accent"><circle cx="183" cy="625" r="38" fill-opacity="0.4"/><circle cx="183" cy="625" r="8"/></g>
+</svg>

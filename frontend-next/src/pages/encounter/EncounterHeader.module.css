@@ -1,0 +1,105 @@
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: var(--margin-small) 0 var(--margin-large);
+
+  @media (min-width: 640px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* the boss icon, then the name and badges (.r-media) */
+.media {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--gutter-small);
+}
+
+.iconWrap {
+  position: relative;
+  align-self: start;
+
+  &:hover .drop {
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 250ms;
+  }
+}
+
+/* a card that shows on hovering the icon, and stays while the pointer is on it, so its link can be followed */
+.drop {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1020;
+  width: 300px;
+  padding: var(--margin);
+  background: var(--c-bg-muted);
+  color: var(--c-text);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms linear, visibility 0s;
+}
+
+.title {
+  margin-bottom: var(--margin-small);
+  line-height: 1;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* badges keep 4px apart with their own margin (controls.module.css); the tags dropdown is not a badge */
+  row-gap: 4px;
+
+  & > :not(:first-child) {
+    margin-left: 4px;
+  }
+}
+
+.tagsToggle {
+  border: none;
+  font: inherit;
+  font-size: var(--font-size-small);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tagsForm {
+  display: grid;
+  gap: var(--margin-small);
+  width: 300px;
+}
+
+.tagsField {
+  margin: 0;
+}
+
+/* ---- the percentile the tables compare against: badges, the chosen one lit */
+.compare {
+  text-align: right;
+}
+
+.compareTitle {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.compareChoice {
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  opacity: 0.5;
+  cursor: pointer;
+
+  & > span {
+    font-weight: bold;
+  }
+}
+
+.chosen {
+  opacity: 1;
+  cursor: default;
+}

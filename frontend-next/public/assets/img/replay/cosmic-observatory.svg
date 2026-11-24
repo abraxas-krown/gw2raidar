@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 1169 1169" width="1169" height="1169">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<g class="fill-accent"><rect x="497" y="0" width="175" height="100"/><rect x="0" y="497" width="100" height="175"/><rect x="1069" y="497" width="100" height="175"/><rect x="497" y="1069" width="175" height="100"/><path d="M109 936L168 878L290 1000L232 1059Z"/></g><g transform="translate(584.5 584.5)"><circle class="fill-base" r="510"/><defs><g id="q"><path class="fill-none stroke-edge" stroke-width="12" stroke-linejoin="miter" d="M17 497V144H81M144 81V17H497M248 248L351 351"/>
+<g class="fill-strong stroke-edge" stroke-width="24" stroke-linejoin="miter" paint-order="stroke"><path d="M344.2 22.9A345 345 0 0 1 22.9 344.2L19.6 295.3A296 296 0 0 0 295.3 19.6Z"/><path d="M464.5 52.9A467.5 467.5 0 0 1 358.1 300.5L299.9 251.7A391.5 391.5 0 0 0 389.0 44.3Z"/><path d="M300.5 358.1A467.5 467.5 0 0 1 52.9 464.5L44.3 389.0A391.5 391.5 0 0 0 251.7 299.9Z"/><rect x="93" y="93" width="91" height="91"/><rect x="34" y="34" width="48" height="48"/></g>
+<path class="fill-none stroke-edge" stroke-width="10.5" d="M93 144H144V93"/>
+<path class="fill-none stroke-edge" stroke-width="12" d="M267.9 111.0L324.3 134.3M205.1 205.1L248.2 248.2M111.0 267.9L134.3 324.3M354.8 152.1L430.2 184.4M152.1 354.8L184.4 430.2"/></g></defs><use href="#q" transform="scale(1 1)"/><use href="#q" transform="scale(-1 1)"/><use href="#q" transform="scale(1 -1)"/><use href="#q" transform="scale(-1 -1)"/><circle class="fill-none stroke-ink" stroke-width="10" r="505"/></g>
+</svg>

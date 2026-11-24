@@ -1,0 +1,18 @@
+/* uk-container uk-container-large */
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  box-sizing: content-box;
+}
+
+/* the page fills at least the window, so the footer stays below it */
+.main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  & > * {
+    flex: none;
+  }
+}

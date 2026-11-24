@@ -7,6 +7,21 @@ services:
       target: frontend
     pull_policy: build
 
+  # The new frontend (frontend-next/), next to `frontend` and against the same `web`; only with
+  # `docker compose --profile next up --build`, at http://localhost:8081. Not in docker-compose.yml (Dokploy).
+  frontend-next:
+    profiles: [next]
+    build:
+      context: .
+      target: frontend-next
+    pull_policy: build
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      web:
+        condition: service_started
+
   web:
     build:
       context: .

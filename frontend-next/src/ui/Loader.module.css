@@ -1,0 +1,37 @@
+.loader {
+  height: calc(100vh - 150px);
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  animation: fade-in 200ms 1 ease-in;
+}
+
+.note {
+  width: 100%;
+  text-align: center;
+}
+
+.legendary {
+  animation: legendary-colours 3s infinite ease-in-out;
+}
+
+.drift {
+  animation: drift 10s infinite ease-in-out alternate;
+}
+
+@keyframes legendary-colours {
+  from { fill: #7B09C9; }
+  33% { fill: #2D81C6; }
+  66% { fill: #278718; }
+  to { fill: #7B09C9; }
+}
+
+@keyframes drift {
+  from { transform: translate(4533px, 572px); }
+  to { transform: translate(4633px, 532px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

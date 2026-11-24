@@ -109,6 +109,22 @@ settings → Change visibility). For private packages, add `ghcr.io` as a regist
 file builds the images from the checkout instead of pulling them, so locally `docker compose up --build`
 runs the code as it is. Dokploy names `docker-compose.yml` explicitly and does not read the override.
 
+### The new frontend (frontend-next)
+
+`frontend-next/` is a new frontend (React, built with Rsbuild; see its README) that runs alongside the current
+one. The Dockerfile's `frontend-next` target serves it with nginx (`docker/nginx-next.conf`), passing everything
+else to `web` as the `frontend` image does. CI publishes it as `ghcr.io/abraxas-krown/gw2raidar-frontend-next`,
+with the same tags as the other images. It is not part of `docker-compose.yml`, so nothing deploys it yet.
+
+Locally, the override has it under the `next` profile:
+
+```sh
+docker compose --profile next up --build   # the new frontend at http://localhost:8081, on the same `web`
+```
+
+To try it on a server, run the image next to `frontend` on the same network as `web`, and route a second host
+name to its port 80.
+
 ## Resetting the database
 
 To start over with an empty database (for example on a test deployment), remove its volume. This deletes

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 914 914" width="914" height="914">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<rect class="fill-base" width="914" height="914"/>
+<g class="fill-light stroke-deep" stroke-width="6" stroke-linejoin="round"><rect x="6" y="8" width="170" height="170" rx="3"/><rect x="737" y="6" width="170" height="170" rx="3"/><rect x="8" y="738" width="170" height="170" rx="3"/><rect x="738" y="737" width="170" height="170" rx="3"/></g>
+<g class="fill-deep"><rect x="53" y="55" width="81" height="81" rx="7"/><rect x="776" y="55" width="81" height="81" rx="7"/><rect x="54" y="781" width="81" height="81" rx="7"/><rect x="776" y="776" width="81" height="81" rx="7"/></g>
+<circle class="fill-pale" cx="457" cy="457" r="56"/>
+<rect class="fill-none stroke-ink" stroke-width="10" x="5" y="5" width="904" height="904"/>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 1000 1000" width="1000" height="1000">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<circle class="fill-base" cx="500" cy="500" r="500"/>
+<g class="fill-none stroke-pale" stroke-width="1.5" opacity=".8"><circle cx="500.0" cy="209.0" r="123"/><circle cx="752.0" cy="645.5" r="123"/><circle cx="248.0" cy="645.5" r="123"/></g>
+<path class="fill-none stroke-pale" stroke-width="12" d="M500.0 660.0L500.0 791.0M361.4 420.0L248.0 354.5M638.6 420.0L752.0 354.5M500.0 340.0L500.0 209.0M638.6 580.0L752.0 645.5M361.4 580.0L248.0 645.5"/>
+<g class="fill-strong"><circle cx="500.0" cy="791.0" r="106"/><circle cx="248.0" cy="354.5" r="106"/><circle cx="752.0" cy="354.5" r="106"/></g>
+<g class="fill-base stroke-pale" stroke-width="13"><circle cx="500.0" cy="791.0" r="55.5"/><circle cx="248.0" cy="354.5" r="55.5"/><circle cx="752.0" cy="354.5" r="55.5"/></g>
+<circle class="fill-none stroke-pale" stroke-width="16" cx="500" cy="500" r="289"/>
+<g class="fill-strong stroke-pale" stroke-width="3"><circle cx="500.0" cy="209.0" r="28"/><circle cx="752.0" cy="645.5" r="28"/><circle cx="248.0" cy="645.5" r="28"/></g>
+<circle class="fill-none stroke-pale" stroke-width="17" cx="500" cy="500" r="159.5"/>
+<circle class="fill-none stroke-strong" stroke-width="23" cx="500" cy="500" r="139.5"/>
+<circle class="fill-none stroke-pale" stroke-width="15" cx="500" cy="500" r="119.5"/>
+<path class="fill-none stroke-pale" stroke-width="12" d="M560.6 535.0L603.9 560.0M500.0 570.0L500.0 620.0M439.4 535.0L396.1 560.0M439.4 465.0L396.1 440.0M500.0 430.0L500.0 380.0M560.6 465.0L603.9 440.0"/>
+<circle class="fill-pale" cx="500" cy="500" r="70"/>
+<circle class="fill-none stroke-pale" stroke-width="12.5" cx="500" cy="500" r="493.75"/>
+</svg>

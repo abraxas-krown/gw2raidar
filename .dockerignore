@@ -4,3 +4,5 @@ db.sqlite3
 __pycache__
 staticfiles
 frontend/dist
+frontend-next/node_modules
+frontend-next/dist

@@ -1,0 +1,76 @@
+/* the log in, register and reset password forms: a narrow column of panels, then the button */
+.form {
+  width: 450px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: var(--gutter) 0;
+  text-align: left;
+
+  @media (min-width: 1200px) {
+    padding: var(--gutter-medium) 0;
+  }
+}
+
+.panel {
+  margin-bottom: var(--margin);
+}
+
+.legend {
+  margin: 0;
+  font-size: var(--font-size-medium);
+  line-height: 1.4;
+  letter-spacing: 1px;
+  font-weight: 900;
+  color: var(--c-emphasis);
+}
+
+.hint {
+  margin: var(--margin-small) 0;
+  font-size: var(--font-size-small);
+  color: var(--c-muted);
+}
+
+.field {
+  margin-top: var(--margin-small);
+}
+
+.forgot {
+  margin: var(--margin-small) 0 0;
+  font-size: var(--font-size-small);
+  text-align: right;
+}
+
+.submit {
+  margin: var(--margin) 0;
+}
+
+.after {
+  font-size: var(--font-size-small);
+  color: var(--c-muted);
+  text-align: center;
+}
+
+/* the API key field, with a link to ArenaNet's applications page inside it on the right */
+.withIcon {
+  position: relative;
+
+  & > a {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-muted);
+
+    &:hover {
+      color: var(--c-text);
+      text-decoration: none;
+    }
+  }
+  & input {
+    padding-right: 40px;
+  }
+}

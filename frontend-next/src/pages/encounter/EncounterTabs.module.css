@@ -1,0 +1,149 @@
+/* The tab bar: its tabs on the left and the phase menu on the right stay on one row. The tabs keep their
+   width; the phase menu gets what is left. */
+.bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  margin-bottom: var(--margin);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin-left: auto;
+  padding-left: var(--gutter);
+}
+
+/* tabs, as uk-tab: muted links, the chosen one underlined */
+.tabs {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  margin: 0 0 0 -20px;
+  padding: 0;
+  list-style: none;
+
+  & > li {
+    flex: none;
+    position: relative;
+    padding-left: 20px;
+  }
+
+  & > li > button,
+  & > li > div > button {
+    display: block;
+    padding: 5px 10px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--c-muted);
+    text-align: center;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--c-text);
+      outline: none;
+    }
+  }
+
+  & > li.active > button,
+  & > li.active > div > button {
+    color: var(--c-emphasis);
+    border-bottom-color: var(--c-text);
+  }
+}
+
+.active {
+  /* (a marker class: the styles are on the lists above) */
+}
+
+/* ---- the phase menu: the path, then the level's tabs, which scroll sideways when they do not fit */
+.phaseNav {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.phaseTabs {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  & > li {
+    padding-left: 4px;
+  }
+  & > li > button {
+    padding: 5px 8px;
+    white-space: nowrap;
+  }
+
+  &.moreLeft {
+    mask-image: linear-gradient(to right, transparent, #000 var(--gutter));
+  }
+  &.moreRight {
+    mask-image: linear-gradient(to left, transparent, #000 var(--gutter));
+  }
+  &.moreLeft.moreRight {
+    mask-image: linear-gradient(to right, transparent, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent);
+  }
+}
+
+.moreLeft,
+.moreRight {
+  /* (marker classes, set while tabs are scrolled out of sight) */
+}
+
+.path {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & > li {
+    display: flex;
+    align-items: center;
+
+    /* each step leads to the next, the last one to the tabs */
+    &::after {
+      content: "\203A";
+      padding: 0 6px;
+      color: var(--c-muted);
+    }
+  }
+
+  & > li > button {
+    display: block;
+    padding: 5px 4px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--c-muted);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--c-text);
+      outline: none;
+    }
+  }
+
+  /* the chosen phase, when it has parts: looks like a chosen tab */
+  & > li.active > button {
+    border-bottom-color: var(--c-text);
+    color: var(--c-emphasis);
+  }
+}

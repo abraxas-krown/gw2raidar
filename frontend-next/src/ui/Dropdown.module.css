@@ -1,0 +1,53 @@
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.box {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 1020;
+  min-width: 200px;
+  padding: var(--margin);
+  border: var(--border-width) solid var(--c-text);
+  background: var(--c-bg-muted);
+  color: var(--c-text);
+  text-align: left;
+
+  @supports (backdrop-filter: blur(6px)) {
+    backdrop-filter: blur(6px);
+    background-color: rgb(61 56 82 / 0.7);
+  }
+}
+
+.right {
+  left: auto;
+  right: 0;
+}
+
+/* a list of choices in a dropdown (uk-nav uk-dropdown-nav) */
+.nav {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  white-space: nowrap;
+
+  & > li > :is(a, button) {
+    display: block;
+    width: 100%;
+    padding: 5px 0;
+    border: none;
+    background: none;
+    color: var(--c-text);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: #f7dbb4;
+      outline: none;
+    }
+  }
+}

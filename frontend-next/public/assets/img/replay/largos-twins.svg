@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 765 1000" width="765" height="1000">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<g class="fill-accent"><path d="M40.7 -0.2L121.7 -0.2L162.2 70L121.7 140.2L40.7 140.2L0.2 70Z"/><path d="M642.7 -0.2L723.7 -0.2L764.2 70L723.7 140.2L642.7 140.2L602.2 70Z"/><path d="M40.7 353.8L121.7 353.8L162.2 424L121.7 494.2L40.7 494.2L0.2 424Z"/><path d="M642.7 353.8L723.7 353.8L764.2 424L723.7 494.2L642.7 494.2L602.2 424Z"/><path d="M340 517.8L421 517.8L461.5 588L421 658.2L340 658.2L299.5 588Z"/><path d="M340 858.8L421 858.8L461.5 929L421 999.2L340 999.2L299.5 929Z"/></g>
+<g class="fill-base"><circle cx="81.2" cy="70" r="65"/><circle cx="683.2" cy="70" r="65"/><circle cx="81.2" cy="424" r="65"/><circle cx="683.2" cy="424" r="65"/><circle cx="380.5" cy="588" r="65"/><circle cx="380.5" cy="929" r="65"/></g>
+<g class="fill-highlight"><circle cx="190" cy="70" r="34" fill-opacity=".4"/><circle cx="190" cy="70" r="7"/><circle cx="574" cy="70" r="34" fill-opacity=".4"/><circle cx="574" cy="70" r="7"/><circle cx="80.4" cy="246.8" r="34" fill-opacity=".4"/><circle cx="80.4" cy="246.8" r="7"/><circle cx="682.2" cy="246.8" r="34" fill-opacity=".4"/><circle cx="682.2" cy="246.8" r="7"/><circle cx="379.5" cy="436.5" r="34" fill-opacity=".4"/><circle cx="379.5" cy="436.5" r="7"/><circle cx="237.4" cy="498.6" r="34" fill-opacity=".4"/><circle cx="237.4" cy="498.6" r="7"/><circle cx="521.6" cy="498.6" r="34" fill-opacity=".4"/><circle cx="521.6" cy="498.6" r="7"/><circle cx="379.5" cy="758" r="34" fill-opacity=".4"/><circle cx="379.5" cy="758" r="7"/><circle cx="249.4" cy="928.4" r="34" fill-opacity=".4"/><circle cx="249.4" cy="928.4" r="7"/><circle cx="512.3" cy="928.4" r="34" fill-opacity=".4"/><circle cx="512.3" cy="928.4" r="7"/></g>
+</svg>

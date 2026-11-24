@@ -1,0 +1,210 @@
+/* The encounter list: filters in a quarter-width column on wider screens, the list beside them */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gutter);
+  margin-top: var(--margin);
+
+  @media (min-width: 960px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  }
+
+  /* the filters hidden: the list takes the whole width */
+  &.full {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.list {
+  min-width: 0;
+}
+
+/* ---- filters */
+.filters {
+  margin-top: var(--margin);
+}
+
+.filtersTitle {
+  margin-bottom: var(--margin-small);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  font-weight: 200;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--c-emphasis);
+}
+
+.filter {
+  margin-bottom: var(--margin);
+}
+
+.filterLabel {
+  font-size: var(--font-size);
+  font-weight: 900;
+  color: var(--c-emphasis);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gutter);
+}
+
+/* ---- the list, laid out as the current site's table: seven columns, the first cell of a row over three */
+.table {
+  --columns: repeat(7, minmax(0, 1fr));
+  display: grid;
+  grid-template-columns: var(--columns);
+  background-color: var(--c-bg);
+}
+
+.head,
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.headCell {
+  padding: 10px 12px;
+  align-self: end;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--c-text);
+  background: var(--c-bg);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* the Encounter heading shows from large screens on (it keeps its place, so the columns stay aligned) */
+.encounterHead {
+  @media (max-width: 1199.98px) {
+    visibility: hidden;
+  }
+}
+
+.sortIcon {
+  font-size: 16px !important;
+  vertical-align: text-bottom !important;
+}
+
+.row {
+  border-bottom: 4px solid var(--c-bg);
+  background-color: var(--c-bg-muted);
+  color: var(--c-link);
+  opacity: 0;
+  animation: fade-bottom-small 60ms ease-out both;
+  transition: background-color 150ms ease-in-out;
+
+  &:hover {
+    background-color: var(--c-bg-muted-dark);
+    text-decoration: none;
+  }
+}
+
+.cell {
+  padding: 10px 12px;
+  vertical-align: top;
+  color: var(--c-text);
+
+  & img {
+    vertical-align: middle;
+  }
+}
+
+.first {
+  position: relative;
+  grid-column: span 3;
+
+  & h4 {
+    color: var(--c-emphasis);
+  }
+}
+
+.character {
+  grid-column: span 2;
+  max-width: max-content;
+}
+
+.tag {
+  margin-right: 2px;
+}
+
+/* a wipe's boss health left: a thin bar down the row's left edge, filled from the bottom */
+.bossHp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 3px 0 0 3px;
+  background-color: var(--c-bg-muted-lighter);
+  overflow: hidden;
+}
+
+.bossHpFill {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background-color: var(--c-danger);
+}
+
+/* below medium screens, as uk-table-responsive: no headings, and each row's cells one under the other */
+@media (max-width: 959.98px) {
+  .table {
+    display: block;
+  }
+  .head {
+    display: none;
+  }
+  .row {
+    display: block;
+  }
+  .cell:not(:first-child) {
+    padding-top: 5px;
+  }
+  .cell:not(:last-child) {
+    padding-bottom: 5px;
+  }
+}
+
+/* ---- pages */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: var(--margin) 0;
+  padding: 0;
+  list-style: none;
+
+  & > li {
+    flex: none;
+    padding-left: 20px;
+  }
+  & > li > * {
+    display: block;
+    color: var(--c-muted);
+  }
+  & > li > a:hover,
+  & > li > a:focus-visible {
+    color: var(--c-text);
+    text-decoration: none;
+  }
+}
+
+.current > * {
+  color: var(--c-text) !important;
+}
+
+.disabled > * {
+  color: var(--c-muted);
+}
+
+/* (keyframes are local to a CSS module, so each module that animates has its own) */
+@keyframes fade-bottom-small {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
