@@ -1,10 +1,9 @@
-# Three images from one build (docker-compose.yml picks them with `target`):
+# Two images from one build (docker-compose.yml picks them with `target`):
 #   app            Django/gunicorn (the `web` and `worker` services): the JSON API and upload processing
-#   frontend       nginx (the `frontend` service): the frontend built from frontend/, proxying the rest to `web`
-#   frontend-next  nginx: the new frontend built from frontend-next/ (Rsbuild, React), proxying the rest to `web`
-# They share nothing: the frontend stages use only frontend/ and docker/nginx.conf, the frontend-next stages
-# only frontend-next/ and docker/nginx-next.conf.
-# `frontend` is the last stage, so a plain `docker build .` makes the nginx image; use `--target app` for Django.
+#   frontend-next  nginx (the `frontend-next` service): the frontend built from frontend-next/ (Rsbuild, React),
+#                  proxying the rest to `web`
+# The original frontend (frontend/, Ractive) is deprecated: kept in the repository, but no longer built here.
+# `frontend-next` is the last stage, so a plain `docker build .` makes the nginx image; use `--target app` for Django.
 
 # Elite Insights CLI (the log parser), taken from its own image, built from our fork
 # (https://github.com/abraxas-krown/GW2-Elite-Insights-Parser, its docker/cli/Dockerfile and "Docker CLI image"
@@ -55,8 +54,7 @@ EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["web"]
 
-# ---- frontend-next: build frontend-next/ (Rsbuild) and serve it with nginx; the new frontend, next to the
-# current one (kept before `frontend`, so that stays the default target) ----
+# ---- frontend-next: build frontend-next/ (Rsbuild) and serve it with nginx ----
 FROM node:24-alpine AS frontend-next-build
 WORKDIR /src
 # the dependencies first, so their layer is reused while only the code changes
@@ -68,14 +66,4 @@ RUN npm run build
 FROM nginx:1.27-alpine AS frontend-next
 COPY docker/nginx-next.conf /etc/nginx/conf.d/default.conf
 COPY --from=frontend-next-build /src/dist /usr/share/nginx/html
-EXPOSE 80
-
-# ---- frontend: build frontend/ (frontend/build.py, standard library only) and serve it with nginx ----
-FROM python:3.13-alpine AS frontend-build
-COPY frontend/ /src/
-RUN python /src/build.py --out /dist
-
-FROM nginx:1.27-alpine AS frontend
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=frontend-build /dist /usr/share/nginx/html
 EXPOSE 80

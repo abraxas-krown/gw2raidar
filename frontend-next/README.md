@@ -1,8 +1,8 @@
 # frontend-next
 
-The next GW2 Raidar frontend: React and TypeScript, built with [Rsbuild](https://rsbuild.rs). It runs alongside
-the current frontend (`../frontend`, Ractive), which stays as it is, and talks to the same Django backend through
-the same JSON API ([docs/frontend-api.md](../docs/frontend-api.md)). It shares no files with `../frontend`: the
+The GW2 Raidar frontend: React and TypeScript, built with [Rsbuild](https://rsbuild.rs). It replaces the original
+frontend (`../frontend`, Ractive), which is deprecated: left in the repository untouched, but no longer built or
+deployed. It talks to the Django backend through the JSON API ([docs/frontend-api.md](../docs/frontend-api.md)). It shares no files with `../frontend`: the
 images are a copy, and nothing here imports from there.
 
 ## Status

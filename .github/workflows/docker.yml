@@ -1,8 +1,8 @@
-# Builds the three images of the Dockerfile (`app`, `frontend` and `frontend-next`) on pushes to develop,
+# Builds the two images of the Dockerfile (`app` and `frontend-next`) on pushes to develop,
 # feature/* and release tags (v*), and publishes them to GHCR:
 #   ghcr.io/abraxas-krown/gw2raidar-app
-#   ghcr.io/abraxas-krown/gw2raidar-frontend
-#   ghcr.io/abraxas-krown/gw2raidar-frontend-next   (the new frontend, frontend-next/)
+#   ghcr.io/abraxas-krown/gw2raidar-frontend-next   (the frontend, frontend-next/)
+# The original frontend (frontend/) is deprecated and no longer built.
 # Tags: the branch name (feature/foo -> feature-foo), sha-<short commit>, and `latest` for develop.
 # A release tag (git tag v3.2.0) gives `3.2.0` and `3.2`.
 # Elite Insights comes ready-made from ghcr.io/abraxas-krown/gw2ei (built in our GW2-Elite-Insights-Parser fork).
@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [app, frontend, frontend-next]
+        target: [app, frontend-next]
     steps:
       - uses: actions/checkout@v4
 

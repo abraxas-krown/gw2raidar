@@ -6,10 +6,10 @@ one, or a replacement) only needs what is on this page.
 
 - Backend routes (Django): [`raidar/urls_api.py`](../raidar/urls_api.py). Page URLs and assets (nginx): [`docker/nginx.conf`](../docker/nginx.conf).
 - The frontend is [`frontend/`](../frontend/README.md); Django has no part in building or serving it.
-- A second frontend uses this contract too: [`frontend-next/`](../frontend-next/README.md) (React, Rsbuild), which
-  runs alongside the first. Its API client is [`frontend-next/src/api/`](../frontend-next/src/api/endpoints.ts),
+- The current frontend is [`frontend-next/`](../frontend-next/README.md) (React, Rsbuild); the original one above
+  is deprecated and no longer built or deployed. Its API client is [`frontend-next/src/api/`](../frontend-next/src/api/endpoints.ts),
   and its page URLs are the same ([`frontend-next/src/routes.tsx`](../frontend-next/src/routes.tsx),
-  [`docker/nginx-next.conf`](../docker/nginx-next.conf)). A change here must work for both.
+  [`docker/nginx-next.conf`](../docker/nginx-next.conf)). A change here must work for the current frontend.
 - The Ractive frontend calls the API only through [`frontend/assets/api.js`](../frontend/assets/api.js)
   (`window.RaidarAPI`). It maps URLs to pages only through [`router.js`](../frontend/assets/router.js) (`window.RaidarRouter`).
 - [`raidar/tests.py`](../raidar/tests.py) checks the parts of this contract that the frontend depends on.

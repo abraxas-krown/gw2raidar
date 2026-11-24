@@ -20,29 +20,9 @@ services:
       start_period: 30s
       start_interval: 2s
 
-  # The site's entry point: Traefik (Dokploy) sends the domain's traffic to this service, port 80. It serves
-  # the frontend (frontend/: the page shell and /assets/), and passes the API and the rest to `web` (docker/nginx.conf).
-  frontend:
-    image: ghcr.io/abraxas-krown/gw2raidar-frontend:${IMAGE_TAG:-latest}
-    pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy
-    restart: unless-stopped
-    expose:
-      - "80"
-    depends_on:
-      web:
-        condition: service_started
-    # the page shell answers, so nginx is up and the image has it
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
-      interval: 60s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  # The new frontend (frontend-next/: React, built with Rsbuild), alongside `frontend` and on the same `web`. It
-  # serves its own page shell, /app/ and /assets/, and passes the API and the rest to `web` (docker/nginx-next.conf).
-  # Give it its own domain in Dokploy (port 80), e.g. next.<site>, and add that host to ALLOWED_HOSTS (see DEPLOY.md).
-# Both frontends show the same users and encounters; each domain has its own login session.
+  # The site's entry point: Traefik (Dokploy) sends the domain's traffic to this service, port 80. It serves the
+  # frontend (frontend-next/: React, built with Rsbuild: the page shell, /app/ and /assets/), and passes the API
+  # and the rest to `web` (docker/nginx-next.conf). The original frontend (frontend/) is deprecated and not deployed.
   frontend-next:
     image: ghcr.io/abraxas-krown/gw2raidar-frontend-next:${IMAGE_TAG:-latest}
     pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy
@@ -60,7 +40,7 @@ services:
       retries: 3
       start_period: 10s
 
-  # Django: the JSON API, downloads and the admin; only reachable through `frontend` and `frontend-next`
+  # Django: the JSON API, downloads and the admin; only reachable through `frontend-next`
   web:
     image: ghcr.io/abraxas-krown/gw2raidar-app:${IMAGE_TAG:-latest}
     pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy
