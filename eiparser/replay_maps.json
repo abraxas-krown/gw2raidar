@@ -1,6 +1,6 @@
 {
   "Aetherblade Hideout": {
-    "image": "aetherblade-hideout.png",
+    "image": "aetherblade-hideout.svg",
     "size": [
       838,
       639
@@ -13,7 +13,7 @@
     ]
   },
   "Ai, Keeper of the Peak": {
-    "image": "ai-keeper-of-the-peak.png",
+    "image": "ai-keeper-of-the-peak.svg",
     "size": [
       823,
       1000
@@ -26,7 +26,7 @@
     ]
   },
   "Arkk": {
-    "image": "arkk.png",
+    "image": "arkk.svg",
     "size": [
       914,
       914
@@ -39,7 +39,7 @@
     ]
   },
   "Artsariiv": {
-    "image": "artsariiv.png",
+    "image": "artsariiv.svg",
     "size": [
       914,
       914
@@ -52,7 +52,7 @@
     ]
   },
   "Average Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -65,7 +65,7 @@
     ]
   },
   "Bandit Trio": {
-    "image": "bandit-trio.png",
+    "image": "bandit-trio.svg",
     "size": [
       1000,
       913
@@ -78,7 +78,7 @@
     ]
   },
   "Boneskinner": {
-    "image": "fraenir-of-jormag.png",
+    "image": "fraenir-of-jormag.svg",
     "size": [
       905,
       789
@@ -91,7 +91,7 @@
     ]
   },
   "Broken King": {
-    "image": "broken-king.png",
+    "image": "broken-king.svg",
     "size": [
       999,
       890
@@ -104,7 +104,7 @@
     ]
   },
   "Cairn": {
-    "image": "cairn.png",
+    "image": "cairn.svg",
     "size": [
       607,
       607
@@ -117,7 +117,7 @@
     ]
   },
   "Cardinal Adina": {
-    "image": "cardinal-adina.png",
+    "image": "cardinal-adina.svg",
     "size": [
       866,
       1000
@@ -130,10 +130,10 @@
     ]
   },
   "Cardinal Sabir": {
-    "image": "cardinal-sabir.png",
+    "image": "cardinal-sabir.svg",
     "size": [
       1000,
-      910
+      912
     ],
     "world": [
       -14122.0,
@@ -143,7 +143,7 @@
     ]
   },
   "Conjured Amalgamate": {
-    "image": "conjured-amalgamate.png",
+    "image": "conjured-amalgamate.svg",
     "size": [
       544,
       1000
@@ -156,7 +156,7 @@
     ]
   },
   "Cosmic Observatory": {
-    "image": "cosmic-observatory.png",
+    "image": "cosmic-observatory.svg",
     "size": [
       1169,
       1169
@@ -169,7 +169,7 @@
     ]
   },
   "Dark Ai": {
-    "image": "ai-keeper-of-the-peak.png",
+    "image": "ai-keeper-of-the-peak.svg",
     "size": [
       823,
       1000
@@ -182,7 +182,7 @@
     ]
   },
   "Decima, the Stormsinger": {
-    "image": "decima-the-stormsinger.png",
+    "image": "decima-the-stormsinger.svg",
     "size": [
       1602,
       1602
@@ -195,7 +195,7 @@
     ]
   },
   "Deimos": {
-    "image": "deimos.png",
+    "image": "deimos.svg",
     "size": [
       765,
       1000
@@ -208,7 +208,7 @@
     ]
   },
   "Dhuum": {
-    "image": "dhuum.png",
+    "image": "dhuum.svg",
     "size": [
       1000,
       899
@@ -221,7 +221,7 @@
     ]
   },
   "Elemental Ai": {
-    "image": "ai-keeper-of-the-peak.png",
+    "image": "ai-keeper-of-the-peak.svg",
     "size": [
       823,
       1000
@@ -234,10 +234,10 @@
     ]
   },
   "Ensolyss": {
-    "image": "ensolyss.png",
+    "image": "ensolyss.svg",
     "size": [
-      366,
-      366
+      343,
+      343
     ],
     "world": [
       532.0,
@@ -247,7 +247,7 @@
     ]
   },
   "Eparch": {
-    "image": "eparch.png",
+    "image": "eparch.svg",
     "size": [
       1035,
       934
@@ -260,10 +260,10 @@
     ]
   },
   "Escort": {
-    "image": "escort.png",
+    "image": "escort.svg",
     "size": [
-      1080,
-      676
+      2948,
+      1844
     ],
     "world": [
       -6081.86,
@@ -273,7 +273,7 @@
     ]
   },
   "Eyes of Judgement and Fate": {
-    "image": "eyes-of-judgement-and-fate.png",
+    "image": "eyes-of-judgement-and-fate.svg",
     "size": [
       809,
       1000
@@ -286,7 +286,7 @@
     ]
   },
   "Fraenir of Jormag": {
-    "image": "fraenir-of-jormag.png",
+    "image": "fraenir-of-jormag.svg",
     "size": [
       905,
       789
@@ -299,7 +299,7 @@
     ]
   },
   "Gorseval": {
-    "image": "gorseval.png",
+    "image": "gorseval.svg",
     "size": [
       957,
       1000
@@ -312,7 +312,7 @@
     ]
   },
   "Greer, the Blightbringer": {
-    "image": "greer-the-blightbringer.png",
+    "image": "greer-the-blightbringer.svg",
     "size": [
       1912,
       1845
@@ -325,7 +325,7 @@
     ]
   },
   "Guardian's Glade": {
-    "image": "guardian-s-glade.png",
+    "image": "guardian-s-glade.svg",
     "size": [
       1149,
       1149
@@ -338,7 +338,7 @@
     ]
   },
   "Harvest Temple": {
-    "image": "harvest-temple.png",
+    "image": "harvest-temple.svg",
     "size": [
       1024,
       1024
@@ -351,7 +351,7 @@
     ]
   },
   "Icebrood Construct": {
-    "image": "icebrood-construct.png",
+    "image": "icebrood-construct.svg",
     "size": [
       729,
       581
@@ -364,7 +364,7 @@
     ]
   },
   "Kaineng Overlook": {
-    "image": "kaineng-overlook.png",
+    "image": "kaineng-overlook.svg",
     "size": [
       1803,
       1918
@@ -377,7 +377,7 @@
     ]
   },
   "Kanaxai, Scythe of House Aurkus": {
-    "image": "kanaxai-scythe-of-house-aurkus.png",
+    "image": "kanaxai-scythe-of-house-aurkus.svg",
     "size": [
       334,
       370
@@ -390,7 +390,7 @@
     ]
   },
   "Keep Construct": {
-    "image": "keep-construct.png",
+    "image": "keep-construct.svg",
     "size": [
       987,
       1000
@@ -403,7 +403,7 @@
     ]
   },
   "Large Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -416,7 +416,7 @@
     ]
   },
   "Largos Twins": {
-    "image": "largos-twins.png",
+    "image": "largos-twins.svg",
     "size": [
       765,
       1000
@@ -429,7 +429,7 @@
     ]
   },
   "MAMA": {
-    "image": "mama.png",
+    "image": "mama.svg",
     "size": [
       664,
       407
@@ -442,7 +442,7 @@
     ]
   },
   "Massive Average Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -455,7 +455,7 @@
     ]
   },
   "Massive Standard Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -468,7 +468,7 @@
     ]
   },
   "Massive Vital Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -481,7 +481,7 @@
     ]
   },
   "Matthias": {
-    "image": "matthias.png",
+    "image": "matthias.svg",
     "size": [
       880,
       880
@@ -494,7 +494,7 @@
     ]
   },
   "Medium Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -507,7 +507,7 @@
     ]
   },
   "Mursaat Overseer": {
-    "image": "mursaat-overseer.png",
+    "image": "mursaat-overseer.svg",
     "size": [
       889,
       889
@@ -520,7 +520,7 @@
     ]
   },
   "Nexus of Eternity": {
-    "image": "nexus-of-eternity.png",
+    "image": "nexus-of-eternity.svg",
     "size": [
       1800,
       1800
@@ -533,7 +533,7 @@
     ]
   },
   "Old Lion's Court": {
-    "image": "old-lion-s-court.png",
+    "image": "old-lion-s-court.svg",
     "size": [
       1008,
       1008
@@ -546,7 +546,7 @@
     ]
   },
   "Qadim": {
-    "image": "qadim.png",
+    "image": "qadim.svg",
     "size": [
       1000,
       994
@@ -559,7 +559,7 @@
     ]
   },
   "Qadim the Peerless": {
-    "image": "qadim-the-peerless.png",
+    "image": "qadim-the-peerless.svg",
     "size": [
       1000,
       1000
@@ -572,7 +572,7 @@
     ]
   },
   "Resistant Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -585,7 +585,7 @@
     ]
   },
   "River of Souls": {
-    "image": "river-of-souls.png",
+    "image": "river-of-souls.svg",
     "size": [
       1000,
       387
@@ -598,7 +598,7 @@
     ]
   },
   "Sabetha": {
-    "image": "sabetha.png",
+    "image": "sabetha.svg",
     "size": [
       1000,
       990
@@ -611,7 +611,7 @@
     ]
   },
   "Samarog": {
-    "image": "samarog.png",
+    "image": "samarog.svg",
     "size": [
       1000,
       959
@@ -624,10 +624,10 @@
     ]
   },
   "Siax": {
-    "image": "siax.png",
+    "image": "siax.svg",
     "size": [
-      476,
-      548
+      485,
+      547
     ],
     "world": [
       663.0,
@@ -637,7 +637,7 @@
     ]
   },
   "Skorvald the Shattered": {
-    "image": "skorvald-the-shattered.png",
+    "image": "skorvald-the-shattered.svg",
     "size": [
       987,
       1000
@@ -650,7 +650,7 @@
     ]
   },
   "Slothasor": {
-    "image": "slothasor.png",
+    "image": "slothasor.svg",
     "size": [
       654,
       1000
@@ -663,7 +663,7 @@
     ]
   },
   "Soul Eater": {
-    "image": "soul-eater.png",
+    "image": "soul-eater.svg",
     "size": [
       710,
       709
@@ -676,7 +676,7 @@
     ]
   },
   "Soulless Horror": {
-    "image": "soulless-horror.png",
+    "image": "soulless-horror.svg",
     "size": [
       1000,
       1000
@@ -689,7 +689,7 @@
     ]
   },
   "Spirit Race": {
-    "image": "spirit-race.png",
+    "image": "spirit-race.svg",
     "size": [
       581,
       1193
@@ -702,7 +702,7 @@
     ]
   },
   "Standard Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -715,7 +715,7 @@
     ]
   },
   "Temple of Febe": {
-    "image": "temple-of-febe.png",
+    "image": "temple-of-febe.svg",
     "size": [
       1149,
       1149
@@ -728,7 +728,7 @@
     ]
   },
   "Tough Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -741,7 +741,7 @@
     ]
   },
   "Twisted Castle": {
-    "image": "twisted-castle.png",
+    "image": "twisted-castle.svg",
     "size": [
       774,
       1000
@@ -754,7 +754,7 @@
     ]
   },
   "Ura, the Steamshrieker": {
-    "image": "ura-the-steamshrieker.png",
+    "image": "ura-the-steamshrieker.svg",
     "size": [
       1746,
       1860
@@ -767,7 +767,7 @@
     ]
   },
   "Vale Guardian": {
-    "image": "vale-guardian.png",
+    "image": "vale-guardian.svg",
     "size": [
       889,
       889
@@ -780,7 +780,7 @@
     ]
   },
   "Vital Kitty Golem": {
-    "image": "kitty-golem.png",
+    "image": "kitty-golem.svg",
     "size": [
       895,
       629
@@ -793,7 +793,7 @@
     ]
   },
   "Voice and Claw of the Fallen": {
-    "image": "fraenir-of-jormag.png",
+    "image": "fraenir-of-jormag.svg",
     "size": [
       905,
       789
@@ -806,7 +806,7 @@
     ]
   },
   "Whisper of Jormag": {
-    "image": "whisper-of-jormag.png",
+    "image": "whisper-of-jormag.svg",
     "size": [
       1682,
       1682
@@ -832,7 +832,7 @@
     ]
   },
   "Xera": {
-    "image": "xera.png",
+    "image": "xera.svg",
     "size": [
       1000,
       897
@@ -845,7 +845,7 @@
     ]
   },
   "Xunlai Jade Junkyard": {
-    "image": "xunlai-jade-junkyard.png",
+    "image": "xunlai-jade-junkyard.svg",
     "size": [
       1485,
       1292

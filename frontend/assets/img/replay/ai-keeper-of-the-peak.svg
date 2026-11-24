@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 823 1000" width="823" height="1000">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<circle class="fill-base" cx="411" cy="588" r="402"/>
+<path class="fill-edge" d="M344.5 428.5L344.5 378.5A50 50 0 0 0 309.1 393.1ZM251.5 521.5L201.5 521.5A50 50 0 0 1 216.1 486.1ZM344.5 747.5L344.5 797.5A50 50 0 0 1 309.1 782.9ZM251.5 654.5L201.5 654.5A50 50 0 0 0 216.1 689.9ZM477.5 428.5L477.5 378.5A50 50 0 0 1 512.9 393.1ZM570.5 521.5L620.5 521.5A50 50 0 0 0 605.9 486.1ZM477.5 747.5L477.5 797.5A50 50 0 0 0 512.9 782.9ZM570.5 654.5L620.5 654.5A50 50 0 0 1 605.9 689.9Z"/>
+<path class="fill-none stroke-edge" stroke-width="8.5" stroke-linejoin="miter" d="M344.5 195.6L344.5 428.5L179.9 263.9M18.6 521.5L251.5 521.5L86.9 356.9M344.5 980.4L344.5 747.5L179.9 912.1M18.6 654.5L251.5 654.5L86.9 819.1M477.5 195.6L477.5 428.5L642.1 263.9M803.4 521.5L570.5 521.5L735.1 356.9M477.5 980.4L477.5 747.5L642.1 912.1M803.4 654.5L570.5 654.5L735.1 819.1"/>
+<circle class="fill-none stroke-edge" stroke-width="4" cx="411" cy="588" r="124"/>
+<circle class="fill-none stroke-deep" stroke-width="3" cx="411" cy="588" r="78.3"/>
+<circle class="fill-none stroke-deep" stroke-width="4" cx="411" cy="588" r="52"/>
+<circle class="fill-none stroke-deep" stroke-width="18" cx="411" cy="588" r="402"/>
+<g class="fill-edge stroke-deep" stroke-width="2"><circle cx="360.3" cy="180.8" r="11"/><circle cx="457.8" cy="179.9" r="11"/></g>
+<circle class="fill-highlight" fill-opacity=".73" cx="501" cy="41" r="41.5"/>
+<g class="fill-none stroke-ink" stroke-width="2.5" stroke-linejoin="round"><path d="M483 19H519V50Q519 62 501 72Q483 62 483 50Z"/><path d="M501 31L509 41L501 51L493 41Z"/></g>
+</svg>

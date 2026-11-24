@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 1485 1292" width="1485" height="1292">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<path class="fill-deep" d="M1157 144L1043 123L708 0L579 19L468 63L438 105L433 296L407 381L333 479L185 626L87 780L67 848L66 916L145 1007L142 1089L0 1219L113 1291L229 1178L543 1182L688 1108L750 1121L847 1102L1002 1028L1204 990L1320 989L1405 974L1481 920L1478 605L1324 486L1229 486L1234 314L1219 224Z"/>
+<path class="fill-base stroke-ink" stroke-width="2.5" stroke-linejoin="round" d="M1459 654L1424 630L1394 564L1357 570L1349 539L1310 545L1284 489L1195 490L1197 530L1156 534L1145 505L1146 378L1119 361L1121 318L1055 250L1012 250L989 230L840 227L837 195L816 195L825 75L790 55L606 59L600 90L558 109L530 151L521 189L499 221L499 269L535 286L520 326L538 368L627 378L657 401L751 404L822 387L829 366L851 356L847 326L859 296L966 288L999 304L1038 353L1073 607L1054 632L1029 700L1034 757L1076 831L1069 866L976 891L965 931L858 932L825 946L696 946L695 933L677 930L678 889L657 879L640 767L611 755L602 724L572 731L560 705L542 696L509 697L507 677L382 678L263 733L198 799L208 879L187 893L195 979L224 990L242 1068L293 1082L308 1102L353 1102L353 1127L493 1129L494 1105L555 1104L557 1076L640 1073L660 1063L663 1039L920 1044L927 1010L1022 1006L1026 984L1052 980L1055 957L1197 957L1211 976L1295 973L1301 957L1332 957L1354 977L1402 972L1416 945L1418 906L1443 860L1432 808L1461 783L1468 748Z"/>
+<path class="fill-none stroke-ink" stroke-width="2.5" d="M860 228L860 297M1058 503L1147 505M1066 865L1108 957M697 946L698 1041"/>
+<path class="fill-base stroke-ink" stroke-width="2.5" stroke-linejoin="round" d="M143 1093L4 1218L113 1288L227 1177Z"/>
+<circle class="fill-none stroke-ink" stroke-width="2.5" cx="131.5" cy="1203.5" r="6"/>
+</svg>

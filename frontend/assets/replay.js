@@ -10,7 +10,8 @@
  *     buffOrder: ['might', 'fury', ...],          // the order buffs are listed in
  *     conditionOrder: ['bleeding', ...],          // the order conditions are listed in
  *     buffInfo: {might: {name, icon}, ...},       // buffs and conditions without info are not listed
- *     onView: view => ...,                         // the state of players and targets, a few times a second
+ *     mapTheme: {deep: '#4f739c', accent: '#fff'}, // SVG maps only: colours overriding the SVG's own (see setMapTheme)
+ *     onView: view => ...,                       // the state of players and targets, a few times a second
  *                                                  // (players' DPS so far, from their running damage totals)
  *   });
  *   viewer.seek(ms); viewer.select(actorIndex); viewer.destroy();
@@ -18,7 +19,20 @@
 (function () {
   'use strict';
 
-  const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16];
+  // The SVG's source with the given colours set as --c-* variables on its root (an inline style beats the
+  // SVG's own theme-* defaults). Colours not given keep the SVG's.
+  function themedSvg(text, colours) {
+    if (!colours) return text;
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const root = doc.documentElement;
+    if (!root || root.nodeName !== 'svg') return text;
+    Object.keys(colours).forEach(key => {
+      if (/^[a-z]+$/.test(key)) root.style.setProperty('--c-' + key, colours[key]);
+    });
+    return new XMLSerializer().serializeToString(root);
+  }
+
+  const SPEEDS =[0.25, 0.5, 1, 2, 4, 8, 16];
   // back and forward skip 5 seconds of watching: more of the fight when it plays faster
   const SKIP_MS = 5000;
   const MAX_ZOOM = 16;
@@ -317,17 +331,51 @@
     }
 
     destroy() {
+      this.destroyed = true;
       this.pause();
       this.listeners.forEach(([target, type, handler, options]) => target.removeEventListener(type, handler, options));
       this.listeners = [];
     }
 
+    // A map that is an SVG is themed by its --c-* colour variables (see the style in the SVG). It is drawn on a
+    // canvas, so the page's CSS cannot reach it: the theme is applied to the SVG's source, which is then loaded as
+    // an image. colours maps the SVG's colour names (ink, deep, strong, edge, base, mid, light, pale, accent,
+    // highlight) to CSS colours: {deep: '#4f739c', accent: '#e07a5f', ...}. Any left out keep the SVG's own.
+    // Other maps (PNGs) are not themed.
+    setMapTheme(colours) {
+      this.options.mapTheme = colours;
+      if (this.mapSource) this.loadMapSvg();
+    }
+
+    loadMapSvg() {
+      const url = this.data.map.image, serial = this.mapSerial = (this.mapSerial || 0) + 1;
+      const source = this.mapSource || (this.mapSource = fetch(url).then(response => {
+        if (!response.ok) throw new Error('Map ' + url + ': ' + response.status);
+        return response.text();
+      }));
+      source.then(text => {
+        if (serial !== this.mapSerial || this.destroyed) return;
+        const image = new Image();
+        image.onload = () => {
+          if (serial !== this.mapSerial || this.destroyed) return;
+          this.mapImage = image;
+          this.render();
+        };
+        image.onerror = () => { this.mapImage = null; };
+        image.src = URL.createObjectURL(new Blob([themedSvg(text, this.options.mapTheme)], {type: 'image/svg+xml'}));
+      }).catch(() => { this.mapSource = null; });
+    }
+
     loadImages() {
       const redraw = () => this.render();
       if (this.data.map && this.data.map.image) {
-        this.mapImage = new Image();
-        this.mapImage.onload = redraw;
-        this.mapImage.src = this.data.map.image;
+        if (/\.svg(\?.*)?$/i.test(this.data.map.image)) {
+          this.loadMapSvg();
+        } else {
+          this.mapImage = new Image();
+          this.mapImage.onload = redraw;
+          this.mapImage.src = this.data.map.image;
+        }
       }
       this.icons = {};
       const root = this.options.staticRoot || '/assets/img/';
