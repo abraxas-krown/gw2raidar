@@ -46,15 +46,13 @@
   line-height: 1;
 }
 
+/* the badges on a line of text, as the current site has them (inline, so the line's height sets the spacing) */
 .badges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  /* badges keep 4px apart with their own margin (controls.module.css); the tags dropdown is not a badge */
-  row-gap: 4px;
-
   & > :not(:first-child) {
     margin-left: 4px;
+  }
+  & > div {
+    vertical-align: middle;
   }
 }
 

@@ -89,19 +89,27 @@
   }
 }
 
+/* the account links of the top bar: their icons in the link colour, at the text's size (16px), as the current site
+   shows them (its uk-text-small loses to the navbar's font size there) */
 .noHover > a {
-  color: var(--c-text) !important;
-  font-size: var(--font-size-small) !important;
+  font-size: var(--font-size);
 }
 
 .iconGap {
   margin-right: var(--margin-small);
 }
 
+/* the logo sits on a line of the logo's text size (.uk-logo), as the current site's inline SVG does: the line's
+   descender space under it is part of the bar's height */
 .logo {
   display: block;
   flex: none;
-  line-height: 0;
+  font-size: var(--font-size-large);
+  line-height: 1.25;
+
+  & img {
+    vertical-align: baseline;
+  }
 
   &:hover {
     text-decoration: none;

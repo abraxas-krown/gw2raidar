@@ -17,6 +17,12 @@
   padding-left: var(--gutter);
 }
 
+/* Every item of the bar, as the current site's navbar has them (.uk-navbar li, li > a): 24px apart on the right,
+   and no padding of their own, so the underline is right under the text */
+.bar li {
+  margin-right: var(--gutter);
+}
+
 /* tabs, as uk-tab: muted links, the chosen one underlined */
 .tabs {
   display: flex;
@@ -35,7 +41,7 @@
   & > li > button,
   & > li > div > button {
     display: block;
-    padding: 5px 10px;
+    padding: 0;
     border: none;
     border-bottom: 2px solid transparent;
     background: none;
@@ -84,7 +90,7 @@
     padding-left: 4px;
   }
   & > li > button {
-    padding: 5px 8px;
+    padding: 0;
     white-space: nowrap;
   }
 
@@ -126,7 +132,7 @@
 
   & > li > button {
     display: block;
-    padding: 5px 4px;
+    padding: 0;
     border: none;
     border-bottom: 2px solid transparent;
     background: none;

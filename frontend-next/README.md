@@ -7,16 +7,20 @@ images are a copy, and nothing here imports from there.
 
 ## Status
 
-Ported, with the current site's look:
+Every page of the current frontend is ported, with its look:
 
 - the page around every page: header, navigation, footer
 - log in, register, reset password, log out
 - **Encounters**: the list, with its filters, sorting and pages
 - **Encounter**: header (with category and tags), Overview, the Buffs tabs, Boss Metrics, the phase menu, and the
   Replay tab
+- **Global Stats**, **Leaderboards** and **Personal Stats** (with the graph of a stat over the user's encounters)
+- **Upload** (dropping log files anywhere on the site works too) and **Account**
+- the info pages: Help, Release Notes, Contact Us, About Us, API, and Framework (which shows this frontend's own
+  building blocks, where the current site showed UIkit's)
 
-Not yet ported (their URLs exist and show a placeholder): Global Stats, Leaderboards, Personal Stats, Upload,
-Account and the info pages. Polling for processed uploads and for a new server version is not here yet either.
+While a user is signed in, the app polls for processed uploads every 30 seconds, and reloads when the backend has
+a new version (`session/Background.tsx`), as the current frontend does.
 
 ## Working on it
 

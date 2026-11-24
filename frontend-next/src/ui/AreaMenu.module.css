@@ -1,0 +1,93 @@
+/* a row of buttons sharing their borders' corners (uk-button-group), the open menu across all of it */
+.menu {
+  position: relative;
+  display: flex;
+  width: 100%;
+  margin: var(--margin) 0;
+
+  & > button {
+    border-radius: 0;
+  }
+  & > button:first-of-type {
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+  & > button:last-of-type {
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+}
+
+.box {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 1020;
+  padding: var(--margin);
+  border: var(--border-width) solid var(--c-text);
+  background: var(--c-bg-muted);
+  color: var(--c-text);
+
+  @supports (backdrop-filter: blur(6px)) {
+    backdrop-filter: blur(6px);
+    background-color: rgb(61 56 82 / 0.7);
+  }
+
+  & ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    white-space: nowrap;
+  }
+  & a {
+    display: block;
+    padding: 5px 0;
+    color: var(--c-text);
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      color: #f7dbb4;
+      outline: none;
+    }
+  }
+}
+
+.all {
+  margin-bottom: var(--margin) !important;
+}
+
+/* the wings side by side, as many columns as the kind says (columns) */
+.wings {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gutter);
+
+  @media (min-width: 960px) {
+    grid-template-columns: repeat(var(--columns, 3), minmax(0, 1fr));
+  }
+}
+
+.header {
+  padding: 5px 0;
+  color: var(--c-emphasis);
+  font-size: var(--font-size-small);
+  text-transform: uppercase;
+}
+
+.active > a {
+  color: #f7dbb4 !important;
+}
+
+.disabled > a {
+  color: var(--c-muted) !important;
+  cursor: default;
+}
+
+.selectTitle {
+  margin-top: var(--margin);
+  font-family: var(--font-mono);
+}
+
+.select {
+  margin-bottom: var(--margin);
+}

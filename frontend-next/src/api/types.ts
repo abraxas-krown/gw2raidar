@@ -26,7 +26,8 @@ export interface BuffTab {
 export interface Bootstrap {
   archetypes: Record<string, string>;
   areas: Record<string, Area>;
-  boss_locations: { name: string; wings: { name: string; bosses: number[] }[] }[];
+  // the kinds of encounter (raids, fractals, …): their "all" entry, how many columns their menu has, and their wings
+  boss_locations: { name: string; all?: string; columns?: number; wings: { name: string; bosses: number[] }[] }[];
   // profession id -> elite id -> specialisation name
   specialisations: Record<string, Record<string, string>>;
   categories: Record<string, string>;
@@ -171,6 +172,12 @@ export interface Encounter {
   max_player_recv?: number;
   max_player_breakbar?: number;
 }
+
+// ---- poll.json: what happened to the user's uploads since the last poll
+
+export type Notification =
+  | { type: 'upload'; filename: string; upload_id: number; uploaded_by: string; encounter_id: number; encounter_url_id: string; encounter?: EncounterRow }
+  | { type: 'upload_error'; upload_id: number; error: string };
 
 // ---- replay/<url_id>.json: passed to the replay viewer as it is (see Replay/viewer.d.ts)
 export type { ReplayData } from "../pages/encounter/Replay/viewer";

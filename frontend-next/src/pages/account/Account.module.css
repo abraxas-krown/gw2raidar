@@ -1,0 +1,91 @@
+/* the tabs on the left, the profile on the right; one under the other below medium screens */
+.account {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gutter-medium);
+
+  @media (min-width: 960px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.smallBottom {
+  margin-bottom: var(--margin-small);
+}
+
+.choices {
+  margin: 0;
+}
+
+/* the palette's colours from the 0th to the 100th percentile: a space each, in a row */
+.swatches {
+  white-space: nowrap;
+}
+
+.field {
+  margin-bottom: var(--margin);
+}
+
+/* an input and its button: three quarters and a quarter */
+.row {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: var(--gutter-small);
+  align-items: start;
+}
+
+.help {
+  margin-top: var(--margin-large);
+}
+
+.privacy {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.privacyChoice {
+  padding: var(--margin);
+
+  &:first-child {
+    padding-left: 0;
+  }
+}
+
+/* as uk-table: on the muted background, headings in small mono capitals */
+.table {
+  width: 100%;
+  margin: var(--margin) 0;
+  border-collapse: collapse;
+  background: var(--c-bg-muted);
+
+  & th {
+    padding: 16px 12px;
+    text-align: left;
+    vertical-align: bottom;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    font-weight: 400;
+    text-transform: uppercase;
+    color: var(--c-text);
+    background: var(--c-bg);
+  }
+  & td {
+    padding: 16px 12px;
+    vertical-align: top;
+  }
+}
+
+/* uk-button-danger */
+.danger {
+  background-color: var(--c-danger);
+  border-color: var(--c-danger);
+  color: var(--c-text);
+
+  &:hover,
+  &:focus-visible {
+    background-color: #ac3940;
+    border-color: #ac3940;
+    color: var(--c-text);
+  }
+}

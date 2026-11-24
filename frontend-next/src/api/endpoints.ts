@@ -1,6 +1,6 @@
 // One function per JSON endpoint of docs/frontend-api.md (the same list as frontend/assets/api.js).
 import { get, post, postWithProgress, type FormFields } from './client';
-import type { Bootstrap, Encounter, EncounterRow, ReplayData, Session } from './types';
+import type { Bootstrap, Encounter, EncounterRow, Notification, ReplayData, Session } from './types';
 
 // login.json and register.json answer as initial.json, plus the new CSRF token (Django sets the cookie itself)
 export type LoginResponse = Session & { csrftoken?: string; page?: unknown };
@@ -42,7 +42,8 @@ export const api = {
   changePassword: (fields: { old_password: string; new_password1: string; new_password2: string }) =>
     post<Record<string, never>>('change_password.json', fields),
   changeEmail: (email: string) => post<{ email: string }>('change_email.json', { email }),
-  addAPIKey: (apiKey: string) => post<{ account_name: string }>('add_api_key.json', { api_key: apiKey }),
+  addAPIKey: (apiKey: string) =>
+    post<{ account_name: string; encounters?: EncounterRow[] }>('add_api_key.json', { api_key: apiKey }),
   removeAPIKey: (accountName: string) =>
     post<{ account_name: string }>('remove_api_key.json', { account_name: accountName }),
   setPrivacy: (privacy: number) => post<Record<string, never>>('privacy.json', { privacy }),
@@ -56,7 +57,7 @@ export const api = {
     postWithProgress<{ filename: string; upload_id: number }>('upload.json', form, onProgress),
   // notifications since lastId (processed uploads), and the server's version
   poll: (lastId?: number) =>
-    post<{ notifications: unknown[]; version: string; last_id?: number }>(
+    post<{ notifications: Notification[]; version: string; last_id?: number }>(
       'poll.json',
       lastId ? { last_id: lastId } : undefined,
     ),

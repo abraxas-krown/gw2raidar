@@ -36,7 +36,7 @@ export function EncountersPage() {
   if (query.isPending) return <Loader />;
   if (!encounters) return null;
   if (!encounters.length) {
-    return <p>No encounters yet. Uploading logs is not part of the new frontend yet.</p>;
+    return <p>Drag and drop evtc files to this window to upload.</p>;
   }
 
   const onSort = (prop: SortProp, dir: 'up' | 'down') => {

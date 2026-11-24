@@ -121,6 +121,48 @@
     white-space: nowrap;
   }
 
+  /* radio buttons and checkboxes, as UIkit's uk-radio and uk-checkbox: dark, the chosen ones in the primary colour */
+  input:is([type="radio"], [type="checkbox"]) {
+    box-sizing: border-box;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin: -4px 0 0;
+    padding: 0;
+    overflow: hidden;
+    vertical-align: middle;
+    appearance: none;
+    background-color: var(--c-bg-muted-dark);
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+
+    &:not(:disabled) {
+      cursor: pointer;
+    }
+    &:focus {
+      outline: none;
+    }
+    &:checked {
+      background-color: var(--c-bg-primary);
+    }
+    &:checked:focus {
+      background-color: #5c1b3e;
+    }
+    &:disabled {
+      background-color: var(--c-bg-muted);
+    }
+  }
+  input[type="radio"] {
+    border-radius: 50%;
+
+    &:checked {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20fill%3D%22%23FCF1E2%22%20cx%3D%228%22%20cy%3D%228%22%20r%3D%222%22%3E%3C%2Fcircle%3E%3C%2Fsvg%3E");
+    }
+  }
+  input[type="checkbox"]:checked {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpolygon%20fill%3D%22%23FCF1E2%22%20points%3D%2212%201%205%207.5%202%205%201%205.5%205%2010%2013%201.5%22%2F%3E%3C%2Fsvg%3E");
+  }
+
   /* Material Icons take the size and line of the text they are in */
   .material-icons {
     font-size: inherit !important;

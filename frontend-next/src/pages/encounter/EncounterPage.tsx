@@ -21,7 +21,9 @@ export function EncounterPage() {
   const query = useEncounterQuery(urlId);
   const signedIn = useSignedIn();
 
-  React.useEffect(() => window.scrollTo(0, 0), [urlId]);
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [urlId]);
 
   if (query.isPending) return <Loader />;
   if (query.error) {

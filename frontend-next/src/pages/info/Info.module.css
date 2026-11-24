@@ -1,0 +1,147 @@
+/* The info pages: text in the site's base styles, a few layouts around it */
+.page {
+  min-width: 0;
+
+  & img {
+    display: block;
+    margin: var(--margin) 0;
+  }
+  & pre {
+    padding: 10px;
+    overflow: auto;
+    background: var(--c-bg-muted);
+    border: 1px solid var(--c-border);
+    font-size: var(--font-size-small);
+    line-height: 1.5;
+
+    & code {
+      color: inherit;
+      white-space: pre;
+    }
+  }
+}
+
+/* ---- Help: its menu on the left (a sixth of the width), the text in two thirds, as a uk-grid: the columns
+   share the width with their gutters, each column's gutter on its left */
+.help {
+  --grid-gutter: 30px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-left: calc(-1 * var(--grid-gutter));
+
+  & > * {
+    padding-left: var(--grid-gutter);
+  }
+
+  @media (min-width: 960px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 4fr) minmax(0, 1fr);
+  }
+  @media (min-width: 1200px) {
+    --grid-gutter: 40px;
+  }
+}
+
+/* the sections, as uk-tab-left: muted links, the current one underlined, staying in view while scrolling */
+.helpMenu {
+  @media (min-width: 960px) {
+    position: sticky;
+    top: var(--margin);
+    align-self: start;
+  }
+
+  & ul {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  & a {
+    display: block;
+    padding: 5px 0;
+    border-bottom: 2px solid transparent;
+    color: var(--c-muted);
+    text-align: left;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--c-text);
+      text-decoration: none;
+    }
+  }
+  & .current a {
+    border-bottom-color: var(--c-text);
+    color: var(--c-emphasis);
+  }
+}
+
+.current {
+  /* (a marker class: see .helpMenu) */
+}
+
+/* ---- Contact */
+/* uk-padding-large: 24px, 72px from large screens on */
+.contact {
+  padding: var(--gutter);
+  text-align: center;
+
+  @media (min-width: 1200px) {
+    padding: var(--gutter-large);
+  }
+}
+
+.field {
+  margin-bottom: var(--margin);
+}
+
+.medium {
+  width: 200px;
+}
+
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 4px 10px;
+  border: var(--border-width) solid var(--c-muted);
+  background: var(--c-bg-muted);
+  color: var(--c-text);
+  vertical-align: top;
+
+  &:focus {
+    outline: none;
+    border-color: var(--c-emphasis);
+  }
+  &::placeholder {
+    color: var(--c-muted);
+  }
+}
+
+/* ---- Framework */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+
+.badges {
+  margin-bottom: var(--margin);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+
+  & > * + * {
+    margin-left: 0 !important;
+  }
+}
+
+.form {
+  max-width: 450px;
+}
+
+.legend {
+  width: 100%;
+  padding: 0;
+  font-size: var(--font-size-large);
+  line-height: 1.4;
+}
