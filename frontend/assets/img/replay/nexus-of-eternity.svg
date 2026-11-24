@@ -15,6 +15,6 @@
   .fill-none{fill:none} .stroke-none{stroke:none}
 </style>
 <circle class="fill-base stroke-ink" stroke-width="22" cx="899.5" cy="899.5" r="889"/>
-<g class="fill-none stroke-deep" stroke-width="3.5"><circle cx="899.5" cy="899.5" r="91"/><circle cx="899.5" cy="899.5" r="70"/><circle cx="899.5" cy="899.5" r="49.5"/></g>
-<circle class="fill-accent stroke-deep" stroke-width="4" cx="899.5" cy="899.5" r="32"/>
+<g class="fill-none stroke-edge" stroke-width="3.5"><circle cx="899.5" cy="899.5" r="91"/><circle cx="899.5" cy="899.5" r="70"/><circle cx="899.5" cy="899.5" r="49.5"/></g>
+<circle class="fill-deep stroke-deep" stroke-width="4" cx="899.5" cy="899.5" r="32"/>
 </svg>
