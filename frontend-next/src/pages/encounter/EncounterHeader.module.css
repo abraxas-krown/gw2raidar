@@ -51,7 +51,9 @@
   & > :not(:first-child) {
     margin-left: 4px;
   }
+  /* the tags dropdown's wrapper: exactly as tall as its badge, so it lines up with the others */
   & > div {
+    display: inline-flex;
     vertical-align: middle;
   }
 }
@@ -72,6 +74,11 @@
 
 .tagsField {
   margin: 0;
+}
+
+/* the Save button is as wide as its label, not the form */
+.tagsSave {
+  justify-self: start;
 }
 
 /* ---- the percentile the tables compare against: badges, the chosen one lit */

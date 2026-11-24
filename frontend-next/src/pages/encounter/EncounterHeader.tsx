@@ -157,7 +157,7 @@ function TagsEditor({ encounter }: TagsEditorProps) {
             {Object.entries(bootstrap.categories).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </Select>
           <TagsInput className={styles.tagsField} value={tags} onChange={setTags} placeholder="Tags" />
-          <Button type="submit" variant="primary" small disabled={save.isPending}>Save</Button>
+          <Button type="submit" variant="primary" small className={styles.tagsSave} disabled={save.isPending}>Save</Button>
         </form>
       )}
     </Dropdown>
