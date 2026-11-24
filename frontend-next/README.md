@@ -98,8 +98,9 @@ styles (`replay.css`) are global, not a CSS module.
 
 The Dockerfile's `frontend-next` target builds this app and serves it with nginx
 ([docker/nginx-next.conf](../docker/nginx-next.conf)), which passes everything else to the `web` service. CI
-publishes it as `ghcr.io/abraxas-krown/gw2raidar-frontend-next`. Locally, `docker compose --profile next up
---build` runs it next to the current frontend at http://localhost:8081. See [DEPLOY.md](../DEPLOY.md).
+publishes it as `ghcr.io/abraxas-krown/gw2raidar-frontend-next`, and `docker-compose.yml` runs it as the
+`frontend-next` service, next to `frontend`. Locally, `docker compose up --build` runs it at http://localhost:8081.
+See [DEPLOY.md](../DEPLOY.md).
 
 Adding a page with a new URL means adding it to `src/routes.tsx` and to the page locations in
 `docker/nginx-next.conf`.

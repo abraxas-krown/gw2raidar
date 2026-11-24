@@ -114,16 +114,19 @@ runs the code as it is. Dokploy names `docker-compose.yml` explicitly and does n
 `frontend-next/` is a new frontend (React, built with Rsbuild; see its README) that runs alongside the current
 one. The Dockerfile's `frontend-next` target serves it with nginx (`docker/nginx-next.conf`), passing everything
 else to `web` as the `frontend` image does. CI publishes it as `ghcr.io/abraxas-krown/gw2raidar-frontend-next`,
-with the same tags as the other images. It is not part of `docker-compose.yml`, so nothing deploys it yet.
+with the same tags as the other images, and `docker-compose.yml` runs it as the `frontend-next` service.
 
-Locally, the override has it under the `next` profile:
+In Dokploy, give `frontend-next` its own domain (port 80), for example `next.<site>`, next to the domain of
+`frontend`. Add that host name to `ALLOWED_HOSTS` too: Django only answers the hosts listed there, and takes its
+trusted CSRF origins from them, so logging in through the new domain needs it.
 
-```sh
-docker compose --profile next up --build   # the new frontend at http://localhost:8081, on the same `web`
-```
+Before the first deploy that includes it:
 
-To try it on a server, run the image next to `frontend` on the same network as `web`, and route a second host
-name to its port 80.
+- its image must exist under the deployed `IMAGE_TAG`: wait for the Actions run of that branch or tag to finish;
+- the new GHCR package `gw2raidar-frontend-next` is private when first published; make it public as for the others
+  (or have the registry credentials cover it), or the deploy cannot pull it.
+
+Locally, `docker compose up --build` builds and runs it with the rest, at http://localhost:8081.
 
 ## Resetting the database
 
