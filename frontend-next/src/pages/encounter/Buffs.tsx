@@ -18,22 +18,25 @@ export function Buffs({ tabId }: BuffsProps) {
   const { encounter, phase, boonOutput, setBoonOutput } = useEncounterView();
   const buffTab = encounter.buff_tabs.find(tab => tab.id === tabId);
 
-  // Only the boons have percentiles to compare against. The other tabs colour an uptime by its share of the
-  // fight, and an output by how it ranks among the squad's players.
+  // Only the boons have percentiles to compare against. On the other tabs an uptime is coloured by its share of
+  // the fight (a stacking buff's by its stacks of the most it can have), and an output, or the uptime of a
+  // stacking buff whose most is not known, by how it ranks among the squad's players.
   const hasPercentiles = tabId === 'boons';
-  const squadOutputs = React.useMemo(() => {
+  const squad = React.useMemo(() => {
     const byCode: Record<string, Float32Array> = {};
-    if (!buffTab || hasPercentiles || !boonOutput) return byCode;
+    if (!buffTab || hasPercentiles) return byCode;
     const members = Object.values(phase.parties).flatMap(party => party.members);
     for (const code of buffTab.order) {
-      byCode[code] = Float32Array.from(members.map(member => Number(member.buffs_out?.[code]) || 0)).sort();
+      byCode[code] = Float32Array.from(members.map(member => Number((boonOutput ? member.buffs_out : member.buffs)?.[code]) || 0)).sort();
     }
     return byCode;
   }, [hasPercentiles, boonOutput, phase, buffTab]);
 
-  // uptimes are percents; a stacking buff's is its stacks of the most it can have (25)
-  const uptimePercent = (buff: BuffInfo | undefined, value: number) =>
-    Math.max(0, Math.min(100, buff?.stacks ? (100 * value) / 25 : value));
+  // an uptime in percent; for a stacking buff, its stacks of the most it can have (undefined when not known)
+  const uptimePercent = (buff: BuffInfo | undefined, value: number): number | undefined => {
+    if (!buff || !('stacks' in buff)) return Math.max(0, Math.min(100, value));
+    return typeof buff.stacks === 'number' && buff.stacks > 0 ? Math.min(100, (100 * value) / buff.stacks) : undefined;
+  };
 
   if (!buffTab) return null;
 
@@ -46,10 +49,11 @@ export function Buffs({ tabId }: BuffsProps) {
         let percentile: number | undefined;
         let relativeTo: string | undefined;
         if (!hasPercentiles && variant !== 'party') {
-          if (!boonOutput) {
-            percentile = Math.round(uptimePercent(buff, value));
+          const share = boonOutput ? undefined : uptimePercent(buff, value);
+          if (share !== undefined) {
+            percentile = Math.round(share);
           } else if (variant === 'member') {
-            percentile = bsearch(value, squadOutputs[code] ?? new Float32Array(0));
+            percentile = bsearch(value, squad[code] ?? new Float32Array(0));
             relativeTo = 'in the squad';
           }
         }

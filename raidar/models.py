@@ -24,7 +24,7 @@ from taggit.managers import TaggableManager
 from gw2raidar import settings
 from analyser.analyser import Profession, Archetype, Elite, BOSSES
 from analyser.bosses import MetricType, DesiredValue
-from analyser.buffs import BUFF_TYPES, BUFF_CATEGORIES, BOONS_TAB, HIDDEN_BUFF_TABS, BOON_ORDER, LEGACY_BOON_ORDER, StackType
+from analyser.buffs import BUFF_TYPES, BUFF_CATEGORIES, BOONS_TAB, HIDDEN_BUFF_TABS, BOON_ORDER, LEGACY_BOON_ORDER, STACK_CAPACITY, StackType
 
 # unique to 30-60s precision
 START_RESOLUTION = 60
@@ -654,7 +654,8 @@ class Encounter(models.Model):
                         order.append(buff["code"])
                         buffs[buff["code"]] = {"name": buff["name"], "icon": buff["icon"]}
                         if buff["stacking"]:
-                            buffs[buff["code"]]["stacks"] = 25
+                            # the most stacks; null when not known (the frontend then compares with the squad)
+                            buffs[buff["code"]]["stacks"] = STACK_CAPACITY.get(buff["code"])
             if order:
                 tabs.append({"id": tab_id, "name": tab_name, "order": order})
         return buffs, tabs

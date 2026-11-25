@@ -232,6 +232,12 @@
   }
 }
 
+/* a row of buffs with a single line each is as short as the player's name: room above and below it (more below,
+   where the archetype icon hangs off the spec icon) */
+.buffsRow:not(.party):has(.single) {
+  padding-block: 8px 11px;
+}
+
 /* ---- Boss Metrics: a column per mechanic */
 .mechanicsValue {
   align-self: center;

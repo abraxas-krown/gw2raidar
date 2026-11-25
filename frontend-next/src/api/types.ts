@@ -14,7 +14,9 @@ export interface Area {
 export interface BuffInfo {
   name: string;
   icon: string;
-  stacks?: boolean;
+  // present for buffs that stack in intensity (their value is a number of stacks): the most they can have, or
+  // null (a buff of an encounter, whose most is not known); the Overview's say only true
+  stacks?: boolean | number | null;
 }
 
 export interface BuffTab {

@@ -65,7 +65,7 @@ two folders; other buff icons are absolute URLs from Elite Insights.
 
 | Endpoint | Method | Auth | Request | Response |
 | --- | --- | --- | --- | --- |
-| `bootstrap.json` | GET | – | | Reference data, the same for everyone; `no-cache` with an ETag. Keys: `archetypes`, `areas` (`{id: {name, mode, tag, icon, kind, enrage}}`), `boss_locations`, `specialisations`, `categories`, `buffs` (`{code: {name, icon, stacks?}}`), `buff_tabs`, `version` (`{id, timestamp}`), `debug`, `urls` (`{admin, download, report, api_upload, api_categories}`: backend URLs the frontend links to) |
+| `bootstrap.json` | GET | – | | Reference data, the same for everyone; `no-cache` with an ETag. Keys: `archetypes`, `areas` (`{id: {name, mode, tag, icon, kind, enrage}}`), `boss_locations`, `specialisations`, `categories`, `buffs` (`{code: {name, icon, stacks?}}`) (`stacks` is there for buffs that stack in intensity, whose values are stack counts, not percents: the most stacks, or `null` where that is not known), `buff_tabs`, `version` (`{id, timestamp}`), `debug`, `urls` (`{admin, download, report, api_upload, api_categories}`: backend URLs the frontend links to) |
 | `initial.json` | GET | – | | The current user: `{username, email, is_staff, accounts: [{name, api_key (masked)}]}`, plus `privacy` and `last_notification_id` when signed in (`username` is `""` for guests). Sets the CSRF cookie. Also the Docker healthcheck. |
 | `login.json` | POST | – | `username`, `password` | As `initial.json`, plus `csrftoken`, or `{error}` |
 | `register.json` | POST | – | `username`, `password`, `api_key`, `invite_code` | As `login.json`, or `{error}` |
