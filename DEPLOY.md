@@ -48,7 +48,14 @@ one before moving the pin:
    the boss's `CombatReplayMap` (in its `GetCombatMapInternal`).
    Add maps for new bosses, and update the image, `world` and `size` of any boss whose map changed. While a
    map does not match EI's, that boss's encounters are stored without a replay (with a warning in the log).
-3. Run the tests (`python -m unittest discover -s eiparser/tests -t .`) and parse a few real logs.
+3. **Buff stacks.** The buffs that stack in intensity have their uptime as an average number of stacks, and the
+   frontend colours it by its share of the most stacks the buff can have. EI declares that maximum for each buff
+   (`new Buff("Emboldened", ..., BuffStackType.Stacking, 5, ...)`, in `GW2EIEvtcParser/EIData/Buffs/*.cs`) but does
+   not put it in its JSON, so `STACK_CAPACITY` in `analyser/buffs.py` copies it. Update that table for buffs EI
+   added, and for any whose maximum changed. Only the buffs of the classifications the site lists, with a maximum
+   from 1 to 99 (not conditions), belong in it; a stacking buff missing from it is coloured by comparing the
+   squad's players instead, so a missing entry is a loss of accuracy, not an error.
+4. Run the tests (`python -m unittest discover -s eiparser/tests -t .`) and parse a few real logs.
 
 # Docker Compose deploy
 
