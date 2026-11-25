@@ -220,7 +220,9 @@
   grid-column-start: 2;
 }
 
-.party .buff {
+/* party rows, and buffs with no percentile to compare with: the icon and the value side by side, centred */
+.party .buff,
+.single {
   align-items: center;
 
   & img,

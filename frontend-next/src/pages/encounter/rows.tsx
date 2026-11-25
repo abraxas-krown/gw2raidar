@@ -165,7 +165,7 @@ export function BuffCell({ code, buff, value, points, percentile: given, relativ
   return (
     <div
       data-buff={code}
-      className={cx(styles.buff, 'help', hideZero && !(Number(value) > 0) && 'invisible')}
+      className={cx(styles.buff, (neutral || !points) && styles.single, 'help', hideZero && !(Number(value) > 0) && 'invisible')}
       {...tooltip(content, { pos: 'bottom-left' })}
     >
       <img src={buff.icon} alt={buff.name} />
