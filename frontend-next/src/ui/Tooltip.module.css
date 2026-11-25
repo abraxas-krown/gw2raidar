@@ -1,0 +1,23 @@
+.tooltip {
+  position: fixed;
+  z-index: 1030;
+  max-width: 450px;
+  padding: 3px 6px;
+  border: var(--border-width) solid var(--c-text);
+  border-radius: 2px;
+  background-color: var(--c-bg-muted);
+  color: var(--c-text);
+  pointer-events: none;
+
+  @supports (backdrop-filter: blur(6px)) {
+    backdrop-filter: blur(6px);
+    background-color: rgb(61 56 82 / 0.7);
+  }
+
+  /* the tooltips' titles: <h5> in mono capitals, as the current site's */
+  & h5 {
+    margin: 0;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+}

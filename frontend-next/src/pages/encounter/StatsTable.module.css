@@ -1,0 +1,329 @@
+/*
+ * The encounter page's tables (Overview, Buffs, Boss Metrics): a block per party (and one for the squad), each
+ * a stack of grid rows, the first column the player. (.r-encounter-stats-container in 6-styles.scss)
+ */
+
+/* ---- blocks */
+.container {
+  opacity: 0;
+  animation: fade-bottom-small 60ms ease-out both;
+  padding: 4px;
+  margin-bottom: var(--gutter);
+  border-radius: var(--radius);
+  background-color: var(--c-bg-panel);
+
+  & text {
+    dominant-baseline: hanging;
+  }
+}
+
+/* no panel of its own, but its row lines up with the parties' rows and their players' */
+.squad {
+  padding: 0 4px;
+  background-color: transparent;
+}
+
+/* the column headings stay at the top of the window while the table scrolls under them */
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 980;
+  margin-bottom: 0;
+  background-color: var(--c-bg);
+}
+
+/* ---- rows */
+.row {
+  display: grid;
+  gap: var(--gutter-small);
+  align-items: center;
+  margin-bottom: 4px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--c-bg-muted);
+  transition: all 150ms ease-in-out;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.header {
+  min-height: auto;
+  align-items: end;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  text-transform: uppercase;
+}
+
+.party {
+  padding: 0 4px;
+  background-color: var(--c-bg-panel);
+}
+
+/* a player: a red bar down the row's left edge, with the share of the fight they were up in green over it */
+.member {
+  position: relative;
+
+  &:hover {
+    background: var(--c-bg-muted-light);
+  }
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    border-radius: 3px 0 0 3px;
+  }
+  &::before {
+    height: 100%;
+    background-color: var(--c-danger);
+  }
+  &::after {
+    height: calc(var(--activity, 100) * 1%);
+    background-color: var(--c-success-dark);
+  }
+}
+
+/* ---- the player column: archetype and name, then the spec icon with the archetype's over its corner */
+.player {
+  display: grid;
+  grid-template-columns: 1fr 36px;
+  gap: var(--gutter-smallest);
+  align-items: center;
+}
+
+.playerText {
+  min-width: 0;
+}
+
+.archetypeName {
+  margin: 0;
+  font-family: var(--font-mono);
+  color: var(--c-muted);
+  text-transform: uppercase;
+}
+
+.playerImage {
+  position: relative;
+}
+
+.archetypeIcon {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 20px;
+  padding: 3px;
+  border-radius: 50%;
+  background: #1f1c2d;
+}
+
+.partyCount {
+  margin: 0;
+  font-family: var(--font-mono);
+  color: var(--c-muted);
+  text-transform: uppercase;
+}
+
+/* ---- Overview's cells */
+.toggle {
+  & button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--c-muted);
+    font: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--c-link-hover);
+    }
+  }
+  & .on {
+    color: var(--c-text);
+  }
+}
+
+.on {
+  /* (a marker class: see .toggle) */
+}
+
+/* the Uptime | Output toggle: on the right under the player on small screens, at the buffs' left on wider ones */
+.boonToggle {
+  text-align: right;
+
+  @media (min-width: 960px) {
+    text-align: left;
+  }
+}
+
+.cellTitle {
+  margin: 0;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.misc {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 3px 4px;
+
+  & > span {
+    margin: 0 !important;
+    cursor: help;
+  }
+}
+
+/* ---- buffs: the icon, the value under it, and the compared percentile's value under that */
+
+/* the groups of a tab of several kinds of buff (BuffGroups.tsx): side by side, half a buff's width apart, each as
+   wide as the columns of buffs it has (set there) */
+.buffGroups {
+  display: grid;
+  justify-content: start;
+  align-items: start;
+  column-gap: 37px;
+  min-width: 0;
+}
+
+.buffs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max-content, 74px));
+  column-gap: calc(var(--gutter-small) / 2);
+  margin: 0;
+  padding: 0;
+}
+
+.buff {
+  display: grid;
+  grid-template-rows: repeat(auto-fill, 18px);
+  grid-template-columns: 20px 1fr;
+  gap: 2px;
+  align-items: flex-start;
+
+  & img {
+    grid-row: 2 / span 2;
+  }
+
+  @media (max-width: 639.98px) {
+    grid-template-rows: 20px;
+  }
+}
+
+.buffNumber {
+  grid-row-start: 2;
+  align-self: center;
+  max-height: 24px;
+  padding: 0 2px;
+  border-radius: var(--radius);
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.compare {
+  grid-row-start: 3 !important;
+  grid-column-start: 2;
+}
+
+/* party rows, and buffs with no percentile to compare with: the icon and the value side by side, centred */
+.party .buff,
+.single {
+  align-items: center;
+
+  & img,
+  & .buffNumber {
+    grid-row: auto;
+    grid-row-start: 1;
+  }
+}
+
+/* a row of buffs with a single line each is as short as the player's name: room above and below it (more below,
+   where the archetype icon hangs off the spec icon) */
+.buffsRow:not(.party):has(.single) {
+  padding-block: 8px 11px;
+}
+
+/* ---- Boss Metrics: a column per mechanic */
+.mechanicsValue {
+  align-self: center;
+}
+
+/* ---- column layouts, by screen size */
+
+/* phones: one column */
+@media (max-width: 639.98px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+  .row:not(.party) {
+    padding: var(--margin-small);
+  }
+  .row.header {
+    grid-template-columns: 1fr 1fr;
+  }
+  .player {
+    grid-template-columns: 1fr 36px !important;
+  }
+  .compare {
+    display: none;
+  }
+}
+
+/* tablets: the player, then the rest */
+@media (min-width: 640px) and (max-width: 1199.98px) {
+  .row {
+    grid-template-columns: 1fr 2fr;
+  }
+  .row:not(.party) {
+    padding: var(--margin-small);
+  }
+  .player {
+    grid-template-columns: max-content 36px;
+  }
+  .buffsRow > :is(.buffs, .buffGroups) {
+    grid-column: span 2;
+  }
+}
+
+/* desktops: player, damage, damage received, breakbar (a quarter narrower than damage received), buffs, misc */
+@media (min-width: 1200px) {
+  .row {
+    grid-template-columns: var(--encounter-player-column) minmax(300px, 3fr) 1fr 0.75fr minmax(max-content, 3fr) 50px;
+  }
+  .row.buffsRow {
+    grid-template-columns: var(--encounter-player-column) 1fr;
+  }
+  /* the compared values, and the players' buff icons, show while the row is pointed at */
+  .compare,
+  .member .buff img {
+    opacity: 0;
+    transition: opacity 150ms ease-in-out 100ms;
+  }
+  .row:hover .compare,
+  .member:hover .buff img {
+    opacity: 1;
+  }
+}
+
+/* Boss Metrics: the player, then a column per mechanic, at every size */
+.mechanics .row {
+  grid-template-columns: var(--encounter-player-column) repeat(auto-fit, minmax(60px, 1fr));
+  grid-template-rows: 1fr;
+  text-align: center;
+
+  &:not(.header) {
+    min-height: 60px;
+  }
+}
+
+/* (keyframes are local to a CSS module, so each module that animates has its own) */
+@keyframes fade-bottom-small {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

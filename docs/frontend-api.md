@@ -6,6 +6,10 @@ one, or a replacement) only needs what is on this page.
 
 - Backend routes (Django): [`raidar/urls_api.py`](../raidar/urls_api.py). Page URLs and assets (nginx): [`docker/nginx.conf`](../docker/nginx.conf).
 - The frontend is [`frontend/`](../frontend/README.md); Django has no part in building or serving it.
+- The current frontend is [`frontend-next/`](../frontend-next/README.md) (React, Rsbuild); the original one above
+  is deprecated and no longer built or deployed. Its API client is [`frontend-next/src/api/`](../frontend-next/src/api/endpoints.ts),
+  and its page URLs are the same ([`frontend-next/src/routes.tsx`](../frontend-next/src/routes.tsx),
+  [`docker/nginx-next.conf`](../docker/nginx-next.conf)). A change here must work for the current frontend.
 - The Ractive frontend calls the API only through [`frontend/assets/api.js`](../frontend/assets/api.js)
   (`window.RaidarAPI`). It maps URLs to pages only through [`router.js`](../frontend/assets/router.js) (`window.RaidarRouter`).
 - [`raidar/tests.py`](../raidar/tests.py) checks the parts of this contract that the frontend depends on.
@@ -61,7 +65,7 @@ two folders; other buff icons are absolute URLs from Elite Insights.
 
 | Endpoint | Method | Auth | Request | Response |
 | --- | --- | --- | --- | --- |
-| `bootstrap.json` | GET | – | | Reference data, the same for everyone; `no-cache` with an ETag. Keys: `archetypes`, `areas` (`{id: {name, mode, tag, icon, kind, enrage}}`), `boss_locations`, `specialisations`, `categories`, `buffs` (`{code: {name, icon, stacks?}}`), `buff_tabs`, `version` (`{id, timestamp}`), `debug`, `urls` (`{admin, download, report, api_upload, api_categories}`: backend URLs the frontend links to) |
+| `bootstrap.json` | GET | – | | Reference data, the same for everyone; `no-cache` with an ETag. Keys: `archetypes`, `areas` (`{id: {name, mode, tag, icon, kind, enrage}}`), `boss_locations`, `specialisations`, `categories`, `buffs` (`{code: {name, icon, stacks?}}`) (`stacks` is there for buffs that stack in intensity, whose values are stack counts, not percents: the most stacks, or `null` where that is not known), `buff_tabs`, `version` (`{id, timestamp}`), `debug`, `urls` (`{admin, download, report, api_upload, api_categories}`: backend URLs the frontend links to) |
 | `initial.json` | GET | – | | The current user: `{username, email, is_staff, accounts: [{name, api_key (masked)}]}`, plus `privacy` and `last_notification_id` when signed in (`username` is `""` for guests). Sets the CSRF cookie. Also the Docker healthcheck. |
 | `login.json` | POST | – | `username`, `password` | As `initial.json`, plus `csrftoken`, or `{error}` |
 | `register.json` | POST | – | `username`, `password`, `api_key`, `invite_code` | As `login.json`, or `{error}` |

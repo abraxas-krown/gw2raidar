@@ -1,0 +1,66 @@
+.options {
+  display: flex;
+  align-items: center;
+  gap: var(--margin-small);
+  margin: var(--margin-small) 0;
+}
+
+/* compact, as the current site's uk-form-small select */
+.category {
+  width: 150px;
+  flex: none;
+  height: 21px !important;
+  padding-left: 8px !important;
+  font-size: var(--font-size-small);
+}
+
+.tags {
+  flex: 1;
+  min-height: 21px !important;
+  padding: 0 4px !important;
+  font-size: var(--font-size-small);
+}
+
+/* the browser's own file input, in its own font, as on the current site */
+.file {
+  font: 13px system-ui, sans-serif;
+}
+
+/* uk-table uk-table-striped */
+.table {
+  width: 100%;
+  margin-bottom: var(--margin);
+  border-collapse: collapse;
+  background: var(--c-bg-muted);
+
+  & th {
+    padding: 16px 12px;
+    text-align: left;
+    vertical-align: bottom;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    font-weight: 400;
+    text-transform: uppercase;
+    color: var(--c-text);
+    background: var(--c-bg);
+  }
+  & td {
+    padding: 16px 12px;
+    vertical-align: top;
+  }
+  & tbody tr:nth-of-type(odd) {
+    background: var(--c-bg-muted-dark);
+  }
+}
+
+.quarter {
+  width: 25%;
+}
+
+.link {
+  cursor: pointer;
+}
+
+.warning {
+  color: red;
+}

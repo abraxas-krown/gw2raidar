@@ -1,0 +1,239 @@
+/* Buttons, form controls, badges, labels and cards: UIkit's, as the site's settings and hooks styled them */
+
+/* ---- buttons */
+.button {
+  display: inline-block;
+  margin: 0;
+  padding: 0 16px;
+  border: 2px solid var(--c-bg-muted);
+  border-radius: var(--radius);
+  background-color: transparent;
+  color: inherit;
+  font-size: var(--font-size);
+  line-height: var(--control-height);
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
+  &:hover {
+    text-decoration: none;
+    background-color: var(--c-accent);
+    border-color: var(--c-emphasis);
+  }
+  &:focus-visible {
+    outline: none;
+    background-color: var(--c-bg-muted);
+    border-color: var(--c-emphasis);
+  }
+  &:active,
+  &.active {
+    background-color: var(--c-bg-muted);
+    border-color: var(--c-emphasis);
+  }
+}
+
+.default {
+  background-color: var(--c-bg-muted);
+  color: var(--c-emphasis);
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--c-bg-muted-dark);
+    color: var(--c-emphasis);
+  }
+  &:active,
+  &.active {
+    background-color: var(--c-bg-muted-darker);
+    color: var(--c-emphasis);
+  }
+  &:disabled {
+    background-color: var(--c-bg-muted);
+    color: var(--c-muted);
+  }
+}
+
+.primary {
+  background-color: var(--c-bg-muted);
+  border-color: var(--c-emphasis);
+  color: var(--c-text);
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--c-bg-primary-hover);
+    color: var(--c-text);
+  }
+}
+
+.small {
+  padding: 0 16px;
+  font-size: var(--font-size-small);
+  line-height: var(--control-small-height);
+}
+
+.block {
+  width: 100%;
+}
+
+/* a row of buttons sharing their borders' corners */
+.group {
+  display: inline-flex;
+  position: relative;
+  vertical-align: middle;
+
+  & > .button {
+    border-radius: 0;
+  }
+  & > .button:first-child {
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+  & > .button:last-child {
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+}
+
+/* ---- form controls */
+.input,
+.select,
+.textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0 10px;
+  border: var(--border-width) solid var(--c-muted);
+  border-radius: 0;
+  background: var(--c-bg-muted);
+  color: var(--c-text);
+
+  &:focus {
+    outline: none;
+    border-color: var(--c-emphasis);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--c-muted);
+  }
+  &::placeholder {
+    color: var(--c-muted);
+    opacity: 1;
+  }
+}
+
+.input,
+.select {
+  height: var(--control-height);
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.input {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 20px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2224%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2016%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpolygon%20fill%3D%22%23FCF1E2%22%20points%3D%2212%201%209%206%2015%206%22%3E%3C%2Fpolygon%3E%3Cpolygon%20fill%3D%22%23FCF1E2%22%20points%3D%2212%2013%209%208%2015%208%22%3E%3C%2Fpolygon%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: 100% 50%;
+}
+
+.textarea {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  vertical-align: top;
+  overflow: auto;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--c-text);
+}
+
+/* ---- badges (uk-badge) and labels (uk-label) */
+.badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: var(--radius);
+  background: var(--c-bg-primary);
+  color: var(--c-text);
+  font-size: var(--font-size-small);
+  line-height: 22px;
+  vertical-align: middle;
+
+  &:hover,
+  &:focus {
+    color: var(--c-text);
+    text-decoration: none;
+    outline: none;
+  }
+}
+
+/* badges keep a little room between them, as inline-block elements with whitespace did */
+.badge + .badge {
+  margin-left: 4px;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.success {
+  background-color: var(--c-success);
+  color: var(--c-text);
+}
+.danger {
+  background-color: var(--c-danger);
+  color: var(--c-text);
+}
+/* the 30th percentile colour, the plain badge of dates and tags (r-bg-0) */
+.neutral {
+  background-color: var(--pctl-default-30);
+  border: 1px solid hsl(from var(--pctl-default-30) h s calc(l - 20));
+}
+
+.tag {
+  display: inline-block;
+  padding: 0 8px;
+  background: var(--c-bg-primary);
+  color: var(--c-text);
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+/* encounter modes: challenge mode (CM) and legendary challenge mode (LCM) */
+.modeCM,
+.modeLCM {
+  font-weight: bold;
+  color: #fff;
+}
+.modeCM { background: var(--c-mode-cm); }
+.modeLCM { background: var(--c-mode-lcm); }
+
+/* ---- cards (uk-card uk-card-default, the site's r-panel shade) */
+.card {
+  position: relative;
+  padding: var(--margin);
+  background: var(--c-bg-muted);
+  color: var(--c-text);
+
+  & > :last-child {
+    margin-bottom: 0;
+  }
+}
+.panel {
+  background-color: var(--c-bg-panel);
+}

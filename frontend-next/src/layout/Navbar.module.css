@@ -1,0 +1,125 @@
+/* the header image, darkened with the site's maroon (.custom-header) */
+.header {
+  margin-bottom: var(--margin);
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-image: var(--header-image);
+  background-color: rgb(70 21 48 / 0.9);
+  background-blend-mode: multiply;
+  background-size: 100% auto;
+  background-position: top;
+  background-attachment: fixed;
+
+  @media (max-width: 959.98px) {
+    background-size: auto;
+  }
+}
+
+.topBar {
+  background: rgb(21 20 30 / 0.5);
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  box-sizing: content-box;
+}
+
+.navbar {
+  display: flex;
+  position: relative;
+}
+
+.left,
+.right {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.right {
+  margin-left: auto;
+}
+
+/* the top bar: its links on the right */
+.end {
+  justify-content: flex-end;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & > li {
+    margin-right: var(--gutter);
+  }
+
+  & > li > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--c-emphasis);
+    font-size: var(--font-size);
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  & > li:hover > a,
+  & > li > a:focus-visible,
+  & > li > a.active {
+    color: var(--c-text);
+    outline: none;
+  }
+}
+
+/* the site's links: underlined while chosen or pointed at */
+.hover > li {
+  border-bottom: 2px solid transparent;
+
+  &:has(> a.active),
+  &:hover {
+    border-bottom-color: var(--c-text);
+  }
+}
+
+/* the account links of the top bar: their icons in the link colour, at the text's size (16px), as the current site
+   shows them (its uk-text-small loses to the navbar's font size there) */
+.noHover > a {
+  font-size: var(--font-size);
+}
+
+.iconGap {
+  margin-right: var(--margin-small);
+}
+
+/* the logo sits on a line of the logo's text size (.uk-logo), as the current site's inline SVG does: the line's
+   descender space under it is part of the bar's height */
+.logo {
+  display: block;
+  flex: none;
+  font-size: var(--font-size-large);
+  line-height: 1.25;
+
+  & img {
+    vertical-align: baseline;
+  }
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.logoFull {
+  margin: var(--margin) var(--margin-large) var(--margin) 0;
+}
+
+.logoMark {
+  margin: var(--margin-small) var(--margin-small) var(--margin-small) 0;
+}

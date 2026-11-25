@@ -20,10 +20,11 @@ services:
       start_period: 30s
       start_interval: 2s
 
-  # The site's entry point: Traefik (Dokploy) sends the domain's traffic to this service, port 80. It serves
-  # the frontend (frontend/: the page shell and /assets/), and passes the API and the rest to `web` (docker/nginx.conf).
-  frontend:
-    image: ghcr.io/abraxas-krown/gw2raidar-frontend:${IMAGE_TAG:-latest}
+  # The site's entry point: Traefik (Dokploy) sends the domain's traffic to this service, port 80. It serves the
+  # frontend (frontend-next/: React, built with Rsbuild: the page shell, /app/ and /assets/), and passes the API
+  # and the rest to `web` (docker/nginx-next.conf). The original frontend (frontend/) is deprecated and not deployed.
+  frontend-next:
+    image: ghcr.io/abraxas-krown/gw2raidar-frontend-next:${IMAGE_TAG:-latest}
     pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy
     restart: unless-stopped
     expose:
@@ -39,7 +40,7 @@ services:
       retries: 3
       start_period: 10s
 
-  # Django: the JSON API, downloads and the admin; only reachable through `frontend`
+  # Django: the JSON API, downloads and the admin; only reachable through `frontend-next`
   web:
     image: ghcr.io/abraxas-krown/gw2raidar-app:${IMAGE_TAG:-latest}
     pull_policy: always   # tags like `latest` move, so fetch the current image on every deploy

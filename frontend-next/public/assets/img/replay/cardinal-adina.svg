@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 866 1000" width="866" height="1000">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<defs><pattern id="h" patternUnits="userSpaceOnUse" x="-5" y="14.9" width="80" height="46.2"><path class="fill-base stroke-pale" stroke-width="2.5" stroke-linejoin="round" d="M66.7 23.1L53.4 46.2L26.7 46.2L13.3 23.1L26.6 -0.0L53.4 -0.0ZM26.7 0.0L13.4 23.1L-13.3 23.1L-26.7 0.0L-13.4 -23.1L13.4 -23.1ZM106.7 0.0L93.4 23.1L66.7 23.1L53.3 0.0L66.6 -23.1L93.4 -23.1ZM26.7 46.2L13.4 69.3L-13.3 69.3L-26.7 46.2L-13.4 23.1L13.4 23.1ZM106.7 46.2L93.4 69.3L66.7 69.3L53.3 46.2L66.6 23.1L93.4 23.1Z"/></pattern><clipPath id="c"><path d="M422 15L408 38L382 38L368 61L342 61L328 84L302 84L288 107L262 107L248 130L222 130L208 154L182 154L168 176L142 176L128 200L102 200L88 223L62 223L48 246L21 246L8 269L21 291L21 294L8 315L21 337L21 340L8 361L21 384L21 386L8 408L21 430L21 432L8 454L21 476L21 478L8 500L21 522L21 524L8 546L21 568L21 571L8 592L21 614L21 617L8 638L21 660L21 663L8 685L21 706L21 709L8 731L22 754L48 754L62 777L88 777L102 800L128 800L142 823L168 823L182 846L208 846L222 870L248 870L262 892L288 892L302 916L328 916L342 939L368 939L382 962L408 962L422 985L448 985L462 962L488 962L502 939L528 939L542 916L568 916L582 892L608 892L622 870L648 870L662 846L688 846L702 823L728 823L742 800L768 800L782 777L808 777L822 754L848 754L862 731L849 709L849 707L862 685L849 663L849 660L862 638L849 617L849 614L862 592L849 571L849 568L862 546L849 524L849 522L862 500L849 478L849 476L862 454L849 432L849 430L862 408L849 386L849 384L862 361L849 340L849 337L862 315L849 294L849 291L862 269L848 246L822 246L808 223L782 223L768 200L742 200L728 176L702 176L688 154L662 154L648 130L622 130L608 107L582 107L568 84L542 84L528 61L502 61L488 38L462 38L448 15Z"/></clipPath></defs>
+<rect fill="url(#h)" x="-5" y="-9" width="880" height="1020" clip-path="url(#c)"/>
+<path class="fill-strong stroke-pale" stroke-width="2.5" stroke-linejoin="round" d="M261.7 476.9L248.3 500.0L221.7 500.0L208.3 476.9L221.6 453.8L248.3 453.8ZM341.7 661.7L328.4 684.8L301.6 684.8L288.3 661.7L301.6 638.6L328.4 638.6ZM461.7 315.2L448.4 338.3L421.6 338.3L408.3 315.2L421.6 292.1L448.4 292.1ZM581.7 661.7L568.4 684.8L541.6 684.8L528.3 661.7L541.6 638.6L568.4 638.6ZM661.7 500.0L648.4 523.1L621.6 523.1L608.3 500.0L621.6 476.9L648.4 476.9Z"/>
+<path class="fill-accent stroke-pale" stroke-width="2.5" stroke-linejoin="round" d="M421.7 476.9L408.4 500.0L381.6 500.0L368.3 476.9L381.6 453.8L408.4 453.8ZM421.7 523.1L408.4 546.2L381.6 546.2L368.3 523.1L381.6 500.0L408.4 500.0ZM461.7 453.8L448.4 476.9L421.6 476.9L408.3 453.8L421.6 430.7L448.4 430.7ZM461.7 500.0L448.4 523.1L421.6 523.1L408.3 500.0L421.6 476.9L448.4 476.9ZM461.7 546.2L448.4 569.3L421.6 569.3L408.3 546.2L421.6 523.1L448.4 523.1ZM501.7 476.9L488.4 500.0L461.6 500.0L448.3 476.9L461.6 453.8L488.4 453.8ZM501.7 523.1L488.4 546.2L461.6 546.2L448.3 523.1L461.6 500.0L488.4 500.0Z"/>
+</svg>

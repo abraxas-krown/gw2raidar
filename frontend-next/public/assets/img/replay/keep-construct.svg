@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 987 1000" width="987" height="1000">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<rect class="fill-edge" fill-opacity=".5" x="410" y="0" width="180" height="212"/>
+<circle class="fill-base stroke-deep" stroke-width="14" cx="493" cy="600.5" r="391"/>
+<circle class="fill-none stroke-deep" stroke-width="6" cx="493" cy="600.5" r="317.5"/>
+<circle class="fill-none stroke-deep" stroke-width="6" cx="493" cy="600.5" r="125"/>
+<defs><g id="fig" class="fill-base stroke-deep" stroke-width="6.5" stroke-linejoin="round"><ellipse cx="-22.5" cy="22.5" rx="19.5" ry="21" transform="rotate(-20 -22.5 22.5)"/><path d="M-22.5 -32.5Q-2 -27 17.5 -35.8Q36 -8 32.5 23.3Q15 8 0.8 10Q-9 3 -8.3 -2Q-8 -12 -22.5 -32.5Z"/><rect x="-33" y="-7" width="66" height="14" transform="translate(27.5 -30.8) rotate(47)"/></g></defs><circle class="fill-base stroke-deep" stroke-width="3" cx="805.5" cy="917.8" r="58.5"/><use href="#fig" transform="translate(805.5 917.8) rotate(-86.4)"/><circle class="fill-base stroke-deep" stroke-width="3" cx="175.6" cy="912.9" r="58.5"/><use href="#fig" transform="translate(175.6 912.9) rotate(3.7)"/><circle class="fill-base stroke-deep" stroke-width="3" cx="922.4" cy="719.1" r="58.5"/><use href="#fig" transform="translate(922.4 719.1) rotate(-116.4)"/><circle class="fill-base stroke-deep" stroke-width="3" cx="61.9" cy="712.4" r="58.5"/><use href="#fig" transform="translate(61.9 712.4) rotate(33.6)"/><circle class="fill-base stroke-deep" stroke-width="3" cx="924.1" cy="488.7" r="58.5"/><use href="#fig" transform="translate(924.1 488.7) rotate(213.7)"/><circle class="fill-base stroke-deep" stroke-width="3" cx="63.6" cy="481.9" r="58.5"/><use href="#fig" transform="translate(63.6 481.9) rotate(63.6)"/><circle class="fill-base stroke-deep" stroke-width="3" cx="810.3" cy="288.1" r="58.5"/><use href="#fig" transform="translate(810.3 288.1) rotate(183.6)"/><circle class="fill-base stroke-deep" stroke-width="3" cx="180.6" cy="283.2" r="58.5"/><use href="#fig" transform="translate(180.6 283.2) rotate(93.6)"/>
+<g class="fill-accent"><circle cx="645" cy="424" r="5"/><circle cx="362" cy="433.4" r="5"/><circle cx="283.5" cy="705.5" r="5"/><circle cx="715" cy="708" r="5"/><circle cx="503" cy="836" r="5"/></g>
+</svg>

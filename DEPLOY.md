@@ -48,20 +48,31 @@ one before moving the pin:
    the boss's `CombatReplayMap` (in its `GetCombatMapInternal`).
    Add maps for new bosses, and update the image, `world` and `size` of any boss whose map changed. While a
    map does not match EI's, that boss's encounters are stored without a replay (with a warning in the log).
-3. Run the tests (`python -m unittest discover -s eiparser/tests -t .`) and parse a few real logs.
+3. **Buff stacks.** The buffs that stack in intensity have their uptime as an average number of stacks, and the
+   frontend colours it by its share of the most stacks the buff can have. EI declares that maximum for each buff
+   (`new Buff("Emboldened", ..., BuffStackType.Stacking, 5, ...)`, in `GW2EIEvtcParser/EIData/Buffs/*.cs`) but does
+   not put it in its JSON, so `STACK_CAPACITY` in `analyser/buffs.py` copies it. Update that table for buffs EI
+   added, and for any whose maximum changed. Only the buffs of the classifications the site lists, with a maximum
+   from 1 to 99 (not conditions), belong in it; a stacking buff missing from it is coloured by comparing the
+   squad's players instead, so a missing entry is a loss of accuracy, not an error.
+4. Run the tests (`python -m unittest discover -s eiparser/tests -t .`) and parse a few real logs.
 
 # Docker Compose deploy
 
-`docker-compose.yml` runs the database, the site's front (`frontend`, nginx), Django (`web`) and the upload
+`docker-compose.yml` runs the database, the site's front (`frontend-next`, nginx), Django (`web`) and the upload
 processor (`worker`). It needs `SECRET_KEY`, `ALLOWED_HOSTS` and `POSTGRES_PASSWORD` in the environment, and
 optionally `IMAGE_TAG` (see "Images" below). The server does not build anything: it pulls the images that
 GitHub Actions built.
 
-**Point the domain (Traefik/Dokploy) at `frontend`, port 80.** It serves the frontend (the page shell and
-`/assets/`) and passes everything else to `web` (`docker/nginx.conf`). `web` (gunicorn, port 8000) answers only
-the JSON API, downloads, the admin (with its `/static/` files) and Django's own pages, and is not meant to be
-reached directly: it has no page URLs. `frontend` and `web`/`worker` are two targets of the same Dockerfile but
-share nothing: the `frontend` image is built from `frontend/` alone, so either side can be deployed on its own.
+**Point the domain (Traefik/Dokploy) at `frontend-next`, port 80.** It serves the frontend (the page shell, its
+bundles under `/app/` and `/assets/`) and passes everything else to `web` (`docker/nginx-next.conf`). `web`
+(gunicorn, port 8000) answers only the JSON API, downloads, the admin (with its `/static/` files) and Django's own
+pages, and is not meant to be reached directly: it has no page URLs. `frontend-next` and `web`/`worker` are two
+targets of the same Dockerfile but share nothing: the `frontend-next` image is built from `frontend-next/` alone,
+so either side can be deployed on its own.
+
+The original frontend (`frontend/`, Ractive) is deprecated: the folder is kept, but it is no longer built, published
+or deployed. If the domain was pointed at the old `frontend` service, point it at `frontend-next` instead.
 
 Files are kept on two volumes:
 
@@ -79,7 +90,7 @@ reports stay, as they are on their own volume; only the encounter's download goe
 
 `.github/workflows/docker.yml` builds the Dockerfile's two targets and publishes them to the GitHub Container
 Registry as `ghcr.io/abraxas-krown/gw2raidar-app` (`web` and `worker`) and
-`ghcr.io/abraxas-krown/gw2raidar-frontend`. It runs on every push to `develop` and `feature/**`, on release
+`ghcr.io/abraxas-krown/gw2raidar-frontend-next`. It runs on every push to `develop` and `feature/**`, on release
 tags (`v*`), and by hand from the Actions tab. It only builds: nothing is deployed.
 
 Each build is tagged with:
@@ -108,6 +119,24 @@ settings → Change visibility). For private packages, add `ghcr.io` as a regist
 `docker compose` also reads `docker-compose.override.yml` when it sits next to `docker-compose.yml`. That
 file builds the images from the checkout instead of pulling them, so locally `docker compose up --build`
 runs the code as it is. Dokploy names `docker-compose.yml` explicitly and does not read the override.
+
+### The frontend (frontend-next)
+
+`frontend-next/` is the frontend (React, built with Rsbuild; see its README). The Dockerfile's `frontend-next`
+target serves it with nginx (`docker/nginx-next.conf`), passing everything else to `web`. CI publishes it as
+`ghcr.io/abraxas-krown/gw2raidar-frontend-next`, with the same tags as the other image, and `docker-compose.yml`
+runs it as the `frontend-next` service.
+
+In Dokploy, the site's domain (port 80) goes to `frontend-next`, and its host name must be in `ALLOWED_HOSTS`: Django
+only answers the hosts listed there, and takes its trusted CSRF origins from them, so logging in needs it.
+
+Before the first deploy that includes it:
+
+- its image must exist under the deployed `IMAGE_TAG`: wait for the Actions run of that branch or tag to finish;
+- the GHCR package `gw2raidar-frontend-next` is private when first published; make it public as for the other
+  (or have the registry credentials cover it), or the deploy cannot pull it.
+
+Locally, `docker compose up --build` builds and runs it with the rest, at http://localhost:8081.
 
 ## Resetting the database
 
@@ -287,13 +316,16 @@ usermod -aG sudo amadan
 
 # The frontend
 
-The frontend (Ractive) is [`frontend/`](frontend/README.md): a static page shell and its assets, talking to
-the JSON API in `raidar/urls_api.py`, described in `docs/frontend-api.md`. Django has no part in building or
-serving it. `python frontend/build.py` (standard library only) writes it to `frontend/dist/`; the Docker
-image's `frontend` stage does this.
+The frontend (React, Rsbuild) is [`frontend-next/`](frontend-next/README.md): a static page shell and its bundles,
+talking to the JSON API in `raidar/urls_api.py`, described in `docs/frontend-api.md`. Django has no part in
+building or serving it. `npm run build` in `frontend-next/` writes it to `frontend-next/dist/`; the Docker
+image's `frontend-next` stage does this.
 
-A web server serves it, which in Compose is the `frontend` service (`docker/nginx.conf`):
+(The original Ractive frontend, [`frontend/`](frontend/README.md), is deprecated: it stays in the repository
+but is no longer built or deployed. `docker/nginx.conf` is its nginx configuration.)
+
+A web server serves it, which in Compose is the `frontend-next` service (`docker/nginx-next.conf`):
 - for each page URL, `dist/index.html` with `Cache-Control: no-cache`;
-- `dist/assets/` under `/assets/` (the hashed copies can be cached forever);
+- `dist/app/` under `/app/` (hashed bundles, cached forever) and `dist/assets/` under `/assets/` (the images);
 - everything else (the `*.json` endpoints, `api/`, `download/`, `report/`, `reset/`, `admin/`, `static/`,
   `robots.txt`) passed to Django, which serves the admin's static files itself (WhiteNoise).

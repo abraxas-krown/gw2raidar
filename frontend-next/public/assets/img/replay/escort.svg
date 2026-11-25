@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 2948 1844" width="2948" height="1844">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<path class="fill-strong stroke-deep" stroke-width="4" stroke-linejoin="round" d="M0 404v863h121l8 99 56 1v225h179v-26h156v28h183l2-196 281-2v165h99v-163l110-1 3 446h1602v-1397l147-3v-443h-2442l-236 243h-101l-168 161z"/>
+<path class="fill-base" fill-rule="evenodd" d="M2947 0h-143l-1 88-79 36-121-60-99 25-135 204-85 216 72 106-51 90-47-136-124 35-32-30 14-51 64-32-23-136-191 2-81 64-60-4-158-107-157-205-253-10-102 32-103-56-118 79-143-37-355 149-109 260-23-14-22 180 86 171 49 26 62-23 65 51 9 85-48 9 44-1 1 44-165 2 28-51-91-77-58 18-29 53h-113v205l77 44-77 24 7 98 56 1v225h179v-26h156v28h183l2-196 281-2v165h99l1-164h247v-450l-123-1v-285l123-2 108-64 56 55-93 97 42 105-65 79 56 30 97-73 53 24-3 80-78 107 22 55 139-74 57 25-12 142-56 91-72 21-18 78 99 261 156-58 170 99 94-244 90-85 59 32 63-43 222 130 109-17 74-119-65-162-14-152 37-8-16-93-39 2-9-105 204-3v-260l-292 1v-87l36-38 109-7 44-73 83-27 22 63 145-1v-443zM2401 849l51 98-36 74-62-113 47-59zM1599 477l53 13 104 123 119-69 87 54 27 46-71 22 116 415 84-22 87 144v124l-83 70-93-40 7 110-78 40-73-3-41-66 155-182 4-131-117-98 19-81-74-62-47-115-99-39-104 59-46-20 20-128-31-47 67-48 8-69z"/>
+<path class="fill-edge" fill-opacity=".6" d="M1502 683l18 174 280 265-36 223-106 61 98 30 114 147 140-5 324-299 153 106 163-50-171-395 38 297-136 10-185-214 121 219-327 302-101 1-98-151 38-296-281-278-46-147zM2747 261l-305 107-38 261 45-9 28-231 270-128zM2112 609l-50-101-299-46-317-236-813 37-156 114-71 188 119 245 217 71-180-106-90-130-1-145 99-149 205-63 685-12 270 218 293 48 89 67z"/>
+<path class="fill-highlight" fill-opacity=".8" d="M2392 683l-39 127 30 49 47 2-38-178zM2511 643l47 243 238-15-1-179-284-49z"/>
+<path class="fill-light stroke-deep" stroke-width="3" stroke-linejoin="round" d="M1921 666l115 413 302-84 17 151 123-28-8-45-52-3-1-51-48-52-56-270-56-125-144 19-192 75zM1623 473l-90-38-72 31-195-28-68-56-73 51-323 3-35-37-75 7-29 68 41 57-5 244h123l19 268-150 18-1-62-117 9-17-42-5 88-173-8 8-69-57-45-55 14-29 52-122-1v201l78 46-1 23h-69v97l56 1v225h177v-25h156v28l181-1 2-196 285-2v165h95l1-164h247v-446l-123-1v-285l45 2-40-8-2-131 48-37 189 26 79 92 96-134z"/>
+<g class="fill-edge stroke-deep" stroke-width="4" stroke-linejoin="round"><path d="M554 1005v45l129 7v-52h-129zM2640 984l-76 7 15 90 74-12-13-85zM1926 667l111 408 308-90 17 156 108-28-7-38-50 3-22-106-25-2-110-394-330 91zM1205 527l-39-5-4 67v26l-1 108-415-1-3-184-39-7-4 237 452 3v193v21h136v361h-158v-115h-492v55h-27v220h-91v87h183v-197h286v164h94v-164h248v-446h-125l-1-423zM1267 445l-4 37 185 27 8-36-189-28zM1125 435l-322 4 4 37 317-2 1-39zM130 1266h145v240h89v86h-178v-226h-56v-100z"/><circle cx="1195" cy="455" r="77"/><circle cx="735" cy="465" r="77"/><circle cx="1521" cy="507" r="77"/><circle cx="888" cy="987" r="77"/><circle cx="318" cy="1004" r="77"/></g>
+<path class="fill-base stroke-deep" stroke-width="3" stroke-linejoin="round" d="M1999 728L2221 662L2301 934L2077 1002Z"/>
+<g class="fill-base"><rect x="743" y="806" width="77" height="100"/><rect x="1037" y="940" width="111" height="82"/><rect x="635" y="1119" width="410" height="111"/><rect x="1128" y="515" width="33" height="158"/></g><g class="fill-none stroke-deep" stroke-opacity=".35"><path d="M743 856H820" stroke-width="100" stroke-dasharray="5.5 5.5"/><path d="M1092 940V1022" stroke-width="111" stroke-dasharray="5.9 5.9"/><path d="M635 1174H1045" stroke-width="111" stroke-dasharray="12.8 12.8"/><path d="M1144 515V673" stroke-width="33" stroke-dasharray="8.8 8.8"/></g>
+<path class="fill-deep stroke-ink" stroke-width="4" d="M2449 947l-69-311 116-26 69 311-116 26z"/>
+<path class="fill-none stroke-highlight" stroke-width="12" stroke-dasharray="32 24" stroke-linejoin="round" d="M1495 494L1488 259L1444 167L1262 152L650 202L419 276L317 411L316 567L463 762L664 945L677 991L316 1005M1495 494L1171 452L734 468L743 634L864 965M677 991L868 988"/>
+<g class="fill-highlight stroke-deep" stroke-width="8"><circle cx="1676" cy="897" r="40"/><circle cx="1431" cy="918" r="40"/><circle cx="1549" cy="1111" r="40"/><circle cx="1904" cy="1276" r="40"/><circle cx="1619" cy="1385" r="40"/><circle cx="2054" cy="1393" r="40"/><circle cx="2226" cy="1399" r="40"/><circle cx="1689" cy="1661" r="40"/><circle cx="1972" cy="1700" r="40"/></g>
+<g class="fill-accent stroke-ink" stroke-width="4"><circle cx="1202" cy="376" r="15"/><circle cx="690" cy="402" r="15"/><circle cx="1577" cy="453" r="15"/><circle cx="825" cy="944" r="15"/><circle cx="311" cy="1082" r="15"/></g>
+</svg>

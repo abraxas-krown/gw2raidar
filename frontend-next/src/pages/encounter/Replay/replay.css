@@ -1,0 +1,561 @@
+/*
+ * The Replay tab (frontend/scss/raidar/8-replay.scss, in plain CSS).
+ *
+ * Global, not a CSS module: the viewer (vendor/replay.js) builds its controls and timeline itself, with these
+ * class names and UIkit's button classes, so they are styled here, scoped to .r-replay.
+ * TODO(replay-rewrite): becomes a CSS module with the viewer's React rewrite.
+ *
+ * The map, players and targets are drawn on a canvas by the viewer, which keeps its own copy of these colours;
+ * keep the two in step.
+ */
+.r-replay {
+  --replay-panel-background: var(--c-bg-panel);
+  --replay-row-hover-background: var(--c-bg-muted-light);
+  --replay-breakbar-color: #58C4D8;
+  --replay-dps-color: var(--c-bg-primary);
+  --replay-condition-color: rgb(191 63 71 / 0.85);
+  --replay-buff-size: 18px;
+  --replay-buff-gap: 2px;
+  /* wide enough for 15 buffs on a row before they wrap, with room left for the panel's scrollbar */
+  --replay-side-width: 374px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--replay-side-width);
+  gap: var(--gutter-small);
+  align-items: start;
+  margin-top: var(--margin);
+  margin-bottom: var(--margin-medium);
+
+  @media (max-width: 959.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* ---- the buttons the viewer makes (uk-button uk-button-default uk-button-small), and the panel's toggles */
+  & .uk-button {
+    display: inline-block;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 16px;
+    border: 2px solid var(--c-bg-muted);
+    border-radius: var(--radius);
+    background-color: transparent;
+    color: inherit;
+    font-size: var(--font-size);
+    line-height: var(--control-height);
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--c-accent);
+      border-color: var(--c-emphasis);
+    }
+    &:focus-visible {
+      outline: none;
+      background-color: var(--c-bg-muted);
+      border-color: var(--c-emphasis);
+    }
+    &:disabled {
+      cursor: default;
+    }
+  }
+  & .uk-button-default {
+    background-color: var(--c-bg-muted);
+    color: var(--c-emphasis);
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--c-bg-muted-dark);
+    }
+    &:active,
+    &.uk-active {
+      background-color: var(--c-bg-muted-darker);
+      border-color: var(--c-emphasis);
+    }
+  }
+  & .uk-button-small {
+    padding: 0 16px;
+    font-size: var(--font-size-small);
+    line-height: var(--control-small-height);
+  }
+  & .uk-button-group {
+    display: inline-flex;
+    position: relative;
+    vertical-align: middle;
+
+    & > .uk-button {
+      border-radius: 0;
+    }
+    & > .uk-button:first-of-type {
+      border-radius: var(--radius) 0 0 var(--radius);
+    }
+    & > .uk-button:last-of-type {
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+  }
+}
+
+/* ---- map */
+
+.r-replay-stage {
+  position: relative;
+  padding: 4px;
+  border-radius: var(--radius);
+  background-color: var(--replay-panel-background);
+}
+.r-replay-map {
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background-color: var(--c-bg);
+  cursor: grab;
+
+  &.r-replay-dragging {
+    cursor: grabbing;
+  }
+}
+.r-replay-canvas {
+  display: block;
+  outline: none;
+}
+.r-replay-hint {
+  position: absolute;
+  left: var(--margin-small);
+  bottom: var(--margin-small);
+  padding: 2px var(--margin-small);
+  border-radius: var(--radius);
+  background-color: rgb(43 39 58 / 0.85);
+  color: var(--c-muted);
+  font-size: 12px;
+  pointer-events: none;
+  transition: opacity 600ms ease-out;
+
+  .r-replay-used & {
+    opacity: 0;
+  }
+}
+.r-replay-message {
+  position: absolute;
+  top: 40%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--c-muted);
+}
+.r-replay-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  border: 2px solid var(--c-muted);
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -4px;
+  animation: r-replay-spin 800ms linear infinite;
+}
+@keyframes r-replay-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- controls */
+
+.r-replay-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--margin-small) 12px;
+  padding: var(--margin-small) 4px 4px;
+
+  & .uk-button-small {
+    padding: 0 10px;
+    line-height: 28px;
+  }
+  & .uk-button-default:hover {
+    background-color: var(--replay-row-hover-background);
+  }
+  & .uk-button:disabled {
+    opacity: 0.4;
+  }
+  /* the target lock, on the far right, lit while it is on */
+  & .r-replay-lock {
+    margin-left: auto;
+
+    &.uk-active {
+      background-color: var(--c-bg-primary);
+      color: var(--c-emphasis);
+    }
+  }
+}
+.r-replay-button .material-icons {
+  font-size: 18px !important;
+  vertical-align: middle;
+}
+/* the current speed, right of the clock, then the slower and faster buttons */
+.r-replay-speed {
+  min-width: 40px;
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: right;
+}
+.r-replay-clock {
+  min-width: 96px;
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* ---- timeline */
+
+.r-replay-timeline {
+  padding: 4px var(--margin-small) 12px;
+}
+.r-replay-phases {
+  position: relative;
+  height: 18px;
+  margin-bottom: 6px;
+}
+.r-replay-phase {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0 4px;
+  border-left: 1px solid var(--replay-panel-background);
+  border-radius: 2px;
+  color: var(--c-emphasis);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--c-text);
+    filter: brightness(1.25);
+  }
+}
+.r-replay-phase-0 {
+  background-color: var(--c-bg-muted);
+}
+.r-replay-phase-1 {
+  background-color: var(--c-bg-secondary);
+}
+.r-replay-track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--c-bg);
+  cursor: pointer;
+
+  &:hover .r-replay-hover-time {
+    display: block;
+  }
+}
+.r-replay-progress {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 4px;
+  background-color: var(--c-bg-primary);
+}
+.r-replay-head {
+  position: absolute;
+  top: -5px;
+  width: 6px;
+  height: 18px;
+  margin-left: -3px;
+  border-radius: 3px;
+  background-color: var(--c-emphasis);
+  box-shadow: 0 0 0 2px var(--replay-panel-background);
+}
+.r-replay-mark {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+}
+.r-replay-mark-down {
+  background-color: var(--c-warning);
+}
+.r-replay-mark-dead {
+  background-color: var(--c-danger);
+}
+.r-replay-hover-time {
+  display: none;
+  position: absolute;
+  bottom: 14px;
+  padding: 1px 6px;
+  border-radius: var(--radius);
+  background-color: var(--c-bg-muted);
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ---- players and targets */
+
+/* The panel is as tall as the map with its controls and timeline (the viewer sets --replay-stage-height when it
+   sizes the map to the window) and scrolls on its own, so the map stays in view */
+.r-replay-side {
+  max-height: var(--replay-stage-height, none);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-scrollbar) transparent;
+
+  /* under the map, the panel is part of the page */
+  @media (max-width: 959.98px) {
+    max-height: none;
+    overscroll-behavior: auto;
+  }
+}
+.r-replay-group {
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background-color: var(--replay-panel-background);
+}
+.r-replay-group-title {
+  margin: 4px 6px 6px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+/* the title of the players and of the targets, with their toggles on the right */
+.r-replay-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding-right: 4px;
+
+  & .r-replay-group-title {
+    margin-bottom: 4px;
+  }
+}
+/* above the players there is no group, so the head stands on its own */
+.r-replay-side > .r-replay-section-head {
+  margin-bottom: 0;
+  padding-left: 4px;
+}
+.r-replay-toggles {
+  display: flex;
+  gap: 4px;
+
+  & .r-replay-toggle {
+    padding: 0 8px;
+    font-size: 11px;
+    line-height: 22px;
+    text-transform: uppercase;
+  }
+  & .r-replay-toggle.uk-active {
+    background-color: var(--c-bg-primary);
+    color: var(--c-emphasis);
+  }
+}
+.r-replay-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+.r-replay-unit {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  padding: 6px var(--margin-small);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius);
+  background-color: var(--c-bg-muted);
+  cursor: pointer;
+  transition: background-color 150ms ease-in-out, opacity 150ms ease-in-out;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+  &:hover,
+  &.r-replay-selected {
+    background-color: var(--replay-row-hover-background);
+  }
+  &.r-replay-selected {
+    border-left-color: var(--c-emphasis);
+  }
+}
+.r-replay-spec {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-right: var(--margin-small);
+}
+.r-replay-unit-body {
+  flex: 1;
+  min-width: 0;
+}
+.r-replay-unit-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--c-text);
+  font-size: 13px;
+  line-height: 1.3;
+}
+.r-replay-unit-name {
+  min-width: 0;
+  margin-right: var(--margin-small);
+
+  /* the commander tag sits in the name, centred on its letters */
+  & .commander-tag {
+    vertical-align: -0.12em;
+  }
+}
+.r-replay-unit-value {
+  flex: none;
+  color: var(--c-emphasis);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.r-replay-bar {
+  position: relative;
+  height: 6px;
+  margin: 3px 0;
+  overflow: hidden;
+  border-radius: 3px;
+  background-color: var(--c-bg);
+}
+.r-replay-bar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: var(--c-success);
+  transition: width 120ms linear;
+
+  .r-replay-target & {
+    background-color: var(--c-danger);
+  }
+}
+.r-replay-bar-barrier {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: var(--c-emphasis);
+  opacity: 0.85;
+}
+
+/* a player's DPS so far: boss DPS solid, total DPS fainter behind it, with "boss / total" on it */
+.r-replay-dps {
+  position: relative;
+  height: 12px;
+  margin: 3px 0;
+  overflow: hidden;
+  border-radius: 3px;
+  background-color: var(--c-bg);
+}
+.r-replay-dps-total,
+.r-replay-dps-boss {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: var(--replay-dps-color);
+  transition: width 120ms linear;
+}
+.r-replay-dps-total {
+  opacity: 0.35;
+}
+.r-replay-dps-text {
+  position: relative;
+  display: block;
+  padding-left: 4px;
+  color: var(--c-text);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 12px;
+  white-space: nowrap;
+  text-shadow: 0 0 2px #000000, 0 0 2px #000000;
+}
+
+/* a target's defiance bar, while it is up, touching the HP bar above it, square where the two meet */
+.r-replay-bar:has(+ .r-replay-breakbar) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.r-replay-breakbar {
+  height: 4px;
+  margin-top: -3px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+
+  .r-replay-target & .r-replay-bar-fill {
+    background-color: var(--replay-breakbar-color);
+  }
+}
+
+/* states of players and targets */
+.r-replay-down {
+  & .r-replay-bar-fill {
+    background-color: var(--c-warning);
+  }
+  & .r-replay-unit-value {
+    color: var(--c-warning);
+  }
+}
+.r-replay-dead .r-replay-unit-value {
+  color: var(--c-danger);
+}
+.r-replay-dead,
+.r-replay-dc {
+  opacity: 0.5;
+}
+
+.r-replay-buffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--replay-buff-gap);
+  min-height: var(--replay-buff-size);
+}
+.r-replay-buff {
+  position: relative;
+  width: var(--replay-buff-size);
+  height: var(--replay-buff-size);
+
+  & img {
+    display: block;
+    width: var(--replay-buff-size);
+    height: var(--replay-buff-size);
+    border-radius: 2px;
+  }
+}
+/* conditions are outlined, to read apart from the boons */
+.r-replay-conditions {
+  margin-top: 2px;
+
+  & .r-replay-buff img {
+    box-shadow: 0 0 0 1px var(--replay-condition-color);
+  }
+}
+.r-replay-buff-stacks {
+  position: absolute;
+  right: -2px;
+  bottom: -3px;
+  color: var(--c-text);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 0 2px #000000, 0 0 2px #000000;
+}

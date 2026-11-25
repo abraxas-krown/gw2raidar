@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="theme-grey" viewBox="0 0 485 547" width="485" height="547">
+<style>
+  /* Shared by every SVG. Override the --c-* variables on the svg element (or via svg.theme-x) to retheme. */
+  :where(svg.theme-grey){--c-ink:#000000;--c-deep:#505050;--c-strong:#80807b;--c-edge:#aaaaa6;--c-base:#d5d5d1;--c-mid:#dedede;--c-light:#e7e7e5;--c-pale:#f0f0ee;--c-accent:#d4a017;--c-highlight:#5ae1e4}
+  .fill-ink{fill:var(--c-ink)} .stroke-ink{stroke:var(--c-ink)}
+  .fill-deep{fill:var(--c-deep)} .stroke-deep{stroke:var(--c-deep)}
+  .fill-strong{fill:var(--c-strong)} .stroke-strong{stroke:var(--c-strong)}
+  .fill-edge{fill:var(--c-edge)} .stroke-edge{stroke:var(--c-edge)}
+  .fill-base{fill:var(--c-base)} .stroke-base{stroke:var(--c-base)}
+  .fill-mid{fill:var(--c-mid)} .stroke-mid{stroke:var(--c-mid)}
+  .fill-light{fill:var(--c-light)} .stroke-light{stroke:var(--c-light)}
+  .fill-pale{fill:var(--c-pale)} .stroke-pale{stroke:var(--c-pale)}
+  .fill-accent{fill:var(--c-accent)} .stroke-accent{stroke:var(--c-accent)}
+  .fill-highlight{fill:var(--c-highlight)} .stroke-highlight{stroke:var(--c-highlight)}
+  .fill-none{fill:none} .stroke-none{stroke:none}
+</style>
+<defs><g id="sh" class="fill-none stroke-ink" stroke-width="2.4" stroke-linejoin="round"><path d="M-15 -10L0 -17L15 -10V4C15 12 8 18 0 22C-8 18 -15 12 -15 4Z"/><path d="M0 -7L6 0L0 7L-6 0Z" stroke-width="2"/></g></defs>
+<path class="fill-mid" stroke-linejoin="round" d="M77 183L37 202L14 300L0 403L6 447L24 490L52 518L106 538L183 546L254 544L263 513L240 500L100 440L60 300Z"/>
+<path class="fill-base stroke-deep" stroke-width="4" stroke-linejoin="round" d="M107 151L143 140L265 145L331 171L355 187L375 208L383 251L376 381L357 459L341 489L327 502L235 508L150 506L90 490L59 468L47 435L43 385L46 345L52 316L58 265L66 228L76 190L90 170Z"/>
+<path class="fill-mid" stroke-linejoin="round" d="M167 268L144 288L127 320L127 349L135 374L153 395L177 407L239 406L245 482L269 481L289 473L314 443L332 374L271 366L272 306L265 288L248 270L212 259L190 260Z"/>
+<g class="fill-highlight"><circle cx="233" cy="33" r="33"/><circle cx="451" cy="462" r="33"/></g>
+<use href="#sh" x="233" y="33"/><use href="#sh" x="451" y="462"/>
+</svg>

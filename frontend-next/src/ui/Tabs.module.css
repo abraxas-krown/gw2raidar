@@ -1,0 +1,39 @@
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 var(--margin) -20px;
+  padding: 0;
+  list-style: none;
+
+  & > li {
+    flex: none;
+    position: relative;
+    padding-left: 20px;
+  }
+
+  & button {
+    display: block;
+    padding: 5px 10px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--c-muted);
+    text-align: center;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--c-text);
+      outline: none;
+    }
+  }
+
+  & > .active > button {
+    color: var(--c-emphasis);
+    border-bottom-color: var(--c-text);
+  }
+}
+
+.active {
+  /* (a marker class: see .tabs) */
+}

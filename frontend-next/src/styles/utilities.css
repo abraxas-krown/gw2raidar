@@ -1,0 +1,130 @@
+/*
+ * The few global classes: things many components share, or that are set on SVG elements and on markup that
+ * code outside React builds (the replay viewer). Everything else is in the components' *.module.css.
+ */
+@layer utilities {
+  /* ---- responsive visibility, at UIkit's breakpoints (s 640px, m 960px, l 1200px), as uk-visible@ / uk-hidden@ */
+  @media (max-width: 639.98px) { .show-s { display: none !important; } }
+  @media (max-width: 959.98px) { .show-m { display: none !important; } }
+  @media (max-width: 1199.98px) { .show-l { display: none !important; } }
+  @media (min-width: 640px) { .hide-s { display: none !important; } }
+  @media (min-width: 960px) { .hide-m { display: none !important; } }
+  @media (min-width: 1200px) { .hide-l { display: none !important; } }
+
+  /* ---- text */
+  .text-muted { color: var(--c-muted) !important; }
+  .text-small { font-size: var(--font-size-small); line-height: 1.5; }
+  .text-mono { font-family: var(--font-mono); }
+  .text-upper { text-transform: uppercase; }
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+  @media (min-width: 960px) { .text-right-m { text-align: right; } }
+  @media (min-width: 1200px) { .text-right-l { text-align: right; } }
+  .text-success { color: var(--c-success) !important; }
+  .text-danger { color: var(--c-danger) !important; }
+  .truncate {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .m-0 { margin: 0 !important; }
+  .invisible { visibility: hidden !important; }
+  .help { cursor: help; }
+
+  /* A value coloured by its percentile (lib/percentiles.ts sets the --pctl-* properties for the chosen palette);
+     on SVG shapes, the fill */
+  .pctl {
+    background-color: var(--pctl-bg) !important;
+    fill: var(--pctl-bg);
+    border: var(--pctl-border, none);
+    /* (important, to win over the components' own colour, which is the text colour wherever .pctl is used) */
+    color: var(--pctl-color, var(--c-text)) !important;
+    text-shadow: var(--pctl-shadow, none);
+  }
+
+  /* ---- charts (the bars of the encounter tables) */
+  svg.chart {
+    overflow: visible;
+  }
+  rect.chart {
+    animation: chart-grow 600ms 1 200ms ease-out;
+    animation-fill-mode: forwards;
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  .chart text {
+    animation: chart-visible 300ms 1 600ms ease-out;
+    animation-fill-mode: forwards;
+    opacity: 0;
+  }
+  .chart-hover {
+    cursor: help;
+
+    &:hover {
+      outline: 1px solid var(--c-chart-hover-outline);
+    }
+  }
+
+  /* ---- a private player's name: PRIVATE, glitching (the textGlitch mixin) */
+  .private {
+    position: relative;
+    color: var(--c-bg-muted-lightest);
+
+    &::before,
+    &::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: var(--c-bg-muted);
+      clip-path: inset(0 0 100% 0);
+    }
+    &::after {
+      left: 2px;
+      text-shadow: -1px 0 #742ea4;
+      animation: private-glitch-1 2s infinite linear alternate-reverse;
+    }
+    &::before {
+      left: -2px;
+      text-shadow: 2px 0 #4223ca;
+      animation: private-glitch-2 3s infinite linear alternate-reverse;
+    }
+  }
+
+  /* ---- the commander tag before a commander's name */
+  .commander-tag {
+    display: inline-block;
+    flex: none;
+    width: 0.9em;
+    height: 0.9em;
+    margin-right: 0.3em;
+    vertical-align: -0.05em;
+    fill: var(--c-commander);
+  }
+}
+
+@keyframes chart-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes chart-visible {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* the Sass mixin drew random slices; these are a fixed set of slices that read the same */
+/* (the Sass mixin clipped to random slices of a box much taller than the text, so the slices mostly missed it:
+   the name reads clean, with a glitch now and then) */
+@keyframes private-glitch-1 {
+  0%, 12%, 30%, 58%, 76%, 100% { clip-path: inset(0 0 100% 0); }
+  6% { clip-path: inset(20% 0 55% 0); }
+  44% { clip-path: inset(60% 0 15% 0); }
+  88% { clip-path: inset(35% 0 45% 0); }
+}
+@keyframes private-glitch-2 {
+  0%, 20%, 38%, 66%, 84%, 100% { clip-path: inset(0 0 100% 0); }
+  28% { clip-path: inset(50% 0 25% 0); }
+  52% { clip-path: inset(10% 0 70% 0); }
+  92% { clip-path: inset(70% 0 5% 0); }
+}

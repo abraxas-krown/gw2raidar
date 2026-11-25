@@ -1,0 +1,118 @@
+/*
+ * Design tokens: the Sass settings of the current frontend (frontend/scss/raidar/1-type, 2-colors,
+ * 3-percentiles, 4-settings) as custom properties. Values Sass computed (darken(), lighten(), mix()) are written
+ * out with the result the current site's compiled CSS has, so the two sites look the same.
+ */
+:root {
+  /* ---- type (1-type) */
+  --font-body: 'Source Sans 3', 'Source Sans Pro', Helvetica, sans-serif;
+  --font-mono: 'Source Code Pro', monospace;
+  --font-size: 16px;
+  --font-size-xxlarge: 3.157em;
+  --font-size-xlarge: 2.369em;
+  --font-size-large: 1.777em;
+  --font-size-medium: 1.333em;
+  --font-size-small: 0.75em;
+  --font-size-xsmall: 0.563em;
+  --letter-space: 0.4px;
+
+  /* ---- colours (2-colors) */
+  --c-text: #FCF1E2;          /* off white */
+  --c-emphasis: #E7CCA9;      /* dusky yellow: headings, links */
+  --c-muted: #958cbb;         /* light grey-purple */
+  --c-accent: #461530;        /* maroon */
+  --c-link: var(--c-emphasis);
+  --c-link-hover: #fdfbf9;    /* lighten(emphasis, 20%) */
+
+  --c-bg: #15141e;
+  --c-bg-muted: #3D3852;
+  --c-bg-muted-dark: #322e43;   /* darken(muted bg, 5%): striped rows, hovers */
+  --c-bg-muted-darker: #262334; /* darken(muted bg, 10%) */
+  --c-bg-panel: #2b273a;        /* darken(muted bg, 8%): party rows, panels */
+  --c-bg-muted-light: #484261;  /* lighten(muted bg, 5%): row hover */
+  --c-bg-muted-lighter: #544d70; /* lighten(muted bg, 10%) */
+  --c-bg-muted-lightest: #615982; /* lighten(muted bg, 16%): the PRIVATE glitch text */
+  --c-scrollbar: #5d557c;        /* lighten(muted bg, 14%) */
+  --c-scrollbar-hover: #746b9a;  /* lighten(muted bg, 24%) */
+  --c-bg-primary: #832759;
+  --c-bg-primary-hover: #6f214c;
+  --c-bg-secondary: #461530;
+
+  --c-success: #278718;
+  --c-success-dark: #1a5c10;  /* darken(success, 10%): the activity bar */
+  --c-warning: #CF890F;
+  --c-danger: #BF3F47;
+
+  --c-border: #D6A568;
+  --c-chart-line: #E7CCA9;
+  --c-chart-hover-outline: #FDF8EF;
+  --c-commander: #3B8FE0;
+  --c-mode-cm: #a3591c;
+  --c-mode-lcm: #8945c9;
+
+  /* ---- shape and spacing (4-settings) */
+  --radius: 3px;
+  --border-width: 1px;
+  --spacing: 8px;
+  --control-height: 32px;
+  --control-small-height: 21px;
+
+  --margin: 16px;
+  --margin-small: 8px;
+  --margin-medium: 24px;
+  --margin-large: 32px;
+  --margin-xlarge: 40px;
+
+  --gutter: 24px;
+  --gutter-smallest: 8px;
+  --gutter-small: 16px;
+  --gutter-medium: 40px;
+  --gutter-large: 72px;
+
+  --container-max: 2000px;
+  --container-padding: 15px;  /* 30px from small screens on, 40px from medium (below) */
+
+  /* the encounter tables' first column (player, archetype, spec): the same on every tab */
+  --encounter-player-column: 200px;
+
+  /* ---- percentile palettes (3-percentiles): the anchor colours each palette blends between (lib/percentiles.ts) */
+  --pctl-default-99: #903CC9;
+  --pctl-default-90: #7c48ca;
+  --pctl-default-80: #3C6FCE;
+  --pctl-default-70: #5361cd;
+  --pctl-default-60: #3e6ece;
+  --pctl-default-50: #526a9f;
+  --pctl-default-40: #5d6886;
+  --pctl-default-30: #6A656B;
+
+  --pctl-rainbow-99: #8941BA;
+  --pctl-rainbow-90: #993D64;
+  --pctl-rainbow-80: #B28536;
+  --pctl-rainbow-70: #CCB966;
+  --pctl-rainbow-60: #316629;
+  --pctl-rainbow-50: #3D7099;
+  --pctl-rainbow-40: #705E72;
+  --pctl-rainbow-30: #705E72;
+
+  --pctl-colorblind-99: #C3ADD7;
+  --pctl-colorblind-90: #b298ca;
+  --pctl-colorblind-80: #7D57A1;
+  --pctl-colorblind-70: #906eaf;
+  --pctl-colorblind-60: #7f59a2;
+  --pctl-colorblind-50: #77577b;
+  --pctl-colorblind-40: #745667;
+  --pctl-colorblind-30: #715651;
+
+  /* a value that is not compared (party rows): the text colour, faded */
+  --pctl-neutral: rgb(252 241 226 / 0.6);
+}
+
+@media (min-width: 640px) {
+  :root { --container-padding: 30px; }
+}
+@media (min-width: 960px) {
+  :root { --container-padding: 40px; }
+}
+
+/* Breakpoints (UIkit's, which the current site uses): small 640px, medium 960px, large 1200px, xlarge 1600px.
+   Custom media queries cannot be used in plain CSS yet, so they are written out in the media queries. */

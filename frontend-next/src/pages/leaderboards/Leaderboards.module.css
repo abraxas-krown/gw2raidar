@@ -1,0 +1,308 @@
+/* ---- the kind of encounter, the era and the week */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--margin-small) var(--gutter);
+}
+
+.filterTitle {
+  width: 100%;
+  margin: 0;
+  font-family: var(--font-mono);
+}
+
+.kinds {
+  flex-wrap: wrap;
+}
+
+.toggles {
+  margin: var(--margin-small) 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+/* a select shown as its chosen option's text (uk-form-custom): the select itself is invisible, over the text */
+.custom {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+
+  & select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
+    font-size: var(--font-size);
+  }
+}
+
+.on {
+  color: var(--c-text);
+}
+
+/* ---- a wing: its bosses' cards in a grid, more columns on wider screens */
+.wing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gutter);
+  margin-top: var(--margin-large);
+
+  &:last-child {
+    margin-bottom: var(--margin);
+  }
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  @media (min-width: 1600px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.heading {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+/* ---- a boss's card: icon, name and close button, then the kills */
+.encounter {
+  position: relative;
+  display: grid;
+  grid-template-columns: 50px 1fr max-content;
+  gap: calc(var(--gutter-small) / 2);
+  padding: calc(var(--gutter-small) / 2);
+  overflow: hidden;
+  border-radius: var(--radius);
+  background-color: var(--c-bg-panel);
+
+  /* closed: the rows fade out at the bottom, and "See Top 10" shows on hover */
+  &:not(.expanded) {
+    cursor: pointer;
+
+    &::after {
+      content: " ";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgb(43 39 58 / 0) 60%, var(--c-bg-panel));
+    }
+    &::before {
+      content: "See Top 10";
+      position: absolute;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      padding-top: 50%;
+      text-align: center;
+      opacity: 0;
+      background: linear-gradient(rgb(43 39 58 / 0.6) 60%, var(--c-bg-panel));
+      transform: scale(1.2);
+      transition: all 200ms ease-in;
+    }
+    &:hover::before {
+      opacity: 1;
+      transform: scale(1);
+      transition: all 200ms ease-in 75ms;
+    }
+  }
+}
+
+.expanded {
+  grid-column: 1 / -1;
+}
+
+.name {
+  margin: 0 0 var(--margin);
+}
+
+.close {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-link);
+  font-size: var(--font-size-large);
+  line-height: 1.4;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--c-link-hover);
+  }
+}
+
+/* ---- a kill: rank, time, then (open cards, wider screens) damage, boons and composition */
+.row {
+  grid-column: 1 / -1;
+  display: none;
+  grid-template-columns: 48px 112px 1fr;
+  gap: var(--gutter-small);
+  padding: var(--margin) 0;
+  border-bottom: 2px solid var(--c-bg-muted);
+  color: var(--c-link);
+
+  &:last-child {
+    border-bottom: none;
+  }
+  /* closed: the top four */
+  &:nth-of-type(-n + 4) {
+    display: grid;
+  }
+
+  @media (max-width: 639.98px) {
+    grid-template-columns: 48px 1fr;
+
+    & .damage {
+      display: none !important;
+    }
+  }
+
+  & .damage,
+  & .buffs,
+  & .composition {
+    height: 44px;
+  }
+  & .buffs,
+  & .composition {
+    display: none;
+  }
+}
+
+.rank {
+  border-radius: var(--radius);
+  color: var(--c-bg-panel);
+  font-size: var(--font-size-xlarge);
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  align-self: center;
+  opacity: 0.8;
+}
+
+.time h3 {
+  margin: 0;
+  line-height: 1;
+}
+
+.remaining {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--c-text) 70%, var(--c-bg));
+}
+
+.damage {
+  display: inherit;
+
+  & > span {
+    color: color-mix(in srgb, var(--c-text) 70%, var(--c-bg));
+    font-size: var(--font-size-small);
+    letter-spacing: 0;
+  }
+}
+
+/* an open card: every kill, with "View Encounter" on hover; damage, boons and composition as there is room */
+.expanded .row {
+  display: grid;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  grid-template-columns: 48px minmax(192px, 1fr);
+
+  & .damage,
+  & .buffs,
+  & .composition {
+    display: none;
+  }
+
+  &::before {
+    content: "View Encounter";
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    background: rgb(43 39 58 / 0.6);
+    transform: scale(1.2);
+    transition: all 150ms ease-in;
+  }
+  &:hover {
+    text-decoration: none;
+  }
+  &:hover::before {
+    opacity: 1;
+    transform: scale(1);
+    transition: all 150ms ease-in 75ms;
+  }
+
+  @media (min-width: 640px) {
+    grid-template-columns: 48px minmax(192px, 1fr) minmax(272px, 1fr);
+
+    & .damage {
+      display: grid;
+      gap: calc(var(--gutter-small) / 2);
+    }
+  }
+  @media (min-width: 960px) {
+    grid-template-columns: 48px minmax(192px, 1fr) minmax(272px, 1fr) max-content max-content;
+
+    & .buffs,
+    & .composition,
+    & .damage {
+      display: grid;
+      gap: calc(var(--gutter-small) / 2);
+    }
+  }
+}
+
+.buffs {
+  grid-template-columns: repeat(2, 1fr);
+  align-items: center;
+}
+
+.buff {
+  display: grid;
+  grid-template-columns: minmax(20px, max-content) minmax(max-content, 44px);
+  gap: 4px;
+  max-height: 20px;
+}
+
+.buffIcon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.buffNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+  border-radius: var(--radius);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.composition {
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  align-content: space-evenly;
+  justify-content: stretch;
+
+  & img {
+    width: 20px;
+  }
+}

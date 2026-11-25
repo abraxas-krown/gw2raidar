@@ -1,0 +1,150 @@
+.timeFrame {
+  margin-bottom: var(--margin);
+}
+
+/* the encounter's icon, then its name and badges (.r-media) */
+.media {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--gutter-small);
+  margin-top: var(--margin-medium);
+}
+
+.title {
+  margin-bottom: var(--margin-small);
+  line-height: 1;
+}
+
+.badge {
+  margin-right: var(--margin-small);
+}
+
+.warning {
+  background-color: var(--c-warning);
+}
+
+.played {
+  margin-top: 0;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.smallMono {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.chartTitle {
+  margin: var(--margin-small) 0;
+}
+
+/* the specialisations' cards: 1 to 4 a row by screen size, as a uk-grid (each column's gutter on its left) */
+.grid {
+  --grid-gutter: 30px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-left: calc(-1 * var(--grid-gutter));
+
+  & > * {
+    margin-left: var(--grid-gutter);
+  }
+
+  @media (min-width: 1200px) { --grid-gutter: 40px; }
+
+  @media (min-width: 640px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 960px) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (min-width: 1600px) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* .r-profile-stats */
+.card {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gutter-small);
+  margin-bottom: var(--gutter-medium);
+  padding: var(--gutter-smallest);
+  border-radius: var(--radius);
+  background: var(--c-bg-muted);
+}
+
+.profession {
+  display: grid;
+  grid-column: span 3;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: var(--gutter-smallest);
+}
+
+.activity {
+  display: grid;
+  gap: 4px;
+  align-content: center;
+}
+
+.activityBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 5px;
+  margin-left: 4px;
+  border-radius: var(--radius);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: var(--font-size-small);
+}
+
+.damage {
+  grid-column: span 4;
+}
+
+/* ---- the graph's dialog: light, over a dark backdrop (uk-modal) */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.dialog {
+  position: relative;
+  width: 80vw;
+  max-height: 80vh;
+  padding: var(--margin);
+  background: var(--c-text);
+}
+
+.closeDialog {
+  position: absolute;
+  top: -36px;
+  right: -36px;
+  padding: 5px;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.graph {
+  display: block;
+  width: 100%;
+  max-height: calc(80vh - 2 * var(--margin));
+}
+
+.graphTitle {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: bold;
+  fill: #666;
+}
+
+.graphLabel {
+  font-family: var(--font-body);
+  font-size: 12px;
+  fill: #666;
+}

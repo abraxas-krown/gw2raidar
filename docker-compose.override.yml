@@ -1,11 +1,14 @@
 # Local use only: `docker compose` reads this file automatically next to docker-compose.yml, and it builds
 # the images from this checkout instead of pulling them from GHCR. Dokploy reads only docker-compose.yml.
 services:
-  frontend:
+  # published locally at http://localhost:8081
+  frontend-next:
     build:
       context: .
-      target: frontend
+      target: frontend-next
     pull_policy: build
+    ports:
+      - "8081:80"
 
   web:
     build:

@@ -1,0 +1,14 @@
+/* uk-container uk-container-large */
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  box-sizing: content-box;
+}
+
+/* The page fills at least the window, so the footer stays below it. As on the current site, the vertical margins
+   of the page's parts collapse with each other, but not with the header's (flow-root keeps them inside). */
+.main {
+  display: flow-root;
+  min-height: 100vh;
+}
