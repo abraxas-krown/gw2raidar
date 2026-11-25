@@ -23,6 +23,10 @@ export interface BuffTab {
   id: string;
   name: string;
   order: string[];
+  // a tab of several kinds of buff (made of the tabs of the encounter): the buffs of each, in `order`, shown as
+  // groups, and the id of the tab each came from
+  groups?: string[][];
+  groupIds?: string[];
 }
 
 export interface Bootstrap {

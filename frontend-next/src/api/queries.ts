@@ -3,20 +3,31 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from './endpoints';
 import type { BuffTab, Encounter } from './types';
 
-// The encounter's Nourishments, Enhancements and Other Consumables are listed on one Consumables tab, where the first of them was
-const CONSUMABLES_TAB = 'consumables';
-const CONSUMABLE_PARTS = ['nourishments', 'enhancements', 'other_consumables'];
+// The buff tabs the encounter has, merged into fewer tabs: each is a tab of a group of buffs for each tab it
+// replaces (in the order given, so the gear comes last), where the first of them was.
+const MERGED_TABS = [
+  { id: 'effects', name: 'Effects', parts: ['offensive_buffs', 'support_buffs', 'defensive_buffs'] },
+  { id: 'debuffs_and_conditions', name: 'Debuffs', parts: ['debuffs', 'conditions'] },
+  { id: 'equipped_buffs', name: 'Equipped Buffs', parts: ['nourishments', 'enhancements', 'other_consumables', 'gear_buffs'] },
+];
 
-export function mergeConsumables(tabs: BuffTab[]): BuffTab[] {
-  const parts = tabs.filter(tab => CONSUMABLE_PARTS.includes(tab.id));
-  if (parts.length === 0) return tabs;
-  const merged: BuffTab = { id: CONSUMABLES_TAB, name: 'Consumables', order: parts.flatMap(tab => tab.order) };
-  const first = parts[0];
-  return tabs.flatMap(tab => (tab === first ? [merged] : parts.includes(tab) ? [] : [tab]));
+export function mergeTabs(tabs: BuffTab[]): BuffTab[] {
+  return MERGED_TABS.reduce((all, { id, name, parts }) => {
+    const found = parts.flatMap(part => all.find(tab => tab.id === part) ?? []);
+    if (found.length === 0) return all;
+    const merged: BuffTab = {
+      id,
+      name,
+      order: found.flatMap(tab => tab.order),
+      groups: found.map(tab => tab.order),
+      groupIds: found.map(tab => tab.id),
+    };
+    return all.flatMap(tab => (tab === found[0] ? [merged] : found.includes(tab) ? [] : [tab]));
+  }, tabs);
 }
 
-const withConsumables = (encounter: Encounter): Encounter =>
-  ({ ...encounter, buff_tabs: mergeConsumables(encounter.buff_tabs) });
+const withMergedTabs = (encounter: Encounter): Encounter =>
+  ({ ...encounter, buff_tabs: mergeTabs(encounter.buff_tabs) });
 
 export const keys = {
   bootstrap: ['bootstrap'] as const,
@@ -45,7 +56,7 @@ export const useEncounterQuery = (urlId: string | undefined) =>
   useQuery({
     queryKey: keys.encounter(urlId ?? ''),
     queryFn: async () => (await api.encounter(urlId!)).encounter,
-    select: withConsumables,
+    select: withMergedTabs,
     enabled: !!urlId,
     staleTime: Infinity,
     retry: false,

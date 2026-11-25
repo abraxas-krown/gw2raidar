@@ -5,6 +5,7 @@ import type { BuffInfo, StatBlock } from '../../api/types';
 import { bsearch } from '../../lib/percentiles';
 import { cx } from '../../ui/controls';
 import { useEncounterView } from './EncounterContext';
+import { BuffGroups } from './BuffGroups';
 import { Block, BuffCell, memberRowProps, PartyCell, PlayerCell, SquadCell, statsStyles as s } from './rows';
 import { buffPoints, memberKey } from './stats';
 
@@ -40,9 +41,10 @@ export function Buffs({ tabId }: BuffsProps) {
 
   if (!buffTab) return null;
 
-  const buffs = (stats: StatBlock, variant: Variant) => (
+  // the buffs of one group (or of the tab, which has just the one)
+  const buffGrid = (codes: string[], stats: StatBlock, variant: Variant) => (
     <div className={s.buffs}>
-      {buffTab.order.map(code => {
+      {codes.map(code => {
         const buff = encounter.buffs[code];
         const value = (boonOutput ? stats.buffs_out : stats.buffs)?.[code] ?? 0;
         const own = hasPercentiles && variant !== 'party';
@@ -75,6 +77,13 @@ export function Buffs({ tabId }: BuffsProps) {
       })}
     </div>
   );
+
+  // a tab of several kinds of buff (Equipped Buffs) has a group for each, apart, and wrapping on their own
+  const buffs = (stats: StatBlock, variant: Variant) => buffTab.groups ? (
+    <BuffGroups counts={buffTab.groups.map(codes => codes.length)}>
+      {buffTab.groups.map((codes, index) => <React.Fragment key={index}>{buffGrid(codes, stats, variant)}</React.Fragment>)}
+    </BuffGroups>
+  ) : buffGrid(buffTab.order, stats, variant);
 
   return (
     <div>

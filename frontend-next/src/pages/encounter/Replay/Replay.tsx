@@ -82,7 +82,10 @@ export function Replay({ data, buffTabs, buffs, specialisation, phase, topElemen
   React.useEffect(() => {
     const node = root.current;
     if (!node) return;
-    const tabOrder = (ids: string[]) => buffTabs.filter(tab => ids.includes(tab.id)).flatMap(tab => tab.order);
+    // the buffs of the tabs with these ids, also where the site has merged them into a tab of groups
+    const tabOrder = (ids: string[]) => buffTabs.flatMap(tab => tab.groups && tab.groupIds
+      ? tab.groups.filter((_, i) => ids.includes(tab.groupIds![i])).flat()
+      : ids.includes(tab.id) ? tab.order : []);
     const created = new window.RaidarReplay.Viewer(node, data, {
       staticRoot: IMG,
       topElement: topElement?.current,

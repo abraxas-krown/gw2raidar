@@ -179,6 +179,17 @@
 }
 
 /* ---- buffs: the icon, the value under it, and the compared percentile's value under that */
+
+/* the groups of a tab of several kinds of buff (BuffGroups.tsx): side by side, half a buff's width apart, each as
+   wide as the columns of buffs it has (set there) */
+.buffGroups {
+  display: grid;
+  justify-content: start;
+  align-items: start;
+  column-gap: 37px;
+  min-width: 0;
+}
+
 .buffs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(max-content, 74px));
@@ -275,7 +286,7 @@
   .player {
     grid-template-columns: max-content 36px;
   }
-  .buffsRow .buffs {
+  .buffsRow > :is(.buffs, .buffGroups) {
     grid-column: span 2;
   }
 }
