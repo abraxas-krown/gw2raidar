@@ -53,8 +53,10 @@ function EncounterBody() {
   const tabsRef = React.useRef<HTMLElement>(null);
   const { encounter } = useEncounterView();
 
-  // the tab is kept from encounter to encounter, but not every encounter has a replay
-  const tab = encounterTab === 'replay' && !encounter.has_replay ? 'combat_stats' : encounterTab;
+  // the tab is kept from encounter to encounter, but not every encounter has the tab: then the Overview opens
+  const known = encounterTab === 'combat_stats' || encounterTab === 'boss_metrics'
+    || (encounterTab === 'replay' ? encounter.has_replay : encounter.buff_tabs.some(buffTab => buffTab.id === encounterTab));
+  const tab = known ? encounterTab : 'combat_stats';
   React.useEffect(() => {
     if (tab !== encounterTab) uiStore.set({ encounterTab: tab });
   }, [tab, encounterTab]);

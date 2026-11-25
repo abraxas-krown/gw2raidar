@@ -1,6 +1,8 @@
 // A Buffs tab (encounter_buffs.html): the uptime (or output) of one group of buffs, per squad, party and player.
 // The buff tabs and the buffs on them differ per encounter (encounter.buff_tabs, encounter.buffs).
-import type { StatBlock } from '../../api/types';
+import * as React from 'react';
+import type { BuffInfo, StatBlock } from '../../api/types';
+import { bsearch } from '../../lib/percentiles';
 import { cx } from '../../ui/controls';
 import { useEncounterView } from './EncounterContext';
 import { Block, BuffCell, memberRowProps, PartyCell, PlayerCell, SquadCell, statsStyles as s } from './rows';
@@ -15,23 +17,58 @@ export interface BuffsProps {
 export function Buffs({ tabId }: BuffsProps) {
   const { encounter, phase, boonOutput, setBoonOutput } = useEncounterView();
   const buffTab = encounter.buff_tabs.find(tab => tab.id === tabId);
+
+  // Only the boons have percentiles to compare against. The other tabs colour an uptime by its share of the
+  // fight, and an output by how it ranks among the squad's players.
+  const hasPercentiles = tabId === 'boons';
+  const squadOutputs = React.useMemo(() => {
+    const byCode: Record<string, Float32Array> = {};
+    if (!buffTab || hasPercentiles || !boonOutput) return byCode;
+    const members = Object.values(phase.parties).flatMap(party => party.members);
+    for (const code of buffTab.order) {
+      byCode[code] = Float32Array.from(members.map(member => Number(member.buffs_out?.[code]) || 0)).sort();
+    }
+    return byCode;
+  }, [hasPercentiles, boonOutput, phase, buffTab]);
+
+  // uptimes are percents; a stacking buff's is its stacks of the most it can have (25)
+  const uptimePercent = (buff: BuffInfo | undefined, value: number) =>
+    Math.max(0, Math.min(100, buff?.stacks ? (100 * value) / 25 : value));
+
   if (!buffTab) return null;
 
   const buffs = (stats: StatBlock, variant: Variant) => (
     <div className={s.buffs}>
-      {buffTab.order.map(code => (
-        <BuffCell
-          key={code}
-          code={code}
-          buff={encounter.buffs[code]}
-          value={(boonOutput ? stats.buffs_out : stats.buffs)?.[code] ?? 0}
-          points={variant === 'party' ? undefined : buffPoints(stats.performance, boonOutput, code)}
-          output={boonOutput}
-          neutral={variant === 'party'}
-          hideZero={variant === 'member'}
-          stacksByKey
-        />
-      ))}
+      {buffTab.order.map(code => {
+        const buff = encounter.buffs[code];
+        const value = (boonOutput ? stats.buffs_out : stats.buffs)?.[code] ?? 0;
+        const own = hasPercentiles && variant !== 'party';
+        let percentile: number | undefined;
+        let relativeTo: string | undefined;
+        if (!hasPercentiles && variant !== 'party') {
+          if (!boonOutput) {
+            percentile = Math.round(uptimePercent(buff, value));
+          } else if (variant === 'member') {
+            percentile = bsearch(value, squadOutputs[code] ?? new Float32Array(0));
+            relativeTo = 'in the squad';
+          }
+        }
+        return (
+          <BuffCell
+            key={code}
+            code={code}
+            buff={buff}
+            value={value}
+            points={own ? buffPoints(stats.performance, boonOutput, code) : undefined}
+            percentile={percentile}
+            relativeTo={relativeTo}
+            output={boonOutput}
+            neutral={variant === 'party'}
+            hideZero={variant === 'member'}
+            stacksByKey
+          />
+        );
+      })}
     </div>
   );
 

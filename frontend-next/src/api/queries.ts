@@ -1,6 +1,22 @@
 // React Query hooks over the endpoints, and the query keys the rest of the app updates.
 import { useQuery } from '@tanstack/react-query';
 import { api } from './endpoints';
+import type { BuffTab, Encounter } from './types';
+
+// The encounter's Nourishments, Enhancements and Other Consumables are listed on one Consumables tab, where the first of them was
+const CONSUMABLES_TAB = 'consumables';
+const CONSUMABLE_PARTS = ['nourishments', 'enhancements', 'other_consumables'];
+
+export function mergeConsumables(tabs: BuffTab[]): BuffTab[] {
+  const parts = tabs.filter(tab => CONSUMABLE_PARTS.includes(tab.id));
+  if (parts.length === 0) return tabs;
+  const merged: BuffTab = { id: CONSUMABLES_TAB, name: 'Consumables', order: parts.flatMap(tab => tab.order) };
+  const first = parts[0];
+  return tabs.flatMap(tab => (tab === first ? [merged] : parts.includes(tab) ? [] : [tab]));
+}
+
+const withConsumables = (encounter: Encounter): Encounter =>
+  ({ ...encounter, buff_tabs: mergeConsumables(encounter.buff_tabs) });
 
 export const keys = {
   bootstrap: ['bootstrap'] as const,
@@ -29,6 +45,7 @@ export const useEncounterQuery = (urlId: string | undefined) =>
   useQuery({
     queryKey: keys.encounter(urlId ?? ''),
     queryFn: async () => (await api.encounter(urlId!)).encounter,
+    select: withConsumables,
     enabled: !!urlId,
     staleTime: Infinity,
     retry: false,

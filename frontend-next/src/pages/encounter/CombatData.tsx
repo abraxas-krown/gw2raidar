@@ -138,7 +138,7 @@ export function CombatData() {
       {Object.entries(squad.parties).map(([partyNo, party]: [string, Party], index) => (
         <Block key={partyNo} index={index + 2}>
           <div className={cx(s.row, s.party)}>
-            <PartyCell partyNo={partyNo} count={party.members.length} />
+            <PartyCell partyNo={partyNo} count={party.members.length} events={party.events} />
             {cells(party, 'party')}
           </div>
           {party.members.map((member: Member, i) => (

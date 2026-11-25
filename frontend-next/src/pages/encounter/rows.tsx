@@ -135,7 +135,11 @@ export interface BuffCellProps {
   code: string;
   buff: BuffInfo | undefined;
   value: number | undefined;
+  // the stored percentile points to compare against (only the boons have them)
   points?: Float32Array;
+  // without points: the percentile to colour the value by, and what it is relative to
+  percentile?: number;
+  relativeTo?: string;
   output: boolean;
   // players' buffs they never had are left out (their place kept)
   hideZero?: boolean;
@@ -144,16 +148,16 @@ export interface BuffCellProps {
   stacksByKey?: boolean;
 }
 
-export function BuffCell({ code, buff, value, points, output, hideZero, neutral, stacksByKey }: BuffCellProps) {
+export function BuffCell({ code, buff, value, points, percentile: given, relativeTo, output, hideZero, neutral, stacksByKey }: BuffCellProps) {
   const { comparePerc } = useSettings();
   const pc = usePercentile();
   const tooltip = useTooltip();
   if (!buff) return null;
 
-  const percentile = neutral || !points ? NEUTRAL : bsearch(value, points);
+  const percentile = neutral ? NEUTRAL : points ? bsearch(value, points) : given ?? NEUTRAL;
   const name = `${buff.name} ${output ? 'Output' : 'Uptime'}`;
-  const content = neutral ? <h5>{name}</h5> : (
-    <><h5>{name}</h5><strong>Performance:</strong> {th(percentile)} Percentile</>
+  const content = percentile === NEUTRAL ? <h5>{name}</h5> : (
+    <><h5>{name}</h5><strong>Performance:</strong> {th(percentile)} Percentile{relativeTo && <> {relativeTo}</>}</>
   );
   const valueStyle = pc(percentile, styles.buffNumber);
   const compareStyle = pc(comparePerc, cx(styles.buffNumber, styles.compare));

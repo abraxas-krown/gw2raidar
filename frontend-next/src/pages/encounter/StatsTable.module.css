@@ -17,8 +17,9 @@
   }
 }
 
+/* no panel of its own, but its row lines up with the parties' rows and their players' */
 .squad {
-  padding: 0;
+  padding: 0 4px;
   background-color: transparent;
 }
 

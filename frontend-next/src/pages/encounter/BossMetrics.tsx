@@ -53,7 +53,7 @@ export function BossMetrics() {
       {Object.entries(phase.parties).map(([partyNo, party], index) => (
         <Block key={partyNo} mechanics index={index + 2}>
           <div className={cx(s.row, s.party)}>
-            <PartyCell partyNo={partyNo} count={party.members.length} align="all" />
+            <PartyCell partyNo={partyNo} count={party.members.length} events={party.events} align="all" />
             <Values metrics={metrics} stats={party} />
           </div>
           {party.members.map((member, i) => (
