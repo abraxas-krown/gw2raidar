@@ -54,7 +54,7 @@ export function Buffs({ tabId }: BuffsProps) {
             percentile = Math.round(share);
           } else if (variant === 'member') {
             percentile = bsearch(value, squad[code] ?? new Float32Array(0));
-            relativeTo = 'in the squad';
+            if (boonOutput) relativeTo = 'in the squad';
           }
         }
         return (

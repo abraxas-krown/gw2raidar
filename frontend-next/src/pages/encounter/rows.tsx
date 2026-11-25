@@ -137,7 +137,7 @@ export interface BuffCellProps {
   value: number | undefined;
   // the stored percentile points to compare against (only the boons have them)
   points?: Float32Array;
-  // without points: the percentile to colour the value by, and what it is relative to
+  // without points: the percentile to colour the value by; shown when `relativeTo` says what it is relative to
   percentile?: number;
   relativeTo?: string;
   output: boolean;
@@ -156,7 +156,8 @@ export function BuffCell({ code, buff, value, points, percentile: given, relativ
 
   const percentile = neutral ? NEUTRAL : points ? bsearch(value, points) : given ?? NEUTRAL;
   const name = `${buff.name} ${output ? 'Output' : 'Uptime'}`;
-  const content = percentile === NEUTRAL ? <h5>{name}</h5> : (
+  // only the stored percentiles, and a ranking among the squad (an output), are percentiles to show
+  const content = neutral || (!points && !relativeTo) ? <h5>{name}</h5> : (
     <><h5>{name}</h5><strong>Performance:</strong> {th(percentile)} Percentile{relativeTo && <> {relativeTo}</>}</>
   );
   const valueStyle = pc(percentile, styles.buffNumber);
