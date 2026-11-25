@@ -47,7 +47,8 @@ export function Buffs({ tabId }: BuffsProps) {
       {codes.map(code => {
         const buff = encounter.buffs[code];
         const value = (boonOutput ? stats.buffs_out : stats.buffs)?.[code] ?? 0;
-        const own = hasPercentiles && variant !== 'party';
+        // (a player with none stored, as with a spec no one has uploaded yet, is left uncoloured)
+        const stored = hasPercentiles && variant !== 'party' ? buffPoints(stats.performance, boonOutput, code) : undefined;
         let percentile: number | undefined;
         let relativeTo: string | undefined;
         if (!hasPercentiles && variant !== 'party') {
@@ -65,7 +66,7 @@ export function Buffs({ tabId }: BuffsProps) {
             code={code}
             buff={buff}
             value={value}
-            points={own ? buffPoints(stats.performance, boonOutput, code) : undefined}
+            points={stored?.length ? stored : undefined}
             percentile={percentile}
             relativeTo={relativeTo}
             output={boonOutput}

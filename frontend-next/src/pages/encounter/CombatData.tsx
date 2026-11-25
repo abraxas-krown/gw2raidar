@@ -178,7 +178,9 @@ function DpsChart({ variant, stats, squad, scales }: DpsChartProps) {
   const pts = points(perf, 'dps_perc');
   const avg = variant === 'party' ? n(dpsBoss ? squad.group?.avg_dps_boss : squad.group?.avg_dps) : n(perf?.dps_avg);
   const best = n(perf?.dps_max);
-  const percentile = variant === 'party' ? NEUTRAL : bsearch(dps, pts);
+  // (a player with no stored percentiles, as with a spec no one has uploaded yet, has nothing to compare with)
+  const hasPts = pts.length > 0;
+  const percentile = variant === 'party' || !hasPts ? NEUTRAL : bsearch(dps, pts);
 
   const width = ratio(dps, scale);
   const otherWidth = ratio(other, scale);
@@ -188,7 +190,7 @@ function DpsChart({ variant, stats, squad, scales }: DpsChartProps) {
   const main = (
     <>
       <h5>{name}</h5><strong>{num(dps, 0)}</strong> DPS.
-      {variant !== 'party' && <><br /><strong>Performance:</strong> {th(percentile)} Percentile</>}
+      {variant !== 'party' && hasPts && <><br /><strong>Performance:</strong> {th(percentile)} Percentile</>}
       {avg > 0 && <><br />This role's average {name} is <strong>{num(avg, 0)}</strong>.</>}
     </>
   );
@@ -208,7 +210,7 @@ function DpsChart({ variant, stats, squad, scales }: DpsChartProps) {
       {variant === 'squad' && <Line width={100} />}
       {variant === 'member' && <Line width={ratio(best, scale)} />}
       {variant === 'party' && <Line width={squadLine} />}
-      {variant !== 'party' && <Tick x={tickX} />}
+      {variant !== 'party' && hasPts && <Tick x={tickX} />}
       {dpsBoss && (
         <Bar width={otherWidth} percentile={percentile} opacity={0.3} animate={animate} tooltip={clickMore} onClick={() => setDpsBoss(false)} />
       )}
@@ -218,7 +220,7 @@ function DpsChart({ variant, stats, squad, scales }: DpsChartProps) {
       )}
       {variant === 'party' && <SquadLabel x={squadLine} anchor={squadLine < 25 ? 'start' : 'end'} />}
       <Value x={valueX} anchor={valueAnchor}>{num(dps, 0)}</Value>
-      {variant !== 'party' && <TickValue x={tickX} anchor={tickAnchor}>{num(pts[comparePerc], 0)}</TickValue>}
+      {variant !== 'party' && hasPts && <TickValue x={tickX} anchor={tickAnchor}>{num(pts[comparePerc], 0)}</TickValue>}
     </Chart>
   );
 }
@@ -252,9 +254,10 @@ function ReceivedChart({ variant, stats, squad, scales }: ReceivedChartProps) {
 
   const perf = stats.performance?.received;
   const pts = points(perf, 'total_perc');
-  const percentile = bsearchLow(recv, pts);
+  const hasPts = pts.length > 0;
+  const percentile = hasPts ? bsearchLow(recv, pts) : NEUTRAL;
   const tickX = ratio(n(pts[100 - comparePerc]), scale);
-  const performance = <><br /><strong>Performance:</strong> {th(percentile)} Percentile</>;
+  const performance = hasPts ? <><br /><strong>Performance:</strong> {th(percentile)} Percentile</> : null;
 
   let tooltip: React.ReactNode;
   if (variant === 'squad') {
@@ -282,7 +285,7 @@ function ReceivedChart({ variant, stats, squad, scales }: ReceivedChartProps) {
   return (
     <Chart>
       <Line width={variant === 'squad' ? 100 : ratio(n(perf?.total_max), scale)} />
-      <Tick x={tickX} />
+      {hasPts && <Tick x={tickX} />}
       <Bar width={width} percentile={percentile} tooltip={tooltip} />
       {variant === 'member' && (
         <Bar
@@ -296,9 +299,11 @@ function ReceivedChart({ variant, stats, squad, scales }: ReceivedChartProps) {
       <Value x={width < (variant === 'squad' ? 25 : 35) ? 0 : width} anchor={width < (variant === 'squad' ? 25 : 35) ? 'start' : variant === 'squad' ? 'end' : 'middle'}>
         {num(recv, 0)}
       </Value>
-      <TickValue x={tickX} anchor={(variant === 'squad' ? width : tickX) < 25 ? 'start' : 'middle'}>
-        {num(pts[100 - comparePerc], 0)}
-      </TickValue>
+      {hasPts && (
+        <TickValue x={tickX} anchor={(variant === 'squad' ? width : tickX) < 25 ? 'start' : 'middle'}>
+          {num(pts[100 - comparePerc], 0)}
+        </TickValue>
+      )}
     </Chart>
   );
 }
@@ -402,13 +407,14 @@ function MemberMisc({ stats }: MemberMiscProps) {
   const shielded = n(stats.shielded?.total);
 
   const figure = (label: string, value: string, key: 'crit' | 'scholar' | 'flanking') => {
-    const percentile = perf ? bsearch(n(boss?.[key]), points(perf.actual_boss, `${key}_perc`)) : 0;
+    const pts = points(perf?.actual_boss, `${key}_perc`);
+    const percentile = pts.length ? bsearch(n(boss?.[key]), pts) : NEUTRAL;
     return {
       percentile,
       tooltip: (
         <>
           <strong>{label}:</strong> {value}
-          {perf && <><br /><strong>Average:</strong> {perc(100 * n(perf.actual_boss?.[`${key}_avg`]))}<br /><strong>Performance:</strong> {th(percentile)} Percentile</>}
+          {pts.length > 0 && <><br /><strong>Average:</strong> {perc(100 * n(perf?.actual_boss?.[`${key}_avg`]))}<br /><strong>Performance:</strong> {th(percentile)} Percentile</>}
         </>
       ),
     };
@@ -416,7 +422,8 @@ function MemberMisc({ stats }: MemberMiscProps) {
   const crit = figure('Critical', perc(100 * n(boss?.crit)), 'crit');
   const scholar = figure('Scholar Uptime', perc(100 * n(boss?.scholar)), 'scholar');
   const flanking = figure('Flanking Uptime', perc(100 * n(boss?.flanking)), 'flanking');
-  const barrierPercentile = perf ? bsearch(shielded, points(perf.shielded, 'total_perc')) : 0;
+  const barrierPoints = points(perf?.shielded, 'total_perc');
+  const barrierPercentile = barrierPoints.length ? bsearch(shielded, barrierPoints) : NEUTRAL;
 
   return (
     <div className={cx(s.misc, 'show-l')}>
@@ -429,7 +436,7 @@ function MemberMisc({ stats }: MemberMiscProps) {
         tooltip={
           <>
             <strong>Barrier:</strong> {num(shielded, 0)}
-            {perf && <><br /><strong>Average:</strong> {num(n(perf.actual_boss?.shielded?.total_avg), 0)}<br /><strong>Performance:</strong> {th(barrierPercentile)} Percentile</>}
+            {barrierPoints.length > 0 && <><br /><strong>Average:</strong> {num(n(perf?.actual_boss?.shielded?.total_avg), 0)}<br /><strong>Performance:</strong> {th(barrierPercentile)} Percentile</>}
           </>
         }
       />
