@@ -90,13 +90,17 @@ Settings are kept in `localStorage` under `settings`, with the same shape the cu
 
 ## The replay
 
-The Replay tab wraps the current frontend's replay viewer, copied unchanged into
-`src/pages/encounter/Replay/vendor/replay.js`. The viewer draws on a canvas and builds its own controls, so its
-styles (`replay.css`) are global, not a CSS module.
+The Replay tab (`src/pages/encounter/Replay/`) is React throughout:
 
-**Follow-up:** rewrite the viewer as a React component. Everything it needs is in `src/pages/encounter/Replay/`.
-`<Replay>`'s props are the interface to keep, so the rewrite replaces that folder and nothing else changes
-(see `TODO(replay-rewrite)`).
+- `model.ts`: the replay data model, as pure functions: where each actor is and what state it is in at a time, and
+  the panel's view
+- `usePlayback.ts`: the clock. The time is kept in a store (`lib/store.ts`), not in React state, so playback does
+  not re-render the page on every frame
+- `ReplayCanvas.tsx`: the map, drawn on a canvas from the clock. Its camera (zoom, pan) is kept in refs
+- `ReplayControls.tsx`, `ReplayTimeline.tsx`, `ReplayPanel.tsx`: the controls, the timeline, and the panel of
+  players and targets, which follows the clock a few times a second
+
+The data format is the one `eiparser/replay.py` makes (`types.ts`).
 
 ## Deploying
 
