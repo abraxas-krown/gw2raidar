@@ -48,6 +48,12 @@ one before moving the pin:
    the boss's `CombatReplayMap` (in its `GetCombatMapInternal`).
    Add maps for new bosses, and update the image, `world` and `size` of any boss whose map changed. While a
    map does not match EI's, that boss's encounters are stored without a replay (with a warning in the log).
+   Each boss's `ei_images` maps the url of every EI image the site has a copy of to that copy. Replays keep
+   EI's urls (EI changes some maps during a fight, such as Adina's), and show EI's own image for any url
+   missing there, so add the url of a new or changed EI image along with its copy (`test_every_boss_maps_an_ei_image_to_its_own`
+   checks that each boss's image is listed).
+   `ARENA_SPECIES` in `eiparser/decorations.py` lists EI's IDs of actors that are part of the arena (Adina's
+   platforms): check that EI still uses them.
 3. **Buff stacks.** The buffs that stack in intensity have their uptime as an average number of stacks, and the
    frontend colours it by its share of the most stacks the buff can have. EI declares that maximum for each buff
    (`new Buff("Emboldened", ..., BuffStackType.Stacking, 5, ...)`, in `GW2EIEvtcParser/EIData/Buffs/*.cs`) but does

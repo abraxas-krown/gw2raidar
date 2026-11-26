@@ -185,5 +185,5 @@ export type Notification =
   | { type: 'upload'; filename: string; upload_id: number; uploaded_by: string; encounter_id: number; encounter_url_id: string; encounter?: EncounterRow }
   | { type: 'upload_error'; upload_id: number; error: string };
 
-// ---- replay/<url_id>.json: passed to the replay viewer as it is (see Replay/viewer.d.ts)
-export type { ReplayData } from "../pages/encounter/Replay/viewer";
+// ---- replay/<url_id>.json: passed to the replay viewer as it is (see Replay/types.ts)
+export type { ReplayData } from "../pages/encounter/Replay/types";

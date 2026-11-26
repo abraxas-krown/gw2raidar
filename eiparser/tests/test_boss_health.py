@@ -17,6 +17,18 @@ class BossHealthTest(unittest.TestCase):
         targets = [{"healthPercentBurned": 0}, {"healthPercentBurned": 100}, {"healthPercentBurned": 50}]
         self.assertEqual(boss_health(_log(targets, [2, 1])), 50.0)
 
+    def test_main_target_by_priority(self):
+        # with targetPriorities, the first main target, not a blocking one listed before it
+        targets = [{"healthPercentBurned": 0}, {"healthPercentBurned": 100}, {"healthPercentBurned": 50}]
+        log = _log(targets, [1, 2])
+        log["phases"][0]["targetPriorities"] = {"1": "BLOCKING", "2": "MAIN", "0": "NONBLOCKING"}
+        self.assertEqual(boss_health(log), 50.0)
+
+    def test_no_main_target(self):
+        log = _log([{"healthPercentBurned": 50}], [0])
+        log["phases"][0]["targetPriorities"] = {"0": "NONBLOCKING"}
+        self.assertIsNone(boss_health(log))
+
     def test_falls_back_to_the_last_health_sample(self):
         self.assertEqual(boss_health(_log([{"healthPercents": [[0, 100], [500, 42.123]]}], [0])), 42.12)
 

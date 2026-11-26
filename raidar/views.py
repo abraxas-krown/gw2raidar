@@ -472,8 +472,15 @@ def replay(request, url_id=None):
             "image": asset_url("img/replay/" + entry["image"]) if entry["image"] else None,
             "world": entry["world"],
         }
+        # the map over time, where EI's changes (or is blank): the site's images where it has them, else EI's
+        if data.get("arena"):
+            data["map"]["arena"] = [
+                {"start": item["start"], "end": item["end"],
+                 "image": asset_url("img/replay/" + item["file"]) if "file" in item else item.get("url")}
+                for item in replay_format.arena_images(entry, data["arena"])]
     except replay_format.ReplayException:
         data["map"] = None
+    data.pop("arena", None)
     return JsonResponse(data)
 
 
