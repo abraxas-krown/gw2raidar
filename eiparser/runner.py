@@ -14,8 +14,12 @@ RESULT_PREFIX = "Processed - "
 DEFAULT_TIMEOUT = 300
 
 # The JSON output feeds the site: its statistics, and the combat replay data (positions and the other
-# timeline arrays, which EI only writes with RawTimelineArrays) that eiparser.replay keeps. The HTML report is
-# only made when the caller wants to keep it; everything else EI can do is switched off.
+# timeline arrays, which EI only writes with RawTimelineArrays, and the mechanic drawings, which it only writes
+# with RawCombatReplayDecorations) that eiparser.replay keeps. The HTML report is only made when the caller wants
+# to keep it; everything else EI can do is switched off. EI ignores settings it does not know, so an EI build
+# without RawCombatReplayDecorations still works, and its replays have no decorations.
+# The JSON is read once and thrown away, so it is not compressed; EI compresses instance logs' JSON regardless,
+# and CompressRawFormat keeps that gzip (which _load reads) rather than brotli.
 CONFIG = """\
 SaveAtOut=false
 OutLocation={out_dir}
@@ -27,7 +31,9 @@ SaveOutCSV=false
 SaveOutJSON=true
 IndentJSON=false
 CompressRaw=false
+CompressRawFormat=gzip
 RawTimelineArrays=true
+RawCombatReplayDecorations=true
 SaveOutTrace=false
 ParsePhases=true
 ParseCombatReplay=true

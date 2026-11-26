@@ -110,12 +110,20 @@
   & .button:disabled {
     opacity: 0.4;
   }
-  /* the target lock, on the far right, lit while it is on */
-  & .lock {
+  /* the layer toggles and the target lock, on the far right, lit while they are on */
+  & .end {
+    display: flex;
+    gap: var(--margin-small);
     margin-left: auto;
   }
-  & .lock[aria-pressed='true'] {
+  & .toggle[aria-pressed='true'] {
     background-color: var(--c-bg-primary);
+    border-color: var(--c-emphasis);
+    color: var(--c-emphasis);
+  }
+  /* on, but waiting for something to apply to (the skills toggle with no player selected): only its outline lit,
+     faded with the button */
+  & .toggle.armed {
     border-color: var(--c-emphasis);
     color: var(--c-emphasis);
   }
@@ -316,6 +324,10 @@
   padding: 6px var(--margin-small);
   border-left: 3px solid transparent;
   border-radius: var(--radius);
+  /* The selection border's anti-aliased corners can spill a pixel outside the row, which the browser does not repaint
+     when the row is deselected (light dots left beside it). An invisible outline makes the area it repaints a pixel
+     larger all round, so they are cleared. */
+  outline: 1px solid transparent;
   background-color: var(--c-bg-muted);
   cursor: pointer;
   transition: background-color 150ms ease-in-out, opacity 150ms ease-in-out;

@@ -1,6 +1,7 @@
 """Tests of eiparser.replay against a small, made-up EI log. Run with: python -m unittest discover eiparser/tests"""
 import copy
 import json
+import math
 import os
 import tempfile
 import unittest
@@ -193,14 +194,75 @@ class ReplayTest(unittest.TestCase):
         self.assertNotIn("breakbar", self.actor(result, "Add"))
         self.assertNotIn("breakbar_active", self.actor(result, "Add"))
 
-    def test_target_boss_flag(self):
-        # the full fight's targets are the bosses; any other target is an add
-        result = self.convert()
-        self.assertEqual((self.actor(result, "Test Boss")["boss"], self.actor(result, "Add")["boss"]), (True, True))
+    def priorities(self, result):
+        return (self.actor(result, "Test Boss").get("priority"), self.actor(result, "Add").get("priority"))
+
+    def test_target_priorities(self):
+        """The full fight's targetPriorities; a target without one is an add."""
+        log = make_log()
+        log["phases"][0]["targetPriorities"] = {"0": "MAIN", "1": "BLOCKING"}
+        self.assertEqual(self.priorities(self.convert(log)), ("main", "blocking"))
+        log["phases"][0]["targetPriorities"] = {"0": "MAIN", "1": "NONBLOCKING"}
+        self.assertEqual(self.priorities(self.convert(log)), ("main", "nonblocking"))
+        log["phases"][0]["targetPriorities"] = {"0": "MAIN"}
+        result = self.convert(log)
+        self.assertEqual(self.priorities(result), ("main", None))
+        self.assertNotIn("boss", self.actor(result, "Test Boss"))
+
+    def test_target_priorities_of_older_ei_builds(self):
+        """Without targetPriorities: "targets" are main, "secondaryTargets" non-blocking."""
+        self.assertEqual(self.priorities(self.convert()), ("main", "main"))
         log = make_log()
         log["phases"][0]["targets"] = [0]
-        result = self.convert(log)
-        self.assertEqual((self.actor(result, "Test Boss")["boss"], self.actor(result, "Add")["boss"]), (True, False))
+        log["phases"][0]["secondaryTargets"] = [1]
+        self.assertEqual(self.priorities(self.convert(log)), ("main", "nonblocking"))
+
+    def test_boss_damage_is_to_main_and_blocking_targets(self):
+        log = make_log()
+        log["phases"][0]["targetPriorities"] = {"0": "MAIN", "1": "BLOCKING"}
+        both = self.actor(self.convert(log), "Alpha Character")["boss_damage"]
+        log["phases"][0]["targetPriorities"] = {"0": "MAIN", "1": "NONBLOCKING"}
+        main = self.actor(self.convert(log), "Alpha Character")["boss_damage"]
+        self.assertNotEqual(both, main)
+        player = log["players"][0]
+        self.assertEqual(main, replay._boss_damage(player, [0]))
+
+    def test_arena_is_eis_maps_over_time(self):
+        log = make_log()
+        log["combatReplayMetaData"]["maps"] = [
+            {"url": "https://example.invalid/split.png", "interval": [400, 700]},
+            {"url": "https://example.invalid/main.png", "interval": [-5000, 400]},
+            {"url": "", "interval": [700, 9223372036854775807]},
+            {"url": "https://example.invalid/never.png", "interval": [2000, 3000]},
+        ]
+        self.assertEqual(self.convert(log)["arena"], [
+            {"start": 0, "end": 400, "image": "https://example.invalid/main.png"},
+            {"start": 400, "end": 700, "image": "https://example.invalid/split.png"},
+            {"start": 700, "end": 900, "image": ""},
+        ])
+        del log["combatReplayMetaData"]["maps"]
+        self.assertNotIn("arena", self.convert(log))
+
+    def test_arena_images(self):
+        """EI's images the site has an image of are shown as it; others as EI's; blank ones as nothing."""
+        entry = {"image": "boss.svg", "ei_images": {"https://example.invalid/main.png": "boss.svg"}}
+        arena = [{"start": 0, "end": 400, "image": "https://example.invalid/main.png"},
+                 {"start": 400, "end": 700, "image": "https://example.invalid/split.png"},
+                 {"start": 700, "end": 900, "image": ""}]
+        self.assertEqual(replay.arena_images(entry, arena), [
+            {"start": 0, "end": 400, "file": "boss.svg"},
+            {"start": 400, "end": 700, "url": "https://example.invalid/split.png"},
+            {"start": 700, "end": 900},
+        ])
+        self.assertEqual(replay.arena_images({"image": None}, None), [])
+
+    def test_every_boss_maps_an_ei_image_to_its_own(self):
+        """replay_maps.json: each boss with an image lists the EI image it is a copy of."""
+        with open(replay.MAPS_PATH, encoding="utf-8") as file:
+            maps = json.load(file)
+        for boss, entry in maps.items():
+            if entry["image"]:
+                self.assertIn(entry["image"], (entry.get("ei_images") or {}).values(), boss)
 
     def test_target_health(self):
         boss = self.actor(self.convert(), "Test Boss")
@@ -272,6 +334,307 @@ class ReplayTest(unittest.TestCase):
 
     def test_input_is_not_modified(self):
         log = make_log()
+        original = copy.deepcopy(log)
+        self.convert(log)
+        self.assertEqual(log, original)
+
+
+ALPHA_ID, BRAVO_ID, BOSS_ID, ADD_ID, ORB_ID, UNUSED_ID = 10, 11, 20, 21, 30, 31
+
+
+def log_with_decorations(decorations, metadata=None, anchors=None):
+    """make_log() with EI's actor unique IDs and the given combat replay decorations."""
+    log = make_log()
+    for actor, unique_id in zip(log["players"][:2] + log["targets"][:2], (ALPHA_ID, BRAVO_ID, BOSS_ID, ADD_ID)):
+        actor["uniqueID"] = unique_id
+    meta = log["combatReplayMetaData"]
+    meta["decorations"] = decorations
+    meta["decorationMetadata"] = metadata if metadata is not None else [
+        {"type": 2, "signature": "red", "color": "rgba(255, 0, 0, 0.2)", "radius": 120, "minRadius": 20},
+        {"type": 8, "signature": "tether", "color": "rgba(0, 0, 255, 0.5)", "thickness": 2},
+        {"type": 15, "signature": "unused", "color": "black", "width": 10, "height": 20},
+        {"type": 11, "signature": "cone", "color": "orange", "radius": 600, "openingAngle": 60},
+    ]
+    meta["actors"] = anchors if anchors is not None else [
+        {"uniqueID": ORB_ID, "id": 777, "name": "Orb",
+         "combatReplayData": {"start": 300, "end": 600, "positions": [[750, 0], [0, 375]]}},
+        {"uniqueID": UNUSED_ID, "id": 778, "name": "Nobody",
+         "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}},
+    ]
+    return log
+
+
+class DecorationsTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.maps_path = os.path.join(cls.tmp.name, "maps.json")
+        with open(cls.maps_path, "w") as file:
+            json.dump(MAPS, file)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def convert(self, log):
+        return replay.convert(log, "Test Boss", maps_path=self.maps_path)
+
+    def index(self, result, name):
+        return next(i for i, actor in enumerate(result["actors"]) if actor["name"] == name)
+
+    def test_circle_on_an_actor(self):
+        result = self.convert(log_with_decorations([
+            {"type": 2, "metadataSignature": "red", "start": 100, "end": 500, "fill": True, "growingEnd": 400,
+             "connectedTo": {"masterID": BOSS_ID}},
+        ]))
+        self.assertEqual(result["decorations"], [
+            {"shape": "circle", "style": 0, "start": 100, "end": 500, "fill": True, "grow_end": 400,
+             "at": {"actor": self.index(result, "Test Boss")}},
+        ])
+        self.assertEqual(result["decoration_styles"],
+                         [{"colour": "rgba(255, 0, 0, 0.2)", "radius": 120, "min_radius": 20}])
+
+    def test_positions_offsets_and_angles_are_in_world_terms(self):
+        """EI's are map pixels, with y and angles for its y-down map."""
+        result = self.convert(log_with_decorations([
+            {"type": 11, "metadataSignature": "cone", "start": 0, "end": 900,
+             "connectedTo": {"position": [375, 187.5], "offset": [10, 30], "offsetAfterRotation": True},
+             "rotationConnectedTo": {"angle": 90, "spinAngle": -45}},
+        ]))
+        decoration = result["decorations"][0]
+        self.assertEqual(decoration["at"], {"pos": [1050, -475], "offset": [10, -30], "offset_turns": True})
+        self.assertEqual(decoration["rotation"], {"angle": -90, "spin": 45})
+        self.assertEqual(result["decoration_styles"], [{"colour": "orange", "radius": 600, "opening": 60}])
+
+    def test_tether_to_an_anchor(self):
+        result = self.convert(log_with_decorations([
+            {"type": 8, "metadataSignature": "tether", "start": 300, "end": 600,
+             "connectedTo": {"masterID": ORB_ID}, "connectedFrom": {"masterID": ALPHA_ID}},
+        ]))
+        orb = self.index(result, "Orb")
+        self.assertEqual(result["decorations"][0]["at"], {"actor": orb})
+        self.assertEqual(result["decorations"][0]["from"], {"actor": self.index(result, "Alpha Character")})
+        anchor = result["actors"][orb]
+        self.assertEqual((anchor["kind"], anchor["species"], anchor["start"], anchor["end"]), ("anchor", 777, 300, 600))
+        self.assertEqual(list(zip(anchor["x"], anchor["y"])), [(1100, -450), (1000, -500)])
+        # anchors no decoration uses are left out
+        self.assertNotIn("Nobody", [actor["name"] for actor in result["actors"]])
+
+    def test_platform_on_an_actor(self):
+        """A background icon: an image on an actor; its opacity fades into each new value over the 1500ms before."""
+        metadata = [{"type": 1, "signature": "platform", "image": "https://example.com/p.png", "worldSize": 2247}]
+        result = self.convert(log_with_decorations([
+            {"type": 1, "metadataSignature": "platform", "start": -500, "end": 2147483647,
+             "connectedTo": {"masterID": ORB_ID},
+             "rotationConnectedTo": {"masterID": ORB_ID, "rotationOffset": 180, "rotationOffsetMode": 0},
+             "opacities": [1, -500, 0.1, 400, 1, 3000], "heights": [-50, -500, -50, 100, -60, 200]},
+        ], metadata=metadata))
+        platform = result["decorations"][0]
+        orb = self.index(result, "Orb")
+        self.assertEqual(platform["shape"], "platform")
+        self.assertEqual((platform["start"], platform["end"]), (0, 900))
+        self.assertEqual(platform["at"], {"actor": orb})
+        self.assertEqual(platform["rotation"], {"actor": orb, "offset": -180.0, "mode": "add"})
+        # fading to 0.1 by 400 (from the previous value's time, -500, as it is less than 1500ms before); the fade back
+        # to 1 starts at 1500, after the log
+        self.assertEqual(platform["opacity"], [[0, 0.5], [400, 0.1], [900, 0.1]])
+        self.assertEqual(platform["height"], [[0, -50.0], [200, -60.0]])
+        self.assertEqual(result["decoration_styles"][platform["style"]],
+                         {"image": "https://example.com/p.png", "world_size": 2247})
+        # platforms are not mechanics, markers or minions
+        self.assertNotIn("marker", platform)
+
+    def test_moving_platform_changes_at_once(self):
+        """Two keyframes at the same time are an instant change: the value before holds until then."""
+        metadata = [{"type": 10, "signature": "mp", "image": "https://example.com/p.png", "width": 2247, "height": 2247}]
+        positions = [[0, 0, 0, 0, 1, time] for time in (0, 200, 300)] + [[0, 0, 0, 0, 0.1, 600], [0, 0, 0, 0, 0.1, 700]]
+        positions.insert(3, [0, 0, 0, 0, 1, 600])
+        result = self.convert(log_with_decorations([
+            {"type": 10, "metadataSignature": "mp", "start": 0, "end": 900, "positions": positions},
+        ], metadata=metadata))
+        self.assertEqual(result["decorations"][0]["opacity"], [[0, 1.0], [600, 1.0], [600, 0.1], [900, 0.1]])
+
+    def test_platform_opacities_out_of_order(self):
+        """EI goes through a background icon's opacities in its order: a time before the previous one counts as that
+        one (Sabir's platforms are shown from the start)."""
+        metadata = [{"type": 1, "signature": "platform", "image": "https://example.com/p.png", "worldSize": 1660}]
+        result = self.convert(log_with_decorations([
+            {"type": 1, "metadataSignature": "platform", "start": -545, "end": 900, "connectedTo": {"masterID": ORB_ID},
+             "opacities": [0, -545, 1, -8470, 0, 3000], "heights": [0, -545]},
+        ], metadata=metadata))
+        # shown from the start; the fade out starts at 1500, after the log
+        self.assertEqual(result["decorations"][0]["opacity"], [[0, 1.0], [900, 1.0]])
+
+    def test_moving_platform(self):
+        """A moving platform follows its own keyframes, in map pixels and radians, and is not there before them."""
+        metadata = [{"type": 10, "signature": "mp", "image": "https://example.com/p.png", "width": 2247, "height": 2247}]
+        result = self.convert(log_with_decorations([
+            {"type": 10, "metadataSignature": "mp", "start": -2147483648, "end": 2147483647,
+             "positions": [[750, 0, -10, 3 * math.pi, 1, 500], [0, 375, -20, math.pi / 2, 0.5, 100]]},
+        ], metadata=metadata))
+        platform = result["decorations"][0]
+        self.assertEqual((platform["start"], platform["end"]), (100, 900))
+        self.assertEqual(platform["at"], {"path": [[100, 1000, -500], [500, 1100, -450]]})
+        # world angles; more than half a turn between keyframes is kept
+        self.assertEqual(platform["rotation"], {"path": [[100, -90.0], [500, -540.0]], "unwrapped": True})
+        self.assertEqual(platform["opacity"], [[0, 0.5], [100, 0.5], [500, 1.0], [900, 1.0]])
+        self.assertEqual(platform["height"], [[100, -20.0], [500, -10.0]])
+
+    def test_decorations_on_arena_actors_are_arena(self):
+        """Adina's platforms are drawn as hexagons on her platform actors: the arena, not mechanics."""
+        anchors = [
+            {"uniqueID": ORB_ID, "id": -104, "name": "Platform",
+             "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}},
+        ]
+        metadata = [{"type": 21, "signature": "hex", "color": "brown", "radius": 500, "nbPolygon": 6}]
+        result = self.convert(log_with_decorations([
+            {"type": 21, "metadataSignature": "hex", "start": 0, "end": 900, "fill": True,
+             "connectedTo": {"masterID": ORB_ID}},
+            {"type": 21, "metadataSignature": "hex", "start": 0, "end": 900, "fill": True,
+             "connectedTo": {"position": [0, 0]}},
+        ], metadata=metadata, anchors=anchors))
+        self.assertEqual([decoration.get("arena") for decoration in result["decorations"]], [True, None])
+
+    def test_player_skills(self):
+        """Skill drawings are kept with their owner, EI's categories and the skill; one whose owner the replay does not
+        have is left out."""
+        result = self.convert(log_with_decorations([
+            {"type": 2, "metadataSignature": "red", "start": 100, "end": 500, "connectedTo": {"masterID": ALPHA_ID},
+             "skillMode": {"ownerID": ALPHA_ID, "category": 9, "skillID": 12345}},
+            {"type": 2, "metadataSignature": "red", "start": 100, "end": 500, "connectedTo": {"masterID": ALPHA_ID},
+             "skillMode": {"ownerID": 999, "category": 1, "skillID": 1}},
+        ]))
+        self.assertEqual([decoration.get("skill") for decoration in result["decorations"]],
+                         [{"owner": self.index(result, "Alpha Character"), "category": 9, "id": 12345}])
+
+    def test_skill_owner_anchor_is_kept(self):
+        """A minion that only owns skill drawings is kept, and the owner follows it when anchors are renumbered."""
+        anchors = [
+            {"uniqueID": UNUSED_ID, "id": 778, "name": "Nobody",
+             "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}},
+            {"uniqueID": ORB_ID, "id": 777, "name": "Staff Clone", "masterID": ALPHA_ID, "masterIsPlayer": True,
+             "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}},
+        ]
+        result = self.convert(log_with_decorations([
+            {"type": 2, "metadataSignature": "red", "start": 100, "end": 500, "connectedTo": {"position": [0, 0]},
+             "skillMode": {"ownerID": ORB_ID, "category": 1, "skillID": 7}},
+        ], anchors=anchors))
+        self.assertEqual(result["decorations"][0]["skill"]["owner"], self.index(result, "Staff Clone"))
+        self.assertNotIn("Nobody", [actor["name"] for actor in result["actors"]])
+
+    def test_squad_markers_are_flagged(self):
+        metadata = [{"type": 16, "signature": "arrow", "image": "https://example.com/arrow.png", "pixelSize": 32}]
+        result = self.convert(log_with_decorations([
+            {"type": 16, "metadataSignature": "arrow", "start": 0, "end": 900, "connectedTo": {"position": [0, 0]}},
+            {"type": 17, "metadataSignature": "arrow", "start": 0, "end": 900, "connectedTo": {"masterID": BOSS_ID}},
+            {"type": 6, "metadataSignature": "arrow", "start": 0, "end": 900, "connectedTo": {"position": [0, 0]}},
+        ], metadata=metadata))
+        self.assertEqual([(decoration["shape"], decoration.get("marker")) for decoration in result["decorations"]],
+                         [("icon", True), ("overhead_icon", True), ("icon", None)])
+
+    def test_minions_of_players(self):
+        """Anchors EI gives a player as master are that player's minions; ones named after a player lose the name."""
+        anchors = [
+            {"uniqueID": ORB_ID, "id": 777, "name": "Staff Clone", "masterID": ALPHA_ID, "masterIsPlayer": True,
+             "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}},
+            {"uniqueID": UNUSED_ID, "id": 778, "name": "Bravo Character", "masterID": BRAVO_ID, "masterIsPlayer": True,
+             "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}},
+            # a minion of a target is an anchor like any other
+            {"uniqueID": 32, "id": 779, "name": "Add Minion", "masterID": BOSS_ID,
+             "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}},
+        ]
+        result = self.convert(log_with_decorations([
+            {"type": 8, "metadataSignature": "tether", "start": 0, "end": 900,
+             "connectedTo": {"masterID": minion}, "connectedFrom": {"masterID": master}}
+            for minion, master in ((ORB_ID, ALPHA_ID), (UNUSED_ID, BRAVO_ID), (32, BOSS_ID))
+        ], anchors=anchors))
+        kinds = [(actor["kind"], actor["name"], actor.get("master")) for actor in result["actors"][-3:]]
+        self.assertEqual(kinds, [
+            ("minion", "Staff Clone", self.index(result, "Alpha Character")),
+            ("minion", None, self.index(result, "Bravo Character")),
+            ("anchor", "Add Minion", None),
+        ])
+
+    def test_anchor_of_an_englobed_agent(self):
+        """Decorations refer to the agent that englobes an anchor."""
+        anchors = [{"uniqueID": ORB_ID, "parentID": 99, "id": 777, "name": "Orb",
+                    "combatReplayData": {"start": 0, "end": 900, "positions": [[0, 0]]}}]
+        result = self.convert(log_with_decorations([
+            {"type": 2, "metadataSignature": "red", "start": 0, "end": 900, "connectedTo": {"masterID": 99}},
+        ], anchors=anchors))
+        self.assertEqual(result["decorations"][0]["at"], {"actor": self.index(result, "Orb")})
+
+    def test_moving_and_rotating_connectors(self):
+        result = self.convert(log_with_decorations([
+            {"type": 2, "metadataSignature": "red", "start": 0, "end": 900,
+             "connectedTo": {"positions": [0, 0, 100, 750, 375, 700], "interpolationMethod": 1},
+             "rotationConnectedTo": {"angles": [30, 100, -60, 700], "interpolationMethod": 0}},
+            {"type": 2, "metadataSignature": "red", "start": 0, "end": 900,
+             "connectedTo": {"masterID": BRAVO_ID, "position": [375, 187.5, 200], "velocity": 0.25},
+             "rotationConnectedTo": {"masterID": BOSS_ID, "rotationOffset": 90, "rotationOffsetMode": 2}},
+            {"type": 2, "metadataSignature": "red", "start": 0, "end": 900, "connectedTo": {"masterID": BOSS_ID},
+             "rotationConnectedTo": {"masterID": BOSS_ID, "dstMasterID": ALPHA_ID}},
+        ]))
+        path, homing, facing = result["decorations"]
+        self.assertEqual(path["at"], {"path": [[100, 1000, -450], [700, 1100, -500]], "step": True})
+        self.assertEqual(path["rotation"], {"path": [[100, -30], [700, 60]]})
+        boss, alpha, bravo = (self.index(result, name) for name in ("Test Boss", "Alpha Character", "Bravo Character"))
+        self.assertEqual(homing["at"], {"actor": bravo, "origin": [200, 1050, -475], "speed": 0.25})
+        self.assertEqual(homing["rotation"], {"actor": boss, "offset": -90, "mode": "after_offset"})
+        self.assertEqual(facing["rotation"], {"actor": boss, "towards": alpha})
+
+    def test_only_drawable_mechanics_are_kept(self):
+        result = self.convert(log_with_decorations([
+            # a player's skill, of an owner the replay does not have
+            {"type": 2, "metadataSignature": "red", "start": 0, "end": 900, "connectedTo": {"masterID": ALPHA_ID},
+             "skillMode": {"ownerID": 12345, "category": 9, "skillID": 1}},
+            # drawn on the screen, not on the map
+            {"type": 20, "metadataSignature": "red", "start": 0, "end": 900, "text": "Charge 1 out of 10",
+             "connectedTo": {"position": [10, 10], "isScreenSpace": True}},
+            # attached to an actor the replay does not have
+            {"type": 2, "metadataSignature": "red", "start": 0, "end": 900, "connectedTo": {"masterID": 12345}},
+            # a kind the replay does not know, a missing style, an empty lifespan once clamped
+            {"type": 99, "metadataSignature": "red", "start": 0, "end": 900, "connectedTo": {"masterID": BOSS_ID}},
+            {"type": 2, "metadataSignature": "nope", "start": 0, "end": 900, "connectedTo": {"masterID": BOSS_ID}},
+            {"type": 2, "metadataSignature": "red", "start": 2000, "end": 3000, "connectedTo": {"masterID": BOSS_ID}},
+            # malformed
+            {"type": 2, "metadataSignature": "red", "start": 0, "end": 900, "connectedTo": {"position": "x"}},
+            # a text that is a character's name
+            {"type": 22, "metadataSignature": "red", "start": 0, "end": 900, "text": "Alpha Character",
+             "connectedTo": {"masterID": ALPHA_ID}},
+            # kept, with the only style it uses, renumbered
+            {"type": 15, "metadataSignature": "cone", "start": 600, "end": 700, "text": "3",
+             "connectedTo": {"masterID": ADD_ID}},
+        ]))
+        self.assertEqual(result["decorations"], [
+            {"shape": "rectangle", "style": 0, "start": 600, "end": 700, "text": "3",
+             "at": {"actor": self.index(result, "Add")}}])
+        self.assertEqual(len(result["decoration_styles"]), 1)
+        self.assertEqual([actor["kind"] for actor in result["actors"]].count("anchor"), 0)
+
+    def test_decorations_are_sorted_and_clamped(self):
+        result = self.convert(log_with_decorations([
+            {"type": 2, "metadataSignature": "red", "start": 500, "end": 99999, "connectedTo": {"masterID": BOSS_ID}},
+            {"type": 2, "metadataSignature": "red", "start": -100, "end": 300, "connectedTo": {"masterID": BOSS_ID}},
+        ]))
+        self.assertEqual([(d["start"], d["end"]) for d in result["decorations"]], [(0, 300), (500, 900)])
+
+    def test_broken_decoration_data_keeps_the_replay(self):
+        log = log_with_decorations([{"type": 2}], metadata="not a list", anchors=[{"uniqueID": ORB_ID}])
+        result = self.convert(log)
+        self.assertNotIn("decorations", result)
+        self.assertEqual([actor["kind"] for actor in result["actors"]], ["player", "player", "target", "target"])
+
+    def test_logs_without_decorations(self):
+        result = self.convert(make_log())
+        self.assertNotIn("decorations", result)
+        self.assertNotIn("decoration_styles", result)
+
+    def test_input_is_not_modified(self):
+        log = log_with_decorations([
+            {"type": 8, "metadataSignature": "tether", "start": 300, "end": 600,
+             "connectedTo": {"masterID": ORB_ID}, "connectedFrom": {"masterID": ALPHA_ID}},
+        ])
         original = copy.deepcopy(log)
         self.convert(log)
         self.assertEqual(log, original)

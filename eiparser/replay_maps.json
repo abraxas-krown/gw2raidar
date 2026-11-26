@@ -10,7 +10,10 @@
       540.0,
       4194.0,
       2850.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/Qhnhrvp.png": "aetherblade-hideout.svg"
+    }
   },
   "Ai, Keeper of the Peak": {
     "image": "ai-keeper-of-the-peak.svg",
@@ -23,7 +26,10 @@
       -95,
       8413,
       3552
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/zSBL7YP.png": "ai-keeper-of-the-peak.svg"
+    }
   },
   "Arkk": {
     "image": "arkk.svg",
@@ -36,7 +42,10 @@
       -18274.0,
       -16571.0,
       -15554.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/BIybWJe.png": "arkk.svg"
+    }
   },
   "Artsariiv": {
     "image": "artsariiv.svg",
@@ -49,7 +58,10 @@
       112.0,
       11731.0,
       2812.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/4wmuc8B.png": "artsariiv.svg"
+    }
   },
   "Average Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -62,7 +74,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Bandit Trio": {
     "image": "bandit-trio.svg",
@@ -75,7 +90,10 @@
       -12251.0,
       2561.0,
       -7265.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/dDvhEOP.png": "bandit-trio.svg"
+    }
   },
   "Boneskinner": {
     "image": "fraenir-of-jormag.svg",
@@ -88,7 +106,10 @@
       -1550.0,
       2221.0,
       1266.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/kLjZ7eU.png": "fraenir-of-jormag.svg"
+    }
   },
   "Broken King": {
     "image": "broken-king.svg",
@@ -101,7 +122,10 @@
       5388.0,
       7302.0,
       9668.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/JRPskkX.png": "broken-king.svg"
+    }
   },
   "Cairn": {
     "image": "cairn.svg",
@@ -114,7 +138,10 @@
       642.0,
       15725.0,
       3386.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/NlpsLZa.png": "cairn.svg"
+    }
   },
   "Cardinal Adina": {
     "image": "cardinal-adina.svg",
@@ -127,20 +154,26 @@
       -2678.0,
       15951.0,
       -268.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/IQn2RJV.png": "cardinal-adina.svg"
+    }
   },
   "Cardinal Sabir": {
     "image": "cardinal-sabir.svg",
     "size": [
       1000,
-      912
+      910
     ],
     "world": [
       -14122.0,
       142.0,
       -9199.0,
       4640.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/wesgoc6.png": "cardinal-sabir.svg"
+    }
   },
   "Conjured Amalgamate": {
     "image": "conjured-amalgamate.svg",
@@ -153,7 +186,10 @@
       -15030.0,
       -2864.0,
       -10830.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/lgzr1xD.png": "conjured-amalgamate.svg"
+    }
   },
   "Cosmic Observatory": {
     "image": "cosmic-observatory.svg",
@@ -166,7 +202,10 @@
       -779.0,
       1991.0,
       2610.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/mODYp42.png": "cosmic-observatory.svg"
+    }
   },
   "Dark Ai": {
     "image": "ai-keeper-of-the-peak.svg",
@@ -179,7 +218,10 @@
       -95,
       8413,
       3552
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/zSBL7YP.png": "ai-keeper-of-the-peak.svg"
+    }
   },
   "Decima, the Stormsinger": {
     "image": "decima-the-stormsinger.svg",
@@ -192,7 +234,10 @@
       10300.0,
       -7141.0,
       16227.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/4cJAW7r.png": "decima-the-stormsinger.svg"
+    }
   },
   "Deimos": {
     "image": "deimos.svg",
@@ -205,7 +250,10 @@
       1932.0,
       -7004.0,
       5250.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/FFs9cFq.png": "deimos.svg"
+    }
   },
   "Dhuum": {
     "image": "dhuum.svg",
@@ -218,7 +266,10 @@
       -1334.0,
       18039.0,
       2735.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/7tEZYPd.png": "dhuum.svg"
+    }
   },
   "Elemental Ai": {
     "image": "ai-keeper-of-the-peak.svg",
@@ -231,7 +282,10 @@
       -95,
       8413,
       3552
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/zSBL7YP.png": "ai-keeper-of-the-peak.svg"
+    }
   },
   "Ensolyss": {
     "image": "ensolyss.svg",
@@ -244,7 +298,10 @@
       431.0,
       2612.0,
       2521.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/87B12xN.png": "ensolyss.svg"
+    }
   },
   "Eparch": {
     "image": "eparch.svg",
@@ -257,7 +314,10 @@
       1040.0,
       2880.0,
       4496.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/begYkfC.png": "eparch.svg"
+    }
   },
   "Escort": {
     "image": "escort.svg",
@@ -270,7 +330,10 @@
       13624.72,
       8956.86,
       23099.28
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/lvuFGSJ.png": "escort.svg"
+    }
   },
   "Eyes of Judgement and Fate": {
     "image": "eyes-of-judgement-and-fate.svg",
@@ -283,7 +346,10 @@
       -2108.0,
       16724.0,
       4152.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/ZMCqeQd.png": "eyes-of-judgement-and-fate.svg"
+    }
   },
   "Fraenir of Jormag": {
     "image": "fraenir-of-jormag.svg",
@@ -296,7 +362,10 @@
       -1530.0,
       2401.0,
       1306.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/kLjZ7eU.png": "fraenir-of-jormag.svg"
+    }
   },
   "Gorseval": {
     "image": "gorseval.svg",
@@ -309,7 +378,10 @@
       -6754.0,
       3751.0,
       -2206.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/ESmGD3Z.png": "gorseval.svg"
+    }
   },
   "Greer, the Blightbringer": {
     "image": "greer-the-blightbringer.svg",
@@ -322,7 +394,10 @@
       -10621.0,
       18374.0,
       -3794.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/yH1yulA.png": "greer-the-blightbringer.svg"
+    }
   },
   "Guardian's Glade": {
     "image": "guardian-s-glade.svg",
@@ -335,7 +410,10 @@
       10959.9775,
       -18941.832,
       15059.9775
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/Eg0LxdA.png": "guardian-s-glade.svg"
+    }
   },
   "Harvest Temple": {
     "image": "harvest-temple.svg",
@@ -348,7 +426,10 @@
       -21845.0,
       2055.0,
       -18946.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/XjnWNA7.png": "harvest-temple.svg"
+    }
   },
   "Icebrood Construct": {
     "image": "icebrood-construct.svg",
@@ -361,7 +442,10 @@
       -11470.0,
       -28924.0,
       -8924.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/sXvx6AL.png": "icebrood-construct.svg"
+    }
   },
   "Kaineng Overlook": {
     "image": "kaineng-overlook.svg",
@@ -374,7 +458,10 @@
       -18014.0,
       -18164.0,
       -10932.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/53ECM20.png": "kaineng-overlook.svg"
+    }
   },
   "Kanaxai, Scythe of House Aurkus": {
     "image": "kanaxai-scythe-of-house-aurkus.svg",
@@ -387,7 +474,10 @@
       -295.0,
       -799.0,
       5685.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/UckZyqX.png": "kanaxai-scythe-of-house-aurkus.svg"
+    }
   },
   "Keep Construct": {
     "image": "keep-construct.svg",
@@ -400,7 +490,10 @@
       8069.0,
       -2282.0,
       11297.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/dEwDsOJ.png": "keep-construct.svg"
+    }
   },
   "Large Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -413,7 +506,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Largos Twins": {
     "image": "largos-twins.svg",
@@ -426,7 +522,10 @@
       -3878.0,
       18086.0,
       5622.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/O8wIWds.png": "largos-twins.svg"
+    }
   },
   "MAMA": {
     "image": "mama.svg",
@@ -439,7 +538,10 @@
       4555.0,
       5733.0,
       7195.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/zs03mc8.png": "mama.svg"
+    }
   },
   "Massive Average Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -452,7 +554,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Massive Standard Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -465,7 +570,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Massive Vital Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -478,7 +586,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Matthias": {
     "image": "matthias.svg",
@@ -491,7 +602,10 @@
       4585.0,
       -4625.0,
       7207.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/3X0YveK.png": "matthias.svg"
+    }
   },
   "Medium Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -504,7 +618,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Mursaat Overseer": {
     "image": "mursaat-overseer.svg",
@@ -517,7 +634,10 @@
       2711.0,
       3911.0,
       5248.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/lT1FW2r.png": "mursaat-overseer.svg"
+    }
   },
   "Nexus of Eternity": {
     "image": "nexus-of-eternity.svg",
@@ -530,7 +650,10 @@
       12826.0,
       14718.0,
       17826.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/YFmuDeA.png": "nexus-of-eternity.svg"
+    }
   },
   "Old Lion's Court": {
     "image": "old-lion-s-court.svg",
@@ -543,7 +666,10 @@
       3010.0,
       1580.0,
       6010.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/K1ihXpY.png": "old-lion-s-court.svg"
+    }
   },
   "Qadim": {
     "image": "qadim.svg",
@@ -556,7 +682,10 @@
       8825.0,
       -3870.0,
       16582.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/f4jfgiX.png": "qadim.svg"
+    }
   },
   "Qadim the Peerless": {
     "image": "qadim-the-peerless.svg",
@@ -569,7 +698,10 @@
       7480.0,
       4226.0,
       12676.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/Q5R4R6q.png": "qadim-the-peerless.svg"
+    }
   },
   "Resistant Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -582,7 +714,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "River of Souls": {
     "image": "river-of-souls.svg",
@@ -595,7 +730,10 @@
       -4866.0,
       7742.0,
       2851.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/BMqQKqb.png": "river-of-souls.svg"
+    }
   },
   "Sabetha": {
     "image": "sabetha.svg",
@@ -608,7 +746,10 @@
       -162.0,
       -1601.0,
       6753.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/HXjxqlu.png": "sabetha.svg"
+    }
   },
   "Samarog": {
     "image": "samarog.svg",
@@ -621,20 +762,26 @@
       1218.0,
       -2423.0,
       5146.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/znpsqsI.png": "samarog.svg"
+    }
   },
   "Siax": {
     "image": "siax.svg",
     "size": [
-      485,
-      547
+      476,
+      548
     ],
     "world": [
       663.0,
       -4127.0,
       3515.0,
       -997.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/hauz1jK.png": "siax.svg"
+    }
   },
   "Skorvald the Shattered": {
     "image": "skorvald-the-shattered.svg",
@@ -647,7 +794,10 @@
       15295.0,
       -17227.0,
       20275.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/EhblRgb.png": "skorvald-the-shattered.svg"
+    }
   },
   "Slothasor": {
     "image": "slothasor.svg",
@@ -660,7 +810,10 @@
       -3491.0,
       9549.0,
       2205.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/pChxnuf.png": "slothasor.svg"
+    }
   },
   "Soul Eater": {
     "image": "soul-eater.svg",
@@ -673,7 +826,10 @@
       -9381.0,
       4720.0,
       -5968.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/Owo34RS.png": "soul-eater.svg"
+    }
   },
   "Soulless Horror": {
     "image": "soulless-horror.svg",
@@ -686,7 +842,10 @@
       -771.0,
       -8932.0,
       2420.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/xjPq9vq.png": "soulless-horror.svg"
+    }
   },
   "Spirit Race": {
     "image": "spirit-race.svg",
@@ -699,7 +858,10 @@
       -13757.0,
       -4700.0,
       -436.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/RyA0XH3.png": "spirit-race.svg"
+    }
   },
   "Standard Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -712,7 +874,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Temple of Febe": {
     "image": "temple-of-febe.svg",
@@ -725,7 +890,10 @@
       -6124.0,
       2086.0,
       -1950.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/bgiL46C.png": "temple-of-febe.svg"
+    }
   },
   "Tough Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -738,7 +906,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Twisted Castle": {
     "image": "twisted-castle.svg",
@@ -751,7 +922,10 @@
       -4321.0,
       819.0,
       7143.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/txFtRNN.png": "twisted-castle.svg"
+    }
   },
   "Ura, the Steamshrieker": {
     "image": "ura-the-steamshrieker.svg",
@@ -764,7 +938,10 @@
       6200.0,
       9010.0,
       13082.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/Vn1JQ3p.png": "ura-the-steamshrieker.svg"
+    }
   },
   "Vale Guardian": {
     "image": "vale-guardian.svg",
@@ -777,7 +954,10 @@
       -22213.0,
       -3150.0,
       -18999.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/W7MocGz.png": "vale-guardian.svg"
+    }
   },
   "Vital Kitty Golem": {
     "image": "kitty-golem.svg",
@@ -790,7 +970,10 @@
       -13978.016,
       22590.12,
       -10833.016
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/gmnSuz7.png": "kitty-golem.svg"
+    }
   },
   "Voice and Claw of the Fallen": {
     "image": "fraenir-of-jormag.svg",
@@ -803,7 +986,10 @@
       -1550.0,
       2271.0,
       1266.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/kLjZ7eU.png": "fraenir-of-jormag.svg"
+    }
   },
   "Whisper of Jormag": {
     "image": "whisper-of-jormag.svg",
@@ -816,7 +1002,10 @@
       -1772.0,
       3313.0,
       4828.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/iNEWXJF.png": "whisper-of-jormag.svg"
+    }
   },
   "Whispering Shadow": {
     "image": null,
@@ -842,7 +1031,10 @@
       -5992.0,
       69.0,
       -522.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/mGOHGwN.png": "xera.svg"
+    }
   },
   "Xunlai Jade Junkyard": {
     "image": "xunlai-jade-junkyard.svg",
@@ -855,6 +1047,9 @@
       -2785.0,
       3647.0,
       6556.0
-    ]
+    ],
+    "ei_images": {
+      "https://i.imgur.com/bwTO5Xg.png": "xunlai-jade-junkyard.svg"
+    }
   }
 }

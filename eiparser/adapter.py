@@ -170,6 +170,31 @@ def _outgoing_summary(dps_entries, stat_entries, duration_ms):
     }
 
 
+# EI's target priorities (JsonPhase.targetPriorities) and raidar's names for them
+PRIORITIES = {"MAIN": "main", "BLOCKING": "blocking", "NONBLOCKING": "nonblocking"}
+# the priorities of a phase's bosses: damage to them is boss damage
+BOSS_PRIORITIES = frozenset(["main", "blocking"])
+
+
+def target_priorities(phase):
+    """{target index: "main" | "blocking" | "nonblocking"} of a phase, from EI's targetPriorities, in EI's order.
+
+    EI builds without them list the same targets as "targets" (main and blocking, both taken as "main") and
+    "secondaryTargets" (non-blocking). Targets the phase does not rank are left out.
+    """
+    given = phase.get("targetPriorities")
+    if given:
+        return {int(index): PRIORITIES[priority] for index, priority in given.items() if priority in PRIORITIES}
+    priorities = {index: "nonblocking" for index in phase.get("secondaryTargets") or []}
+    priorities.update((index, "main") for index in phase.get("targets") or [])
+    return priorities
+
+
+def boss_targets(phase):
+    """The indices of a phase's bosses (main and blocking targets), in order."""
+    return sorted(index for index, priority in target_priorities(phase).items() if priority in BOSS_PRIORITIES)
+
+
 def _damage(player, index, phase, duration_ms, names):
     outgoing = _outgoing_summary([player["dpsAll"][index]], [player["statsAll"][index]], duration_ms)
     dists = list(player["totalDamageDist"][index])
@@ -177,7 +202,7 @@ def _damage(player, index, phase, duration_ms, names):
         dists.extend(minion["totalDamageDist"][index])
     outgoing["Skill"] = _skill_breakdown(dists, names)
 
-    targets = phase.get("targets") or []
+    targets = boss_targets(phase)
     boss = _outgoing_summary([player["dpsTargets"][target][index] for target in targets],
                              [player["statsTargets"][target][index] for target in targets], duration_ms)
 
@@ -301,14 +326,15 @@ def _start_timestamp(log):
 
 
 def boss_health(log):
-    """The health the main boss (the full fight's first target) had left at the end, in percent, or None when EI
-    does not say."""
+    """The health the main boss (the first main target EI lists for the full fight) had left at the end, in percent,
+    or None when EI does not say."""
     phases = log.get("phases") or []
     targets = log.get("targets") or []
-    indices = (phases[0].get("targets") or []) if phases else []
-    if not indices or not 0 <= indices[0] < len(targets):
+    priorities = target_priorities(phases[0]) if phases else {}
+    mains = [index for index, priority in priorities.items() if priority == "main"]
+    if not mains or not 0 <= mains[0] < len(targets):
         return None
-    target = targets[indices[0]]
+    target = targets[mains[0]]
     burned = target.get("healthPercentBurned")
     if burned is not None:
         remaining = 100.0 - burned

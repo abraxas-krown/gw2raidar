@@ -6,13 +6,15 @@
 // change with every pointer move, so they are refs too, not state.
 import * as React from 'react';
 import { specIcon } from '../../../lib/assets';
+import { professionColour } from '../../../lib/professions';
 import { cx } from '../../../ui/controls';
 import {
-  actorName,
+  actorLabel,
   type Actor,
   breakbarOf,
   clamp,
   COLOURS,
+  darken,
   isBoss,
   MAX_ZOOM,
   MIN_MAP_HEIGHT,
@@ -25,6 +27,14 @@ import {
   WINDOW_MARGIN_BOTTOM,
   WINDOW_MARGIN_TOP,
 } from './model';
+import {
+  type DecorationLayers,
+  type DecorationScene,
+  drawArena,
+  drawDecorations,
+  minionShown,
+  type PreparedDecorations,
+} from './decorations';
 import type { ClockStore } from './usePlayback';
 import type { ActorState, ReplayMap } from './types';
 import styles from './Replay.module.css';
@@ -43,6 +53,16 @@ export interface ReplayCanvasProps {
   topElement?: React.RefObject<HTMLElement | null>;
   // SVG maps' colours (the SVG's --c-* names), overriding the map's own
   mapTheme?: Record<string, string>;
+  // the decorations EI draws (decorations.ts), prepared, or null when the replay has none
+  decorations: PreparedDecorations | null;
+  // the mechanics (areas, cones, tethers), when the replay has them
+  showMechanics: boolean;
+  // the squad markers
+  showMarkers: boolean;
+  // the players' skills (EI's skill drawings)
+  showSkills: boolean;
+  // the players' minions, with what EI attaches to them (the line to their player, their boon icons)
+  showMinions: boolean;
 }
 
 interface Camera {
@@ -74,7 +94,8 @@ interface Drag {
 }
 
 export function ReplayCanvas({
-  replay, clock, selected, locked, onSelect, onLockChange, onToggle, onSkip, topElement, mapTheme,
+  replay, clock, selected, locked, onSelect, onLockChange, onToggle, onSkip, topElement, mapTheme, decorations,
+  showMechanics, showMarkers, showSkills, showMinions,
 }: ReplayCanvasProps) {
   const box = React.useRef<HTMLDivElement>(null);
   const canvas = React.useRef<HTMLCanvasElement>(null);
@@ -87,13 +108,17 @@ export function ReplayCanvas({
   // the hint fades once the map has been zoomed or moved
   const [used, setUsed] = React.useState(false);
 
-  const mapImage = useMapImage(replay.data.map, mapTheme);
+  const mapImages = useMapImages(replay.data.map, mapTheme);
   const icons = useSpecIcons(replay.players);
+  const decorationImages = useImages(decorations?.images);
+  const layers = React.useMemo<DecorationLayers>(
+    () => ({ mechanics: showMechanics, markers: showMarkers, skills: showSkills, minions: showMinions }),
+    [showMechanics, showMarkers, showSkills, showMinions]);
 
   // what drawing reads, current as of the last render; the lock is turned off here at once when a drag ends it
-  const latest = React.useRef({ replay, selected, locked, mapImage, icons });
+  const latest = React.useRef({ replay, selected, locked, mapImages, icons, decorations, layers, decorationImages });
   React.useLayoutEffect(() => {
-    latest.current = { replay, selected, locked, mapImage, icons };
+    latest.current = { replay, selected, locked, mapImages, icons, decorations, layers, decorationImages };
   });
 
   const world = replay.world;
@@ -121,7 +146,7 @@ export function ReplayCanvas({
     const context = canvas.current?.getContext('2d');
     const s = size.current;
     if (!context || !s) return;
-    const { replay, selected, locked, mapImage, icons } = latest.current;
+    const { replay, selected, locked, mapImages, icons, decorations, layers, decorationImages } = latest.current;
     const time = clock.get().time;
     if (locked && selected !== null) {
       // put the selected player or target in the middle of the map; while they are not there, the view stays
@@ -133,11 +158,16 @@ export function ReplayCanvas({
       }
     }
     const scene: Scene = { context, scale: camera.current.scale, selected, toScreen };
+    // the selected player, if a player is selected: skills are theirs only, and minions only theirs
+    const player = selected !== null && replay.actors[selected].kind === 'player' ? selected : null;
 
     context.fillStyle = COLOURS.background;
     context.fillRect(0, 0, s.width, s.height);
     const corner = toScreen(world.minX, world.maxY);
     const width = world.width * scene.scale, height = world.height * scene.scale;
+    // the map can change during the fight, or be blank where the arena is drawn from its platforms
+    const mapUrl = mapImageAt(replay.data.map, time);
+    const mapImage = mapUrl ? mapImages[mapUrl] : undefined;
     if (mapImage) {
       context.imageSmoothingQuality = 'high';
       context.drawImage(mapImage, corner.x, corner.y, width, height);
@@ -147,14 +177,30 @@ export function ReplayCanvas({
       context.strokeRect(corner.x, corner.y, width, height);
     }
 
+    const decorationScene: DecorationScene = {
+      context, scale: scene.scale, toScreen, images: decorationImages, actorTop: actor => actorRadius(scene, replay, actor),
+    };
+    // the arena's platforms with the map, then areas and the like under the actors, markers and bars over them
+    if (decorations) drawArena(decorationScene, replay, decorations, time);
+    if (decorations) drawDecorations(decorationScene, replay, decorations, layers, player, time, false);
+
     const drawn: Placed[] = [];
     replay.targets.forEach(target => {
       const place = placeOf(replay, target, time);
       if (!place || stateOf(target, time) === 'dead') return;
       drawn.push(drawTarget(scene, target, place, isBoss(replay, target), breakbarOf(target, time)));
     });
-    if (selected !== null && replay.actors[selected].kind === 'player') {
-      drawTrail(scene, replay, replay.actors[selected], time);
+    if (layers.minions) {
+      replay.minions.forEach(minion => {
+        if (!minionShown(minion.master, player)) return;
+        const place = placeOf(replay, minion, time);
+        const state = stateOf(minion, time);
+        if (!place || state === 'dead' || state === 'dc') return;
+        drawn.push(drawMinion(scene, replay, minion, place));
+      });
+    }
+    if (player !== null) {
+      drawTrail(scene, replay, replay.actors[player], time);
     }
     // the selected player last, so it is on top
     const players = replay.players.slice().sort((a, b) => Number(a.index === selected) - Number(b.index === selected));
@@ -165,9 +211,10 @@ export function ReplayCanvas({
       drawn.push(drawPlayer(scene, player, place, state, player.spec ? icons[player.spec] : undefined));
     });
     placed.current = drawn;
+    if (decorations) drawDecorations(decorationScene, replay, decorations, layers, player, time, true);
 
     const hover = drawn.find(item => item.actor.index === hovered.current);
-    if (hover) drawLabel(scene, hover, s.width);
+    if (hover) drawLabel(scene, replay, hover, s.width);
   };
 
   // The canvas fills the width of its box. With a topElement (the page's tabs), its height is what is left of the
@@ -245,7 +292,7 @@ export function ReplayCanvas({
   // and when what is drawn changes
   React.useEffect(() => {
     handlers.current.draw();
-  }, [replay, selected, locked, mapImage, icons]);
+  }, [replay, selected, locked, mapImages, icons, decorations, layers, decorationImages]);
 
   // wheel zoom: React's wheel listeners are passive, and the page must not scroll
   React.useEffect(() => {
@@ -326,10 +373,10 @@ export function ReplayCanvas({
     drag.current = null;
     setDragging(false);
     if (!current.moved) {
-      // a click: select what is under the pointer
+      // a click: select what is under the pointer; a minion, its player
       const point = pointer(event.currentTarget, event);
       const actor = actorAt(point.x, point.y);
-      if (actor) onSelect(actor.index);
+      if (actor) onSelect(actor.master ?? actor.index);
     }
   };
 
@@ -395,49 +442,62 @@ function themedSvg(text: string, colours: Record<string, string> | undefined) {
   return new XMLSerializer().serializeToString(root);
 }
 
-// The map's image once it has loaded, or null. A map that is an SVG is themed by its --c-* colour variables (see
-// the style in the SVG). It is drawn on a canvas, which the page's CSS cannot reach, so the theme is applied to the
-// SVG's source before it is loaded as an image. PNG maps are not themed.
-function useMapImage(map: ReplayMap | null | undefined, theme: Record<string, string> | undefined) {
-  const [image, setImage] = React.useState<HTMLImageElement | null>(null);
-  const url = map?.image;
+// the url of the map's image at time: the arena's (EI's map over time) where it says, else the boss's map; null
+// where there is none
+export function mapImageAt(map: ReplayMap | null | undefined, time: number): string | null {
+  if (!map) return null;
+  const shown = map.arena?.find(item => item.start <= time && time < item.end)
+    ?? (map.arena?.length && time >= map.arena[map.arena.length - 1].end ? map.arena[map.arena.length - 1] : undefined);
+  return shown ? shown.image : map.image;
+}
+
+// The map's images by url, as they load: the boss's map and the arena's (the map can change during the fight). A
+// map that is an SVG is themed by its --c-* colour variables (see the style in the SVG). It is drawn on a canvas,
+// which the page's CSS cannot reach, so the theme is applied to the SVG's source before it is loaded as an image.
+// PNG maps (EI's, where the site has none of its own) are not themed.
+function useMapImages(map: ReplayMap | null | undefined, theme: Record<string, string> | undefined) {
+  const [images, setImages] = React.useState<Record<string, HTMLImageElement>>({});
+  const urls = [...new Set([map?.image, ...(map?.arena || []).map(item => item.image)].filter(Boolean) as string[])];
+  const urlsKey = urls.join('\n');
   const themeKey = theme ? JSON.stringify(theme) : '';
-  // a new theme keeps the map shown until the themed one has loaded
+  // a new theme keeps the maps shown until the themed ones have loaded
   React.useEffect(() => {
-    if (!url) return;
     let live = true;
-    let objectUrl: string | null = null;
-    const load = (src: string) => {
-      const loading = new Image();
-      loading.onload = () => {
-        if (live) setImage(loading);
+    const objectUrls: string[] = [];
+    const colours = themeKey ? JSON.parse(themeKey) as Record<string, string> : undefined;
+    (urlsKey ? urlsKey.split('\n') : []).forEach(url => {
+      const load = (src: string) => {
+        const loading = new Image();
+        loading.onload = () => {
+          if (live) setImages(loaded => ({ ...loaded, [url]: loading }));
+        };
+        loading.src = src;
       };
-      loading.src = src;
-    };
-    if (/\.svg(\?.*)?$/i.test(url)) {
-      fetch(url)
-        .then(response => {
-          if (!response.ok) throw new Error(`Map ${url}: ${response.status}`);
-          return response.text();
-        })
-        .then(text => {
-          if (!live) return;
-          const colours = themeKey ? JSON.parse(themeKey) as Record<string, string> : undefined;
-          objectUrl = URL.createObjectURL(new Blob([themedSvg(text, colours)], { type: 'image/svg+xml' }));
-          load(objectUrl);
-        })
-        .catch(() => {
-          // without its map, the replay shows the map's outline
-        });
-    } else {
-      load(url);
-    }
+      if (/\.svg(\?.*)?$/i.test(url)) {
+        fetch(url)
+          .then(response => {
+            if (!response.ok) throw new Error(`Map ${url}: ${response.status}`);
+            return response.text();
+          })
+          .then(text => {
+            if (!live) return;
+            const objectUrl = URL.createObjectURL(new Blob([themedSvg(text, colours)], { type: 'image/svg+xml' }));
+            objectUrls.push(objectUrl);
+            load(objectUrl);
+          })
+          .catch(() => {
+            // without its map, the replay shows the map's outline
+          });
+      } else {
+        load(url);
+      }
+    });
     return () => {
       live = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrls.forEach(objectUrl => URL.revokeObjectURL(objectUrl));
     };
-  }, [url, themeKey]);
-  return image;
+  }, [urlsKey, themeKey]);
+  return images;
 }
 
 // the players' specialisation icons, by specialisation name, as they load
@@ -459,6 +519,25 @@ function useSpecIcons(players: Actor[]) {
   return icons;
 }
 
+// images by url, as they load (the mechanics' icons)
+function useImages(urls: string[] | undefined) {
+  const [images, setImages] = React.useState<Record<string, HTMLImageElement>>({});
+  React.useEffect(() => {
+    let live = true;
+    (urls || []).forEach(url => {
+      const image = new Image();
+      image.onload = () => {
+        if (live) setImages(loaded => ({ ...loaded, [url]: image }));
+      };
+      image.src = url;
+    });
+    return () => {
+      live = false;
+    };
+  }, [urls]);
+  return images;
+}
+
 // ---- drawing
 
 interface Scene {
@@ -471,33 +550,99 @@ interface Scene {
 // a size in world inches on the screen, within limits
 const radius = (scene: Scene, inches: number, min: number, max: number) => clamp(inches * scene.scale, min, max);
 
-function drawFacing(scene: Scene, screen: { x: number; y: number }, r: number, facing: number | null, colour: string) {
-  if (facing === null) return;
+// the radius an actor is drawn with; anchors are not drawn
+const playerRadius = (scene: Scene) => radius(scene, 26, 10, 22);
+const targetRadius = (scene: Scene, boss: boolean) => boss ? radius(scene, 70, 14, 36) : radius(scene, 30, 7, 16);
+const minionRadius = (scene: Scene) => radius(scene, 14, 4, 9);
+function actorRadius(scene: Scene, replay: PreparedReplay, actor: Actor) {
+  if (actor.kind === 'player') return playerRadius(scene) + 3;
+  if (actor.kind === 'target') return targetRadius(scene, isBoss(replay, actor)) + 3;
+  if (actor.kind === 'minion') return minionRadius(scene) + 2;
+  return 6;
+}
+
+// the facing pointer of an actor of radius r: a triangle with its base on the actor's edge, as a new path
+function facingPath(context: CanvasRenderingContext2D, screen: { x: number; y: number }, r: number, facing: number) {
   const angle = facing * Math.PI / 180;
   // world angles are counter-clockwise with y up; the canvas has y down
   const dx = Math.cos(angle), dy = -Math.sin(angle);
   const tip = r + Math.max(6, r * 0.6);
-  const context = scene.context;
   context.beginPath();
   context.moveTo(screen.x + dx * tip, screen.y + dy * tip);
   context.lineTo(screen.x + dx * r - dy * r * 0.45, screen.y + dy * r + dx * r * 0.45);
   context.lineTo(screen.x + dx * r + dy * r * 0.45, screen.y + dy * r - dx * r * 0.45);
   context.closePath();
-  context.fillStyle = colour;
-  context.fill();
 }
 
+function drawFacing(scene: Scene, screen: { x: number; y: number }, r: number, facing: number | null, colour: string) {
+  if (facing === null) return;
+  facingPath(scene.context, screen, r, facing);
+  scene.context.fillStyle = colour;
+  scene.context.fill();
+}
+
+// the edge around a player's ring and pointer: its width in screen pixels, and how much black is mixed into the
+// ring's colour for it
+const PLAYER_OUTLINE = 1.5;
+const PLAYER_OUTLINE_DARKEN = 0.4;
+
+// A player: their specialisation icon in a ring of their party's colour, which runs into their facing pointer as one
+// shape, outlined all around in a darker shade of that colour. The selected player has the selection ring around that, under the pointer.
 function drawPlayer(scene: Scene, player: Actor, place: Place, state: ActorState, icon: HTMLImageElement | undefined): Placed {
   const context = scene.context;
   const screen = scene.toScreen(place.x, place.y);
-  const r = radius(scene, 26, 10, 22);
+  const r = playerRadius(scene);
+  const band = Math.max(2, r * 0.2);  // the ring's width; it is centred on r
+  const outer = r + band / 2, inner = r - band / 2;
   const colour = state === 'dead' ? COLOURS.dead : state === 'down' ? COLOURS.down : partyColour(player.party);
+  const facing = state === 'alive' ? place.facing : null;
+  const circle = (radius: number) => {
+    context.beginPath();
+    context.arc(screen.x, screen.y, radius, 0, 2 * Math.PI);
+  };
 
   context.save();
   if (state === 'dead') context.globalAlpha = 0.55;
-  if (state === 'alive') drawFacing(scene, screen, r, place.facing, colour);
+
+  // the selection ring first, so the pointer is drawn whole over it
+  if (scene.selected === player.index) {
+    const ring = outer + PLAYER_OUTLINE + 3;
+    // a dark edge on its inner side only: a wider dark ring, shifted in, that the selection ring covers on the outside
+    circle(ring - 1);
+    context.lineWidth = 3;
+    context.strokeStyle = COLOURS.background;
+    context.stroke();
+    circle(ring);
+    context.lineWidth = 2;
+    context.strokeStyle = COLOURS.selected;
+    context.stroke();
+  }
+
+  // the outline of the ring and the pointer: stroked twice as wide, then the fills cover its inner half (and
+  // where the two shapes overlap), leaving one edge around both
+  context.lineWidth = PLAYER_OUTLINE * 2;
+  context.lineJoin = 'round';
+  context.strokeStyle = darken(colour, PLAYER_OUTLINE_DARKEN);
+  circle(outer);
+  context.stroke();
+  if (facing !== null) {
+    facingPath(context, screen, r, facing);
+    context.stroke();
+  }
+
+  // the ring (a band, so a dead player's faded icon is not tinted by it) and the pointer, in one colour
+  context.fillStyle = colour;
   context.beginPath();
-  context.arc(screen.x, screen.y, r, 0, 2 * Math.PI);
+  context.arc(screen.x, screen.y, outer, 0, 2 * Math.PI);
+  context.arc(screen.x, screen.y, inner, 0, 2 * Math.PI, true);
+  context.fill();
+  if (facing !== null) {
+    facingPath(context, screen, r, facing);
+    context.fill();
+  }
+
+  // the icon inside the ring
+  circle(inner);
   context.fillStyle = '#2b273a';
   context.fill();
   if (icon) {
@@ -507,19 +652,6 @@ function drawPlayer(scene: Scene, player: Actor, place: Place, state: ActorState
     context.drawImage(icon, screen.x - r, screen.y - r, r * 2, r * 2);
     context.restore();
   }
-  context.lineWidth = Math.max(2, r * 0.2);
-  context.strokeStyle = colour;
-  context.stroke();
-  if (scene.selected === player.index) {
-    const ring = r + context.lineWidth + 2;
-    context.beginPath();
-    context.arc(screen.x, screen.y, ring, 0, 2 * Math.PI);
-    context.lineWidth = 2;
-    context.strokeStyle = COLOURS.selected;
-    context.stroke();
-    // the ring covers the base of the facing pointer: point from the ring too, in its colour
-    if (state === 'alive') drawFacing(scene, screen, ring, place.facing, COLOURS.selected);
-  }
   context.restore();
   return { actor: player, x: screen.x, y: screen.y, radius: r };
 }
@@ -527,7 +659,7 @@ function drawPlayer(scene: Scene, player: Actor, place: Place, state: ActorState
 function drawTarget(scene: Scene, target: Actor, place: Place, boss: boolean, breakbar: number | null): Placed {
   const context = scene.context;
   const screen = scene.toScreen(place.x, place.y);
-  const r = boss ? radius(scene, 70, 14, 36) : radius(scene, 30, 7, 16);
+  const r = targetRadius(scene, boss);
   drawFacing(scene, screen, r, place.facing, COLOURS.target);
   context.beginPath();
   context.arc(screen.x, screen.y, r, 0, 2 * Math.PI);
@@ -538,6 +670,27 @@ function drawTarget(scene: Scene, target: Actor, place: Place, boss: boolean, br
   context.stroke();
   if (breakbar !== null) drawBreakbar(scene, screen, r, breakbar);
   return { actor: target, x: screen.x, y: screen.y, radius: r };
+}
+
+// a player's minion: a small dot in its player's profession colour, ringed while its player is selected
+function drawMinion(scene: Scene, replay: PreparedReplay, minion: Actor, place: Place): Placed {
+  const context = scene.context;
+  const screen = scene.toScreen(place.x, place.y);
+  const r = minionRadius(scene);
+  const master = minion.master === undefined ? undefined : replay.actors[minion.master];
+  const colour = professionColour(master?.profession) ?? partyColour(master?.party);
+  context.save();
+  context.beginPath();
+  context.arc(screen.x, screen.y, r, 0, 2 * Math.PI);
+  context.globalAlpha = 0.6;
+  context.fillStyle = colour;
+  context.fill();
+  context.globalAlpha = 1;
+  context.lineWidth = 1.5;
+  context.strokeStyle = scene.selected !== null && scene.selected === minion.master ? COLOURS.selected : colour;
+  context.stroke();
+  context.restore();
+  return { actor: minion, x: screen.x, y: screen.y, radius: r };
 }
 
 // the defiance bar under a target, while it is up
@@ -551,14 +704,16 @@ function drawBreakbar(scene: Scene, screen: { x: number; y: number }, r: number,
   context.fillRect(x, y, width * clamp(percent, 0, 100) / 100, height);
 }
 
+// the selected player's recent path: a dashed line in their profession colour, outlined so it reads on any map
 function drawTrail(scene: Scene, replay: PreparedReplay, player: Actor, time: number) {
   const context = scene.context;
   const from = Math.max(player.start, time - TRAIL_MS);
   context.save();
-  context.strokeStyle = partyColour(player.party);
-  context.lineWidth = 2;
-  context.setLineDash([4, 4]);
-  context.globalAlpha = 0.7;
+  // round caps add half the outline's width to each end of a dash, so the gaps are wider than they look
+  context.setLineDash([5, 8]);
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.globalAlpha = 0.8;
   context.beginPath();
   let first = true;
   for (let t = from; t <= time; t += replay.interval) {
@@ -569,13 +724,19 @@ function drawTrail(scene: Scene, replay: PreparedReplay, player: Actor, time: nu
     else context.lineTo(screen.x, screen.y);
     first = false;
   }
+  // the outline first, wider, then the colour over it along the same dashes
+  context.strokeStyle = COLOURS.background;
+  context.lineWidth = 4;
+  context.stroke();
+  context.strokeStyle = professionColour(player.profession) ?? partyColour(player.party);
+  context.lineWidth = 2;
   context.stroke();
   context.restore();
 }
 
-function drawLabel(scene: Scene, item: Placed, canvasWidth: number) {
+function drawLabel(scene: Scene, replay: PreparedReplay, item: Placed, canvasWidth: number) {
   const context = scene.context;
-  const text = actorName(item.actor);
+  const text = actorLabel(replay, item.actor);
   context.font = '600 13px "Source Sans Pro", sans-serif';
   const width = context.measureText(text).width + 12;
   const x = clamp(item.x - width / 2, 2, canvasWidth - width - 2);

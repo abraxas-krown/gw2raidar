@@ -8,6 +8,7 @@ import type {
   ReplayData,
   ReplayView,
   Series,
+  TargetPriority,
   ViewBuff,
   ViewParty,
   ViewTarget,
@@ -47,6 +48,13 @@ export const COLOURS = {
 
 export const partyColour = (party: number | undefined) =>
   PARTY_COLOURS[((party || 1) - 1) % PARTY_COLOURS.length];
+
+// a #RRGGBB colour with black mixed in: 0 keeps it, 1 is black
+export function darken(colour: string, amount: number) {
+  const value = parseInt(colour.slice(1, 7), 16);
+  const channel = (shift: number) => Math.round(((value >> shift) & 255) * (1 - amount));
+  return `rgb(${channel(16)}, ${channel(8)}, ${channel(0)})`;
+}
 
 export const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -109,6 +117,14 @@ export function formatTime(ms: number, tenths = false) {
 
 export const actorName = (actor: ReplayActor) => actor.name || 'Private player';
 
+// what the map's label shows for an actor: a minion's name, with its player's
+export function actorLabel(replay: PreparedReplay, actor: Actor) {
+  if (actor.kind !== 'minion') return actorName(actor);
+  const master = actor.master === undefined ? undefined : replay.actors[actor.master];
+  const name = actor.name || 'Minion';
+  return master ? `${name} (${actorName(master)})` : name;
+}
+
 // ---- the replay, prepared once
 
 export interface Actor extends ReplayActor {
@@ -134,7 +150,9 @@ export interface PreparedReplay {
   actors: Actor[];
   players: Actor[];
   targets: Actor[];
-  // replays made before targets had "boss": the target with the most health data stands for the boss
+  // the players' minions, when the replay has decorations
+  minions: Actor[];
+  // replays made before targets had "priority" or "boss": the target with the most health data stands for the boss
   guessedBoss: Actor | null;
 }
 
@@ -166,14 +184,22 @@ export function prepareReplay(
   });
   const players = actors.filter(actor => actor.kind === 'player');
   const targets = actors.filter(actor => actor.kind === 'target');
+  const minions = actors.filter(actor => actor.kind === 'minion');
   const guessedBoss = targets.reduce<Actor | null>((best, target) =>
     !best || (target.health || []).length > (best.health || []).length ? target : best, null);
-  return { data, duration: data.duration, interval: data.sample_interval, world, actors, players, targets, guessedBoss };
+  return {
+    data, duration: data.duration, interval: data.sample_interval, world, actors, players, targets, minions, guessedBoss,
+  };
 }
 
-// one of the fight's main targets, not an add: drawn larger and listed first
+// one of the fight's bosses (a main or blocking target), not an add: drawn larger and listed first
 export const isBoss = (replay: PreparedReplay, target: Actor) =>
-  'boss' in target ? !!target.boss : target === replay.guessedBoss;
+  target.priority ? BOSS_PRIORITIES.has(target.priority)
+    : 'boss' in target ? !!target.boss
+    : target === replay.guessedBoss;
+
+// the target priorities of the fight's bosses (eiparser.replay.BOSS_PRIORITIES)
+const BOSS_PRIORITIES = new Set<TargetPriority>(['main', 'blocking']);
 
 // ---- actors at a time
 

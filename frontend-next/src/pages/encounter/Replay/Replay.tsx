@@ -15,6 +15,7 @@ import type { BuffInfo, BuffTab } from '../../../api/types';
 import { specName } from '../../../lib/assets';
 import { useBootstrap } from '../../../session/SessionProvider';
 import { useEncounterView } from '../EncounterContext';
+import { prepareDecorations, usedLayers } from './decorations';
 import { actorName, buffLookup, prepareReplay, WINDOW_MARGIN_TOP } from './model';
 import { ReplayCanvas } from './ReplayCanvas';
 import { ReplayControls } from './ReplayControls';
@@ -103,6 +104,17 @@ function ReplayViewer({ data, buffTabs, buffs, specialisation, phase, topElement
   const playback = usePlayback(replay.duration);
   const [selected, setSelected] = React.useState<number | null>(null);
   const [locked, setLocked] = React.useState(false);
+  const decorations = React.useMemo(() => prepareDecorations(replay), [replay]);
+  const layersUsed = React.useMemo(() => usedLayers(decorations), [decorations]);
+  const [showMechanics, setShowMechanics] = React.useState(true);
+  const [showMarkers, setShowMarkers] = React.useState(true);
+  const [showSkills, setShowSkills] = React.useState(true);
+  // minions clutter the map, so they start hidden
+  const [showMinions, setShowMinions] = React.useState(false);
+  const hasMechanics = layersUsed.has('mechanics');
+  const hasMarkers = layersUsed.has('markers');
+  const hasSkills = layersUsed.has('skills');
+  const hasMinions = replay.minions.length > 0;
   const stage = React.useRef<HTMLDivElement>(null);
   const [stageHeight, setStageHeight] = React.useState<number | null>(null);
 
@@ -148,6 +160,8 @@ function ReplayViewer({ data, buffTabs, buffs, specialisation, phase, topElement
   }, []);
 
   const selectedName = selected === null ? null : actorName(replay.actors[selected]);
+  // skills are only shown for a selected player
+  const playerSelected = selected !== null && replay.actors[selected].kind === 'player';
 
   return (
     <div
@@ -166,6 +180,11 @@ function ReplayViewer({ data, buffTabs, buffs, specialisation, phase, topElement
           onSkip={playback.skip}
           topElement={topElement}
           mapTheme={mapTheme}
+          decorations={decorations}
+          showMechanics={showMechanics}
+          showMarkers={showMarkers}
+          showSkills={showSkills}
+          showMinions={hasMinions && showMinions}
         />
         <ReplayControls
           playback={playback}
@@ -173,6 +192,15 @@ function ReplayViewer({ data, buffTabs, buffs, specialisation, phase, topElement
           selectedName={selectedName}
           locked={locked}
           onLockChange={setLock}
+          mechanics={hasMechanics ? showMechanics : null}
+          onMechanicsChange={setShowMechanics}
+          markers={hasMarkers ? showMarkers : null}
+          skills={hasSkills ? showSkills : null}
+          onSkillsChange={setShowSkills}
+          skillsAvailable={playerSelected}
+          onMarkersChange={setShowMarkers}
+          minions={hasMinions ? showMinions : null}
+          onMinionsChange={setShowMinions}
         />
         <ReplayTimeline replay={replay} playback={playback} />
       </div>

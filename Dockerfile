@@ -10,7 +10,7 @@
 # workflow). The site depends on the structure of EI's JSON output and on its encounter IDs, so the tag is
 # pinned here and changes with the code: pin an image made from one of the fork's git tags, never `latest` or
 # `master`, which move. `--build-arg GW2EI_TAG=...` overrides it for one build. See DEPLOY.md.
-ARG GW2EI_TAG=v3.33.0.0-krown.1
+ARG GW2EI_TAG=v3.33.1.0-krown.2
 FROM ghcr.io/abraxas-krown/gw2ei:${GW2EI_TAG} AS gw2ei
 
 # ---- .NET runtime, needed to run the Elite Insights CLI (the log parser); only its files are copied ----
